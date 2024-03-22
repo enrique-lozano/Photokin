@@ -1,0 +1,23 @@
+.images-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+.images-container::after {
+  content: '';
+  flex-grow: 999999999;
+}
+
+.image-container {
+  margin: 2px;
+  position: relative;
+}
+
+i {
+  display: block;
+}
+img {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  vertical-align: bottom;
+}
