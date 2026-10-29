@@ -1,0 +1,324 @@
+@reference '../../App.css';
+
+/* Page title and optional intro at the top of a settings tab. */
+.settings-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-page-header__title {
+  margin: 0;
+  @apply text-xl font-semibold text-foreground;
+}
+
+.settings-page-header__description {
+  margin: 0;
+  max-width: 72ch;
+  @apply text-sm text-muted-foreground;
+}
+
+/* A titled group of rows, drawn as one card with hairlines between rows. */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-group > * + * {
+  margin-top: 8px;
+}
+
+.settings-group__title {
+  margin: 0;
+  padding-inline: 2px;
+  @apply text-sm font-semibold;
+}
+
+.settings-card {
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  background-color: hsl(var(--card) / 0.6);
+}
+
+.settings-card > * + *,
+.settings-radio-group > * + * {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.settings-group__description {
+  margin: 2px 0 0;
+  padding-inline: 2px;
+  @apply text-xs text-muted-foreground;
+  line-height: 1.45;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 56px;
+  padding: 10px 16px;
+}
+
+.settings-row--interactive {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.settings-row--interactive:hover {
+  background-color: hsl(var(--accent) / 0.35);
+}
+
+/* A row whose control is disabled must not advertise itself as clickable. */
+.settings-row[data-disabled] {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.settings-row[data-disabled]:hover {
+  background-color: transparent;
+}
+
+.settings-row__icon {
+  width: 20px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  @apply text-muted-foreground;
+}
+
+.settings-row-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-row__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  @apply text-sm font-medium text-foreground;
+}
+
+.settings-row-description {
+  margin: 0;
+  overflow-wrap: anywhere;
+  @apply text-xs text-muted-foreground;
+  line-height: 1.45;
+}
+
+.settings-row__control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/*
+ * Layout only — the visual styling (height, border, chevron, focus ring) comes
+ * from the shared `<Select>` control so every dropdown in the app matches.
+ * The width comes from the trigger's `optionLabels`; `flex: none` stops the row
+ * from squeezing it and wrapping the label instead.
+ */
+.settings-select {
+  flex: none;
+  min-width: 128px;
+}
+
+.settings-radio {
+  appearance: none;
+  flex-shrink: 0;
+  display: grid;
+  place-content: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 1.5px solid hsl(var(--muted-foreground) / 0.7);
+  border-radius: 9999px;
+  cursor: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.settings-radio::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background-color: hsl(var(--primary));
+  transform: scale(0);
+  transition: transform 0.15s ease;
+}
+
+.settings-radio:checked {
+  border-color: hsl(var(--primary));
+}
+
+.settings-radio:checked::before {
+  transform: scale(1);
+}
+
+.settings-radio:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+@media (min-width: 900px) {
+  .settings-radio-card {
+    flex: 1 1 0%;
+    min-width: 0;
+  }
+}
+
+/* Choice cards (onboarding). */
+.settings-radio-card {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card) / 0.6);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-radio-card:hover {
+  background-color: hsl(var(--accent) / 0.45);
+  border-color: hsl(var(--border) / 0.8);
+}
+
+.settings-radio-card:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+.settings-radio-card[data-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-radio-card[data-disabled='true']:hover {
+  background-color: hsl(var(--card) / 0.6);
+  border-color: hsl(var(--border));
+}
+
+.settings-radio-card--selected {
+  border-color: hsl(var(--primary) / 0.65);
+  background-color: hsl(var(--primary) / 0.08);
+}
+
+.settings-radio-card--selected:hover {
+  background-color: hsl(var(--primary) / 0.12);
+}
+
+.settings-radio-card__bullet {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  border: 1.5px solid hsl(var(--muted-foreground));
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.settings-radio-card--selected .settings-radio-card__bullet {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary));
+}
+
+.settings-radio-card__bullet-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: hsl(var(--primary-foreground));
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.settings-radio-card--selected .settings-radio-card__bullet-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.settings-radio-card__body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-radio-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: 8px;
+  row-gap: 4px;
+  min-width: 0;
+}
+
+/*
+ * Basis 0 + min-content: the title wraps its own text to share the row with the
+ * badge, and the badge only drops to its own line when not even the title's
+ * longest word fits beside it.
+ */
+.settings-radio-card__title {
+  flex: 1 1 0;
+  min-width: min-content;
+  @apply text-sm font-medium;
+  @apply text-foreground;
+}
+
+.settings-radio-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.settings-radio-card__description {
+  margin: 0;
+  @apply text-xs text-muted-foreground;
+  line-height: 1.4;
+}
+
+.settings-radio-card__best-for {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 0 0 0;
+  border-top: 1px solid var(--color-border);
+  @apply text-xs text-muted-foreground;
+  line-height: 1.4;
+}
+
+.settings-radio-card__best-for-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  @apply text-muted-foreground;
+}
+
+.settings-radio-card--selected .settings-radio-card__best-for-icon {
+  @apply text-primary;
+}

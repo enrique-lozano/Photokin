@@ -1,0 +1,184 @@
+@reference '../../App.css';
+
+aside.navbar {
+  background-color: hsl(var(--main-navbar));
+  @apply text-main-navbar-foreground;
+  width: var(--sidebar-width);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 12px;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.navbar-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  background: hsl(var(--main-navbar-foreground) / 0.12);
+}
+
+/* On macOS the traffic lights sit where the logo would be. */
+[data-platform='macos'] .navbar-logo {
+  visibility: hidden;
+}
+
+.page-selector {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .menu {
+    display: flex;
+    gap: 4px;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.navbar-link {
+  width: 64px;
+  max-width: calc(100% - 8px);
+  min-width: 0;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border-radius: 11px;
+  @apply text-main-navbar-foreground;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.navbar-link:hover {
+  background-color: hsl(var(--main-navbar-foreground) / 0.12);
+  @apply text-main-navbar-foreground;
+}
+
+.navbar-link.selected {
+  background-color: hsl(var(--main-navbar-foreground) / 0.25);
+  @apply text-main-navbar-foreground;
+}
+
+.navbar-link__icon {
+  display: grid;
+  place-items: center;
+  transition: transform 0.2s ease;
+}
+
+.navbar-link__icon-outline,
+.navbar-link__icon-filled {
+  grid-area: 1 / 1;
+  display: grid;
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s ease;
+}
+
+.navbar-link__icon-filled {
+  opacity: 0;
+  transform: scale(0.75);
+}
+
+.navbar-link.selected .navbar-link__icon-outline {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
+.navbar-link.selected .navbar-link__icon-filled {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.navbar-icon--filled-face {
+  fill: currentColor;
+}
+
+.navbar-icon--filled-face path:not(:first-child) {
+  fill: none;
+  stroke: hsl(var(--main-navbar));
+}
+
+.navbar-link:hover .navbar-link__icon {
+  transform: scale(1.12);
+}
+
+.navbar-link.selected .navbar-link__icon {
+  animation: navbar-icon-select 0.35s ease-out;
+}
+
+.navbar-link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
+.navbar-link__label {
+  @apply text-xs;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-settings {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+@keyframes navbar-icon-select {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(-3px) scale(1.15);
+  }
+  75% {
+    transform: translateY(1px) scale(0.97);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar-link,
+  .navbar-link__icon,
+  .navbar-link__icon-outline,
+  .navbar-link__icon-filled {
+    transition: none;
+  }
+
+  .navbar-link.selected .navbar-link__icon {
+    animation: none;
+  }
+
+  .navbar-link:hover .navbar-link__icon {
+    transform: none;
+  }
+}

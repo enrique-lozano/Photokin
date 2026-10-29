@@ -1,0 +1,121 @@
+@reference '../../App.css';
+
+/* ----------------------------------------------------------------------------
+ * AppShell: the top-level layout grid.
+ *   rail   | topbar
+ *   rail   | filterstrip   (collapses to 0 when no global filters are active)
+ *   rail   | page
+ *   footer | footer
+ * ------------------------------------------------------------------------- */
+
+.app-shell {
+  display: grid;
+  height: 100vh;
+  width: 100vw;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: var(--toolbar-height) auto 1fr var(--footer-height);
+  grid-template-areas:
+    'rail topbar'
+    'rail filterstrip'
+    'rail page'
+    'footer footer';
+  overflow: hidden;
+  background-color: hsl(var(--main-navbar));
+}
+
+.app-shell > .navbar {
+  grid-area: rail;
+}
+
+.app-shell > .toolbar-header {
+  grid-area: topbar;
+}
+
+.app-shell > .global-filters-strip {
+  grid-area: filterstrip;
+}
+
+.app-shell > .outlet-footer {
+  grid-area: footer;
+}
+
+.app-shell__page {
+  grid-area: page;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  background-color: hsl(var(--background));
+  border-top-left-radius: var(--secondary-navbar-radius);
+}
+
+.app-shell__page > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ───── Global ("library") filters strip ───── */
+.global-filters-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  /* Opaque base: the shell behind is the (often dark) navbar color. */
+  background:
+    linear-gradient(90deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.03)), hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  box-shadow: inset 3px 0 0 hsl(var(--primary));
+  @apply text-xs;
+  overflow-x: auto;
+}
+
+/* Filters persist but don't affect this page: same strip, neutral tint. */
+.global-filters-strip--inactive {
+  --primary: var(--muted-foreground);
+}
+
+.global-filters-strip__note {
+  @apply text-muted-foreground;
+  flex-shrink: 0;
+}
+
+.global-filters-strip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-primary font-semibold;
+  flex-shrink: 0;
+}
+
+.global-filters-strip__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: hsl(var(--primary) / 0.12);
+  border: 1px solid hsl(var(--primary) / 0.25);
+  @apply text-primary;
+  white-space: nowrap;
+}
+
+.global-filters-strip__remove {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  @apply text-primary;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.global-filters-strip__remove:hover {
+  background: hsl(var(--primary) / 0.2);
+}
+
+.global-filters-strip__spacer {
+  flex: 1;
+}

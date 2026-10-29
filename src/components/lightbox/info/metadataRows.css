@@ -1,0 +1,92 @@
+@reference '../../../App.css';
+
+/* Generic metadata rows (Rights, Technical, Location, Settings) */
+.metadata-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.metadata-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0;
+}
+
+.metadata-row + .metadata-row {
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+
+.metadata-row__label {
+  flex-shrink: 0;
+  width: 38%;
+  @apply text-sm text-muted-foreground;
+}
+
+.metadata-row__value {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  @apply text-sm font-medium text-foreground;
+  word-break: break-word;
+}
+
+.metadata-row__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.metadata-row--actionable .metadata-row__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metadata-row[data-editing] .metadata-row__text {
+  overflow: visible;
+  /* Room for the input's focus ring so it never touches the row edges */
+  margin: 4px 0 4px -3px;
+  padding: 0 3px;
+}
+
+.metadata-row--actionable:hover,
+.metadata-row--actionable:focus-within {
+  background: hsl(var(--accent));
+}
+
+.metadata-row__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.metadata-row__actions > button {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  @apply text-muted-foreground;
+}
+
+.metadata-row__actions > button:hover {
+  @apply text-foreground;
+}
+
+@media (hover: hover) {
+  .metadata-row:not(:hover):not(:focus-within):not([data-editing]) .metadata-row__actions {
+    width: 0;
+    margin-left: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.metadata-row__icon {
+  vertical-align: -3px;
+  margin-right: 6px;
+  @apply text-muted-foreground;
+}

@@ -1,0 +1,220 @@
+@reference '../../App.css';
+
+/* ----------------------------------------------------------------------------
+ * Shared surfaces for bulk actions hosted in a dialog: the running progress row
+ * and the finished result panel. Deliberately mirrors the process toast's bar
+ * (toast.css) so the same work looks the same wherever it is shown.
+ * ------------------------------------------------------------------------- */
+
+.bulk-action-progress {
+  /* Takes the whole footer row: nothing else is actionable while it runs. */
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bulk-action-progress__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bulk-action-progress__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @apply text-sm text-muted-foreground;
+}
+
+.bulk-action-progress__percent {
+  flex-shrink: 0;
+  @apply text-sm font-semibold text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+.bulk-action-progress__bar {
+  position: relative;
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+
+.bulk-action-progress__bar-fill {
+  display: block;
+  height: 100%;
+  background: hsl(var(--primary));
+  transition: width 0.25s ease;
+}
+
+.bulk-action-progress__bar--indeterminate .bulk-action-progress__bar-fill {
+  position: absolute;
+  left: 0;
+  width: 40%;
+  animation: bulk-action-bar-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes bulk-action-bar-slide {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+/* ---- Result panel -------------------------------------------------------- */
+
+/* Rows run edge to edge: the negative margins cancel the dialog body's padding
+   (px-6 py-4), so row dividers meet the body's own top and bottom borders. */
+.bulk-action-result {
+  --row-inset: 24px;
+  --row-line: 20px;
+  --row-gap: 12px;
+  display: flex;
+  flex-direction: column;
+  margin: -16px calc(-1 * var(--row-inset));
+}
+
+/* Same tone tokens as the toast status icons, so a result reads the same
+   whether it lands in a dialog or in a notification. */
+.bulk-action-result__tile {
+  --tile-tone: hsl(var(--muted-foreground));
+}
+
+.bulk-action-result__tile + .bulk-action-result__tile {
+  border-top: 1px solid hsl(var(--border) / 0.7);
+}
+
+.bulk-action-result__tile--success {
+  --tile-tone: var(--toastify-color-success);
+}
+
+.bulk-action-result__tile--warning {
+  --tile-tone: var(--toastify-color-warning);
+}
+
+.bulk-action-result__tile--error {
+  --tile-tone: var(--toastify-color-error);
+}
+
+.bulk-action-result__tile--warning,
+.bulk-action-result__tile--error {
+  background: color-mix(in srgb, var(--tile-tone) 6%, transparent);
+}
+
+.bulk-action-result__tile-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--row-gap);
+  padding: 16px var(--row-inset);
+}
+
+button.bulk-action-result__tile-header {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+}
+
+button.bulk-action-result__tile-header:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
+
+/* Icon and chevron sit in a box one title line tall, so they stay centred on
+   the first line however far the title wraps. */
+.bulk-action-result__tile-icon,
+.bulk-action-result__tile-chevron {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--row-line);
+  height: var(--row-line);
+}
+
+.bulk-action-result__tile-icon {
+  /* Status icon only; the adjacent title and body use semantic text utilities. */
+  color: var(--tile-tone);
+}
+
+.bulk-action-result__tile-chevron {
+  @apply text-muted-foreground;
+  transition: color 0.12s ease;
+}
+
+button.bulk-action-result__tile-header:hover .bulk-action-result__tile-chevron {
+  @apply text-foreground;
+}
+
+.bulk-action-result__tile-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bulk-action-result__tile-title {
+  @apply text-sm font-semibold text-foreground;
+  font-variant-numeric: tabular-nums;
+  text-wrap: pretty;
+}
+
+.bulk-action-result__tile-description {
+  @apply text-sm text-muted-foreground;
+  text-wrap: pretty;
+}
+
+/* Starts under the title text, past the icon box and its gap. */
+.bulk-action-result__tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 var(--row-inset) 16px calc(var(--row-inset) + var(--row-line) + var(--row-gap));
+}
+
+.bulk-action-result__tile-hint {
+  margin: 0;
+  max-width: 60ch;
+  @apply text-sm text-muted-foreground;
+  text-wrap: pretty;
+}
+
+.bulk-action-result__failures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 232px;
+  overflow-y: auto;
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 6px;
+  background: hsl(var(--background) / 0.5);
+}
+
+.bulk-action-result__failure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+}
+
+.bulk-action-result__failure + .bulk-action-result__failure {
+  border-top: 1px solid hsl(var(--border) / 0.5);
+}
+
+.bulk-action-result__file {
+  @apply text-sm font-medium text-foreground;
+  overflow-wrap: anywhere;
+}
+
+.bulk-action-result__reason {
+  @apply text-xs text-muted-foreground;
+  overflow-wrap: anywhere;
+}

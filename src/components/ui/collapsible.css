@@ -1,0 +1,40 @@
+/* Shared hover for rows that expand/collapse or open a detail. */
+.expandable-trigger {
+  transition: background-color 0.15s ease;
+}
+
+.expandable-trigger:hover:not(:disabled) {
+  background-color: hsl(var(--accent) / 0.6);
+}
+
+/* One chevron that flips with the open state, instead of swapping icons. */
+.expand-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+[aria-expanded='true'] .expand-chevron {
+  transform: rotate(180deg);
+}
+
+/* Base UI measures the content into --collapsible-panel-height. */
+.collapsible-panel {
+  height: var(--collapsible-panel-height);
+  overflow: hidden;
+  transition:
+    height 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.collapsible-panel[data-starting-style],
+.collapsible-panel[data-ending-style] {
+  height: 0;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expand-chevron,
+  .collapsible-panel {
+    transition: none;
+  }
+}

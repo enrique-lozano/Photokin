@@ -1,0 +1,9 @@
+# Ignore build output
+dist/
+target/
+node_modules/
+
+# Tauri config files that might be too large or auto-generated
+src-tauri/target/
+src-tauri/target/debug/
+src-tauri/target/release/

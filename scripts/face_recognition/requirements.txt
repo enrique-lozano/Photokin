@@ -1,0 +1,5 @@
+# Face detection (YuNet) and recognition (SFace) both run through OpenCV's DNN
+# module, so the only runtime dependencies are OpenCV (headless build) and NumPy.
+# Pinned to the latest releases that ship cp311-compatible wheels.
+numpy==2.4.6
+opencv-python-headless==4.13.0.92

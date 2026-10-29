@@ -1,0 +1,420 @@
+@reference '../../App.css';
+
+.onboarding {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(130% 55% at 50% -12%, hsl(var(--primary) / 0.14), transparent 62%), hsl(var(--background));
+  @apply text-foreground;
+}
+
+.onboarding__dragbar {
+  height: var(--toolbar-height, 44px);
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding-right: 4px;
+}
+
+.onboarding__stepper {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.onboarding__stepper-item {
+  display: flex;
+  align-items: center;
+}
+
+.onboarding__stepper-item + .onboarding__stepper-item::before {
+  content: '';
+  width: 48px;
+  height: 2px;
+  background: hsl(var(--border));
+}
+
+.onboarding__stepper-item--done + .onboarding__stepper-item::before,
+.onboarding__stepper-item--current::before {
+  background: hsl(var(--primary));
+}
+
+.onboarding__stepper-dot {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid hsl(var(--border));
+  @apply text-xs font-semibold text-muted-foreground;
+}
+
+.onboarding__stepper-item--current .onboarding__stepper-dot {
+  border-color: hsl(var(--primary));
+  @apply text-primary;
+}
+
+.onboarding__stepper-item--done .onboarding__stepper-dot {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary));
+  @apply text-primary-foreground;
+}
+
+.onboarding__window-controls {
+  grid-column: 3;
+  justify-self: end;
+  @apply text-foreground;
+}
+
+/* Keep the footer visible; short windows can scroll the step's body. */
+.onboarding__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: 18px;
+  padding: 0 24px;
+}
+
+.onboarding__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 16px 24px 24px;
+}
+
+.onboarding__footer-end {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding__footer-start {
+  min-width: 0;
+}
+
+.onboarding__hint {
+  margin: 0;
+  @apply text-sm text-muted-foreground;
+}
+
+.onboarding__heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.onboarding__logo-tile {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  @apply text-primary-foreground;
+  background: linear-gradient(140deg, hsl(var(--primary)), hsl(var(--primary) / 0.68));
+  box-shadow: 0 10px 30px hsl(var(--primary) / 0.35);
+}
+
+.onboarding__title {
+  margin: 0;
+  @apply text-2xl font-semibold;
+  letter-spacing: -0.01em;
+}
+
+.onboarding__subtitle {
+  margin: 0;
+  max-width: 520px;
+  @apply text-sm text-muted-foreground;
+}
+
+.onboarding__metadata-choices {
+  width: min(100%, 720px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.onboarding__metadata-choices .settings-radio-card {
+  padding: 14px 16px;
+}
+
+@media (max-width: 640px) {
+  .onboarding__metadata-choices {
+    grid-template-columns: 1fr;
+  }
+}
+
+.onboarding__dependencies {
+  width: min(100%, 540px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding__dependencies > :first-child {
+  width: 100%;
+}
+
+.onboarding__dependency {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  background: hsl(var(--card) / 0.6);
+}
+
+.onboarding__dependency-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.onboarding__dependency-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  @apply text-primary;
+  background: hsl(var(--muted) / 0.5);
+}
+
+.onboarding__dependency-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.onboarding__dependency-name {
+  margin: 0;
+  @apply text-sm font-semibold;
+}
+
+.onboarding__dependency-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 2px 0 0;
+  @apply text-xs text-muted-foreground;
+}
+
+.onboarding__dependency-meta > :first-child {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.onboarding__dependency-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onboarding__dependency-error {
+  margin: 0;
+  overflow-wrap: anywhere;
+  @apply text-sm text-destructive-text;
+}
+
+.onboarding__dependency-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding__dependency-actions > button {
+  flex: 1;
+}
+
+.onboarding__open-folder {
+  align-self: flex-start;
+  margin: -6px 0 -4px -8px;
+  @apply text-muted-foreground;
+}
+
+.onboarding__install-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.onboarding__progress-track {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+.onboarding__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: hsl(var(--primary));
+  transition: width 150ms ease-out;
+}
+
+.onboarding__progress-fill[data-indeterminate='true'] {
+  width: 35%;
+  animation: onboarding-progress 1.4s ease-in-out infinite alternate;
+}
+
+.onboarding__install-stages {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  @apply text-xs text-muted-foreground;
+}
+
+.onboarding__install-stages li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.onboarding__install-stages li[data-active='true'] {
+  @apply text-foreground;
+}
+
+.onboarding__install-stages li[data-done='true'] {
+  @apply text-primary;
+}
+
+.onboarding__install-stage-icon {
+  display: grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+  border: 2px solid hsl(var(--border));
+  border-radius: 50%;
+}
+
+.onboarding__install-stages li[data-active='true'] .onboarding__install-stage-icon,
+.onboarding__install-stages li[data-done='true'] .onboarding__install-stage-icon {
+  border-color: hsl(var(--primary));
+}
+
+@keyframes onboarding-progress {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(185%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding__progress-fill {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding__dependency-head {
+    flex-wrap: wrap;
+  }
+
+  .onboarding__dependency-main {
+    flex-basis: calc(100% - 48px);
+  }
+
+  .onboarding__dependency-actions {
+    flex-direction: column;
+  }
+}
+
+.onboarding__tiers {
+  width: min(100%, 760px);
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+.onboarding__tiers .settings-radio-card {
+  flex: 0 1 calc((100% - 2 * 14px) / 3);
+  min-width: 0;
+  padding: 16px;
+}
+
+.onboarding__tiers .settings-radio-card__body {
+  gap: 8px;
+}
+
+.onboarding__model-recommendation {
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: hsl(var(--primary) / 0.12);
+  @apply text-xs font-medium text-primary;
+}
+
+.onboarding__model-status {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid hsl(var(--border));
+  @apply text-xs text-muted-foreground;
+}
+
+@media (max-width: 640px) {
+  .onboarding__tiers {
+    flex-direction: column;
+  }
+
+  .onboarding__tiers .settings-radio-card {
+    flex-basis: auto;
+  }
+}
+
+.onboarding__download {
+  width: min(100%, 420px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 4px);
+  background: hsl(var(--card) / 0.6);
+}
+
+.onboarding__download-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  @apply text-sm font-medium;
+}
+
+.onboarding__download-amount {
+  @apply font-normal text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+.onboarding__progress {
+  height: 4px;
+  border-radius: 999px;
+  background: hsl(var(--muted) / 0.6);
+  overflow: hidden;
+}
+
+.onboarding__progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  transition: width 120ms linear;
+}

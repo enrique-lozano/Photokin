@@ -1,0 +1,118 @@
+@reference '../../App.css';
+
+.tree-root {
+  /* Inside a left navigator this inherits the shared sidebar row height; a
+     `<Tree itemHeightPx>` prop (e.g. dialogs) still overrides it inline. */
+  --tree-item-height: var(--sidebar-row-height, 32px);
+  min-height: 100%;
+  border-radius: var(--sidebar-row-radius, 8px);
+}
+
+.tree-root.is-root-drop-target {
+  box-shadow: inset 0 0 0 2px hsl(var(--primary) / 0.65);
+  background-color: hsl(var(--primary) / 0.06);
+}
+
+.tree-entry-item {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px 1px 0px;
+  width: 100%;
+
+  &.is-draggable {
+    cursor: grab;
+  }
+
+  &.is-drag-source {
+    opacity: 0.45;
+  }
+
+  &.is-drop-target {
+    border-radius: var(--sidebar-row-radius, 8px);
+    box-shadow: inset 0 0 0 2px hsl(var(--primary) / 0.65);
+    background-color: hsl(var(--primary) / 0.08);
+  }
+
+  .caret-icon-container {
+    transition: all 0.15s;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    margin-right: 1px;
+
+    button {
+      padding: 0;
+      width: calc(var(--tree-item-height) / 2);
+      height: calc(var(--tree-item-height) / 2);
+      border-radius: 6px;
+
+      svg {
+        width: calc(var(--tree-item-height) / 2);
+        height: calc(var(--tree-item-height) / 2);
+      }
+    }
+
+    &.expanded {
+      transform: rotate(90deg);
+    }
+  }
+
+  .item-selector {
+    justify-content: start;
+    min-width: 0;
+    flex-grow: 1;
+    height: var(--tree-item-height);
+    border-radius: var(--sidebar-row-radius, 8px);
+    @apply text-sm text-muted-foreground;
+    padding: 8px;
+    overflow: hidden;
+  }
+
+  .item-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .item-selector.is-selected {
+    background-color: hsl(var(--primary) / 0.08);
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.45);
+    @apply text-secondary-navbar-foreground;
+  }
+
+  .item-selector:hover {
+    background-color: hsl(var(--secondary-navbar-foreground) / 0.07);
+    @apply text-secondary-navbar-foreground;
+  }
+
+  .item-icon-container {
+    flex-shrink: 0;
+    width: calc(var(--tree-item-height) / 1.8);
+    height: calc(var(--tree-item-height) / 1.8);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: calc(var(--tree-item-height) / 1.8);
+      height: calc(var(--tree-item-height) / 1.8);
+    }
+  }
+}
+
+.tree-entry-item.is-hidden-item {
+  opacity: 0.58;
+  font-style: italic;
+}
+
+.tree-entry-item:not(.have-children) {
+  .caret-icon-container {
+    opacity: 0;
+  }
+}
+
+.tree-entry-popover {
+  position: fixed;
+  z-index: 9999;
+}

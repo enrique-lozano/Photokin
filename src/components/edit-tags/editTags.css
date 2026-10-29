@@ -1,0 +1,160 @@
+@reference '../../App.css';
+
+/* ── Thumbnail strip ───────────────────────────────────────────────────── */
+.edit-tags-thumbs {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.375rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.edit-tags-thumb {
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--muted));
+  flex: 0 0 auto;
+}
+
+.edit-tags-thumbs-more {
+  flex: 0 0 auto;
+  @apply text-xs text-muted-foreground;
+  white-space: nowrap;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
+/* ── Add keyword row ───────────────────────────────────────────────────── */
+.edit-tags-add {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-tags-add > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Pending new-tag chips ─────────────────────────────────────────────── */
+.edit-tags-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.edit-tags-new-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  border: 1px dashed hsl(var(--primary));
+  background: hsl(var(--primary) / 0.08);
+  @apply text-foreground text-xs;
+  padding: 0.125rem 0.5rem;
+}
+
+.edit-tags-new-chip button {
+  display: inline-flex;
+  align-items: center;
+  @apply text-muted-foreground;
+  border-radius: 999px;
+}
+
+.edit-tags-new-chip button:hover {
+  @apply text-foreground;
+}
+
+/* ── Filter ────────────────────────────────────────────────────────────── */
+.edit-tags-search {
+  position: relative;
+}
+
+.edit-tags-search-icon {
+  position: absolute;
+  left: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  @apply text-muted-foreground;
+  pointer-events: none;
+}
+
+.edit-tags-search .flex,
+.edit-tags-search input {
+  padding-left: 2.25rem;
+}
+
+/* ── Tree ──────────────────────────────────────────────────────────────── */
+.edit-tags-tree-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.edit-tags-empty {
+  padding: 1.5rem 0.75rem;
+  text-align: center;
+  @apply text-sm text-muted-foreground;
+}
+
+.edit-tags-tree {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
+}
+
+.edit-tags-row:hover {
+  background: hsl(var(--accent) / 0.4);
+}
+
+.edit-tags-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  @apply text-muted-foreground;
+  transition: transform 0.15s ease;
+}
+
+.edit-tags-caret.expanded {
+  transform: rotate(90deg);
+}
+
+.edit-tags-caret.is-leaf {
+  visibility: hidden;
+}
+
+.edit-tags-row-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+  padding: 0.125rem 0;
+}
+
+.edit-tags-row-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @apply text-sm;
+}

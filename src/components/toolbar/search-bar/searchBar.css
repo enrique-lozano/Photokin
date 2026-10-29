@@ -1,0 +1,175 @@
+@reference '../../../App.css';
+
+.toolbar-searchbar {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.toolbar-searchbar__input-shell {
+  height: 30px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid hsl(var(--main-navbar-foreground) / 0.16);
+  background: hsl(var(--main-navbar-foreground) / 0.12);
+  border-radius: 9px;
+  padding: 0 10px;
+}
+
+.toolbar-searchbar__input-shell.is-focused {
+  border-color: hsl(var(--main-navbar-foreground) / 0.5);
+}
+
+.toolbar-searchbar__search-icon {
+  flex-shrink: 0;
+  @apply text-main-navbar-foreground;
+}
+
+.toolbar-searchbar__chips {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.toolbar-searchbar__chip {
+  border: 1px solid hsl(var(--main-navbar-foreground) / 0.3);
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  @apply text-xs;
+  background: hsl(var(--main-navbar-foreground) / 0.2);
+}
+
+.toolbar-searchbar__chip span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbar-searchbar__chip button {
+  border: none;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  padding: 0;
+}
+
+.toolbar-searchbar__input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  @apply text-main-navbar-foreground;
+  outline: none;
+  text-overflow: ellipsis;
+}
+
+.toolbar-searchbar__input::placeholder {
+  @apply text-main-navbar-foreground;
+}
+
+/* ── Highlighted input overlay ──────────────────────────────────────── */
+
+.toolbar-searchbar__hl-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.toolbar-searchbar__hl-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+  white-space: pre;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+}
+
+/* Actual input: transparent text so the overlay shows through */
+.toolbar-searchbar__hl-input {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  border: none;
+  background: transparent;
+  @apply text-transparent;
+  caret-color: hsl(var(--main-navbar-foreground));
+  outline: none;
+  font: inherit;
+}
+
+.toolbar-searchbar__hl-input::placeholder {
+  @apply text-main-navbar-foreground;
+}
+
+/* Token colours */
+.toolbar-searchbar__hl-text {
+  @apply text-main-navbar-foreground;
+}
+.toolbar-searchbar__hl-filter {
+  @apply text-main-navbar-foreground font-medium;
+}
+.toolbar-searchbar__hl-operator {
+  @apply text-main-navbar-foreground font-semibold;
+}
+.toolbar-searchbar__hl-paren {
+  @apply text-main-navbar-foreground font-semibold;
+}
+
+.toolbar-searchbar__suggestions {
+  position: absolute;
+  z-index: 90;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  border-radius: 10px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  box-shadow: 0 8px 30px hsl(0 0% 0% / 0.28);
+  max-height: 250px;
+  overflow: auto;
+  padding: 4px;
+}
+
+.toolbar-searchbar__suggestions button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+}
+
+.toolbar-searchbar__suggestions button.is-active,
+.toolbar-searchbar__suggestions button:hover {
+  background: hsl(var(--accent));
+}
+
+.toolbar-searchbar__suggestions button small {
+  @apply text-muted-foreground;
+}
+
+.toolbar-searchbar__suggestion-operator {
+  @apply text-primary font-semibold;
+  letter-spacing: 0.04em;
+}

@@ -1,0 +1,49 @@
+@reference '../../App.css';
+
+.selection-menu {
+  min-width: 15rem;
+}
+
+/* The menu's contents are still being worked out; hide it until they settle so
+   it never opens at one height and then jumps to another. */
+.selection-menu:has([data-selection-menu-loading]) {
+  visibility: hidden;
+}
+
+.selection-menu__item {
+  gap: 10px;
+  cursor: pointer;
+}
+
+.selection-menu__icon {
+  flex-shrink: 0;
+  @apply text-muted-foreground;
+}
+
+.selection-menu__item--danger,
+.selection-menu__item--danger .selection-menu__icon {
+  @apply text-destructive-text;
+}
+
+.selection-menu__item--danger:focus {
+  background: hsl(var(--destructive) / 0.12);
+  @apply text-destructive-text;
+}
+
+/* Inline rows (e.g. Rate) that carry their own controls instead of acting
+   as a single selectable menu item. */
+.selection-menu__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+  @apply text-sm;
+  border-radius: 0.25rem;
+}
+
+.selection-menu__row-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}

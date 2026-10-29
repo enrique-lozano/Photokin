@@ -1,0 +1,515 @@
+@reference '../../App.css';
+
+.lightbox {
+  /* Matches --toolbar-height so the macOS traffic lights stay centred. */
+  --lightbox-stage: var(--muted);
+  --lightbox-topbar-height: 52px;
+  --lightbox-info-panel-width: 400px;
+  display: flex;
+  z-index: 999999;
+  position: absolute;
+}
+
+.dark .lightbox {
+  --lightbox-stage: 222.2 60% 3%;
+}
+
+.lightbox-media {
+  --lightbox-fade-duration: 240ms;
+  --lightbox-fade-easing: cubic-bezier(0.22, 1, 0.36, 1);
+
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+  transition: visibility 0s linear var(--lightbox-fade-duration);
+}
+
+.lightbox-media::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: hsl(var(--lightbox-stage));
+  opacity: 0;
+  transition: opacity var(--lightbox-fade-duration) var(--lightbox-fade-easing);
+}
+
+.lightbox-transition-image {
+  position: fixed;
+  z-index: 1000000;
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+  pointer-events: none;
+  transform-origin: center;
+  will-change: transform, clip-path;
+}
+
+.lightbox-topbar,
+.lightbox-filmstrip,
+.lightbox-stage__footer {
+  opacity: 0;
+  transition: opacity var(--lightbox-fade-duration) var(--lightbox-fade-easing);
+}
+
+.lightbox-media.isActive::before,
+.lightbox-media.isActive .lightbox-topbar,
+.lightbox-media.isActive .lightbox-filmstrip,
+.lightbox-media.isActive .lightbox-stage__footer {
+  opacity: 1;
+}
+
+.lightbox-media.is-transitioning .img-container {
+  pointer-events: none;
+}
+
+/* The info panel slides in below the full-width top bar, so only the image +
+   filmstrip below it shrink — the OS window controls never move. */
+.lightbox-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: width var(--lightbox-info-panel-duration);
+}
+
+.lightbox-media.with-info-modal .lightbox-body {
+  width: calc(100% - var(--lightbox-info-panel-width));
+}
+
+.lightbox-media.isActive {
+  --lightbox-fade-duration: 320ms;
+  visibility: visible;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox-media,
+  .lightbox-media::before,
+  .lightbox-media .lightbox-body,
+  .lightbox-media .lightbox-topbar,
+  .lightbox-media .lightbox-filmstrip,
+  .lightbox-media .lightbox-stage__footer,
+  .lightbox-media img {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Top bar
+   --------------------------------------------------------------------------- */
+.lightbox-topbar {
+  z-index: 20;
+  flex-shrink: 0;
+  height: var(--lightbox-topbar-height);
+  display: flex;
+  align-items: stretch;
+  @apply text-foreground;
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  user-select: none;
+}
+
+.lightbox-topbar__lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 6px;
+  min-width: 0;
+}
+
+/* Clear the macOS traffic lights. */
+[data-platform='macos'] .lightbox-topbar__lead {
+  padding-left: 76px;
+}
+
+.lightbox-topbar__titles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.lightbox-topbar__title {
+  @apply text-sm font-semibold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lightbox-topbar__subtitle {
+  @apply text-xs text-muted-foreground;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lightbox-topbar__drag {
+  flex: 1;
+  align-self: stretch;
+  min-width: 24px;
+}
+
+.lightbox-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 0;
+  /* Never give up space to a long title: the title ellipses instead. */
+  flex-shrink: 0;
+}
+
+/*
+ * The actions are shared `Button`s (ghost + icon). Scoping under the bar keeps
+ * this dark-bar skin ahead of the button's own Tailwind utilities.
+ */
+.lightbox-topbar .lightbox-topbar__action {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: transparent;
+  @apply text-foreground;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.lightbox-topbar .lightbox-topbar__action:hover {
+  background-color: hsl(var(--accent));
+  @apply text-foreground;
+}
+
+.lightbox-topbar .lightbox-topbar__action:focus-visible {
+  /* An outline instead of the button's ring: the ring's offset is drawn in the
+     light app background and would halo on the dark bar. */
+  box-shadow: none;
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+.lightbox-topbar .lightbox-topbar__action:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.lightbox-topbar .lightbox-topbar__action.is-active {
+  background-color: hsl(var(--primary) / 0.9);
+  @apply text-primary-foreground;
+}
+
+.lightbox-topbar .lightbox-topbar__action.is-favorite {
+  @apply text-favorite;
+}
+
+.lightbox-topbar__divider {
+  width: 1px;
+  height: 22px;
+  margin: 0 4px;
+  flex-shrink: 0;
+  background-color: hsl(var(--border));
+}
+
+/* Recolor the shared window controls for the dark bar. */
+.lightbox-topbar .lightbox-topbar__window-controls .window-control-button {
+  @apply text-foreground;
+  height: var(--lightbox-topbar-height);
+}
+
+.lightbox-topbar .lightbox-topbar__window-controls .window-control-button:hover {
+  background-color: hsl(var(--accent));
+  @apply text-foreground;
+}
+
+.lightbox-topbar .lightbox-topbar__window-controls .window-control-button-close:hover {
+  background-color: hsl(0 72% 51%);
+  @apply text-destructive-foreground;
+}
+
+/* ---------------------------------------------------------------------------
+   Stage (image viewport)
+   --------------------------------------------------------------------------- */
+.lightbox-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.lightbox-media .lightbox-nav-button {
+  border-radius: 99999px;
+  height: 48px;
+  width: 48px;
+  @apply text-white bg-black/30 hover:text-white/90 hover:bg-white/15;
+
+  > * {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.lightbox-media .img-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.lightbox-stage__placeholder {
+  width: min(70vw, 720px);
+  height: min(50vh, 480px);
+  border-radius: 0.5rem;
+}
+
+.lightbox-stage__footer {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.lightbox-zoom-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.lightbox-zoom-pill button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  @apply text-white;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.lightbox-zoom-pill button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.lightbox-zoom-pill button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.lightbox-zoom-pill__label {
+  @apply text-xs font-semibold;
+  min-width: 40px;
+}
+
+.lightbox-counter {
+  @apply text-xs text-muted-foreground;
+  pointer-events: none;
+}
+
+.lightbox-media img,
+.lightbox-media video {
+  background-color: transparent;
+  display: inline-block;
+  vertical-align: middle;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+}
+
+.lightbox-media img {
+  transition: transform 0.15s ease-out;
+  cursor: zoom-in;
+  transform-origin: center center;
+}
+
+/* Panning must track the pointer 1:1 — easing towards each new offset reads as
+   input lag and restarts an animation on every mouse move. */
+.lightbox-media img.is-dragging {
+  transition: none;
+}
+
+.lightbox-media img.is-pannable {
+  cursor: grab;
+  /* Only while zoomed, so the webview keeps the scaled photo on its own
+     composited layer instead of re-rasterizing it as the offset changes. */
+  will-change: transform;
+}
+
+.lightbox-media img.is-pannable:active {
+  cursor: grabbing;
+}
+
+.lightbox-media .lightbox-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+
+.lightbox-nav-button.left {
+  left: 16px;
+}
+
+.lightbox-nav-button.right {
+  right: 16px;
+}
+
+.lightbox-face-boxes {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+/* Panning/zooming: the image animates towards its new transform, so the boxes
+   would trail behind the faces. Drop them instantly and fade them back in once
+   the image settled. */
+.lightbox-face-boxes.isSuppressed {
+  opacity: 0;
+  transition: none;
+}
+
+.lightbox-face-box {
+  position: absolute;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  /* Animate colour alongside opacity so an un-highlighted box fades out
+     smoothly instead of snapping from primary to white before disappearing. */
+  transition:
+    opacity 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.lightbox-face-box.isVisible {
+  opacity: 1;
+}
+
+/* Review state is carried by the frame itself: a solid green box is a name the
+   user stands behind, anything dashed still needs a decision. */
+.lightbox-face-box--confirmed {
+  border-color: hsl(var(--success));
+}
+
+.lightbox-face-box--suggested {
+  border-style: dashed;
+  border-color: hsl(var(--warning));
+}
+
+.lightbox-face-box--unnamed {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+/* Emphasised when its matching face is hovered in the info panel. */
+.lightbox-face-box.isHighlighted {
+  border-color: hsl(var(--primary));
+  box-shadow:
+    0 0 0 1px hsl(var(--primary)),
+    0 0 0 3px hsl(var(--primary) / 0.35);
+}
+
+.lightbox-face-box__label {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  /* --face-label-shift keeps a corner pill inside the media frame. */
+  transform: translate(calc(-50% + var(--face-label-shift, 0px)), 100%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 200px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.72);
+  @apply text-white text-xs;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A face on the bottom edge would hang its name outside the clipped stage. */
+.lightbox-face-box.isLabelAbove .lightbox-face-box__label {
+  bottom: auto;
+  top: -6px;
+  transform: translate(calc(-50% + var(--face-label-shift, 0px)), -100%);
+}
+
+.lightbox-face-box--confirmed .lightbox-face-box__label svg {
+  @apply text-success;
+}
+
+.lightbox-face-box--suggested .lightbox-face-box__label {
+  @apply text-warning;
+}
+
+.lightbox-zoom-map {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 12;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.lightbox-zoom-map__image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.lightbox-zoom-map__image > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: none;
+  cursor: default;
+  transition: none;
+}
+
+/* The dimmed area outside the viewport is a spread shadow clipped by the
+   minimap. Its spread is kept just above the minimap's max size (130px): a
+   larger one would invalidate (and repaint) that whole region on every pan. */
+.lightbox-zoom-map__viewport {
+  position: absolute;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 140px rgba(0, 0, 0, 0.32);
+}

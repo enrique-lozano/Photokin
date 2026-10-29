@@ -1,0 +1,288 @@
+@reference '../../App.css';
+
+/* Positioning layer: spans the gallery, centres the pill along the bottom, and
+   never intercepts clicks itself (only the pill does). The side padding keeps
+   the pill off the gallery edges on narrow windows. */
+.selection-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  padding: 0 12px;
+  pointer-events: none;
+  container-type: inline-size;
+}
+
+/* The floating basket pill (§5). */
+.selection-pill {
+  /* Shadow is a neutral ink rather than --foreground so it stays a shadow in
+     dark mode instead of turning into a white halo. The last layer is a faint
+     primary bloom, echoing the page hero and onboarding cards. */
+  --pill-shadow:
+    0 1px 2px hsl(222 47% 11% / 0.1), 0 8px 20px -8px hsl(222 47% 11% / 0.3),
+    0 24px 56px -20px hsl(222 47% 11% / 0.42), 0 16px 44px -24px hsl(var(--primary) / 0.5),
+    0 0 0 1px hsl(var(--primary) / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.5);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(100%, 1040px);
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 26px;
+  background: hsl(var(--card) / 0.97);
+  @apply text-foreground;
+  border: 1px solid hsl(var(--primary) / 0.32);
+  backdrop-filter: blur(20px) saturate(1.3);
+  box-shadow: var(--pill-shadow);
+  white-space: nowrap;
+  /* Hidden by default; rises and settles into place when a basket exists. */
+  transform: translateY(150%) scale(0.96);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dark .selection-pill {
+  --pill-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.45), 0 10px 24px -8px hsl(0 0% 0% / 0.55), 0 28px 64px -20px hsl(0 0% 0% / 0.7),
+    0 16px 44px -24px hsl(var(--primary) / 0.55), 0 0 0 1px hsl(var(--primary) / 0.14),
+    inset 0 1px 0 hsl(0 0% 100% / 0.07);
+}
+
+.selection-pill--visible {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.selection-pill--visible:hover {
+  border-color: hsl(var(--primary) / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .selection-pill {
+    transform: none;
+    transition:
+      opacity 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+}
+
+/* Count badge. */
+.selection-pill__num {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  @apply text-primary-foreground text-xs font-semibold;
+  box-shadow: 0 2px 8px -2px hsl(var(--primary) / 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.selection-pill__label {
+  min-width: 0;
+  padding-right: 2px;
+  @apply text-sm font-semibold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selection-pill__divider {
+  width: 1px;
+  height: 24px;
+  flex-shrink: 0;
+  background: hsl(var(--border));
+  margin: 0 2px;
+}
+
+.selection-pill__actions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+}
+
+.selection-pill__action {
+  flex-shrink: 0;
+  border-radius: 17px;
+  min-height: 34px;
+  @apply text-foreground;
+}
+
+.selection-pill__action svg {
+  @apply text-primary;
+}
+
+.selection-pill__action--danger,
+.selection-pill__action--danger svg {
+  @apply text-destructive-text;
+}
+
+.selection-pill__action--danger:hover:not(:disabled) {
+  background: hsl(var(--destructive) / 0.12);
+  @apply text-destructive-text;
+}
+
+.selection-pill .selection-pill__discard {
+  width: 34px;
+  height: 34px;
+}
+
+.selection-pill__discard svg {
+  @apply text-destructive-text;
+}
+
+.selection-pill__action:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.75);
+  outline-offset: 1px;
+}
+
+/* --- Narrowing ladder ------------------------------------------------------
+   The pill sheds words before it sheds function: first the action labels, then
+   the "Select all" wording and the basket size, then the count sentence (the
+   badge still shows the number), and only at the very end the actions that the
+   "More" menu also carries. Text is hidden with `sr-only` rather than
+   `display: none` so every control keeps its accessible name, and each icon
+   keeps its `title` as a hover hint. */
+
+/* 1. Wordy action cluster collapses to icons. */
+@container (max-width: 720px) {
+  .selection-pill__actions .selection-pill__action-label {
+    @apply sr-only;
+  }
+
+  .selection-pill__actions .selection-pill__action {
+    @apply px-2;
+    min-width: 34px;
+  }
+
+  /* With its label gone the chevron would be the only glyph left, so the dots
+     take over as the menu's affordance. */
+  .selection-pill__more-chevron {
+    display: none;
+  }
+}
+
+/* 2. "Select all 16,016" / "Review selection" become icons, size drops off. */
+@container (max-width: 560px) {
+  .selection-pill__action--link .selection-pill__action-label,
+  .selection-pill__sub--size {
+    @apply sr-only;
+  }
+
+  .selection-pill .selection-pill__action--link {
+    @apply px-2;
+    min-width: 34px;
+  }
+}
+
+/* 3. The badge alone carries the count. The demoted pill keeps its sentence —
+   it has room, and "none on this page" is the only cue for that state. */
+@container (max-width: 440px) {
+  .selection-pill:not(.selection-pill--demoted) .selection-pill__label,
+  .selection-pill__hidden-word {
+    @apply sr-only;
+  }
+
+  .selection-pill {
+    gap: 5px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .selection-pill__divider {
+    margin: 0;
+  }
+
+  /* The rule that followed the sentence has nothing left to separate. */
+  .selection-pill:not(.selection-pill--demoted) .selection-pill__label + .selection-pill__divider {
+    display: none;
+  }
+}
+
+/* 4. Last resort: the secondary actions retreat into the "More" menu, which
+   lists every one of them, leaving the destructive action and the menu. */
+@container (max-width: 340px) {
+  .selection-pill__action--optional {
+    display: none;
+  }
+}
+
+/* Amber "hidden by filters" chip — same anatomy as the library-filter pills:
+   a label plus an inline × that removes what the label names. */
+.selection-pill__hidden {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 6px;
+  height: 28px;
+  padding: 0 4px 0 10px;
+  border-radius: 999px;
+  background: hsl(var(--warning) / 0.14);
+  border: 1px solid hsl(var(--warning) / 0.35);
+  @apply text-warning;
+  @apply text-xs font-semibold;
+}
+
+.selection-pill__hidden svg {
+  flex-shrink: 0;
+}
+
+.selection-pill__hidden-remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.selection-pill__hidden-remove:hover {
+  background: hsl(var(--warning) / 0.25);
+}
+
+.selection-pill--amber {
+  border-color: hsl(var(--warning) / 0.5);
+}
+
+.selection-pill--amber .selection-pill__num {
+  box-shadow: none;
+}
+
+/* Demoted: nothing here is selected — quiet grey, no action cluster. */
+.selection-pill--demoted {
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted) / 0.96);
+  backdrop-filter: none;
+  --pill-shadow:
+    0 1px 2px hsl(222 47% 11% / 0.08), 0 6px 16px -10px hsl(222 47% 11% / 0.3),
+    inset 0 1px 0 hsl(0 0% 100% / 0.04);
+}
+
+.dark .selection-pill--demoted {
+  --pill-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.4), 0 8px 20px -12px hsl(0 0% 0% / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.04);
+}
+
+.selection-pill--demoted .selection-pill__num {
+  background: hsl(var(--muted-foreground) / 0.3);
+  @apply text-foreground;
+  box-shadow: none;
+}
+
+.selection-bar__rate-popover {
+  padding: 8px 12px;
+}

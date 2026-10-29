@@ -1,0 +1,136 @@
+@reference '../../App.css';
+
+.selected-icon-container {
+  border-radius: 9999px;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selected-icon-container.is-selected {
+  background-color: hsl(var(--accent));
+}
+
+.selected-icon-container.is-idle {
+  background-color: hsl(0 0% 0% / 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.button-and-image-container {
+  position: relative;
+  transition: all 0.25s;
+  background-color: hsl(var(--accent));
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+
+  .photo-open-button {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+  }
+
+  .image-container {
+    inset: 0;
+    position: absolute;
+    overflow: hidden;
+  }
+
+  .top-gradient-effect,
+  .focus-outline-effect {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+  }
+
+  .top-gradient-effect {
+    opacity: 0;
+    transition-property: opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 250ms;
+  }
+
+  &:hover .top-gradient-effect {
+    opacity: 1;
+  }
+}
+
+/* The select circle stays out of the way until the photo is hovered, keyboard
+   focused (so it is reachable by keyboard) or already selected. It is only
+   clickable once shown, so a click on a quiet tile still opens the photo.
+   Keyboard focus is matched with `:focus-visible` because a mouse click leaves
+   focus on the tile, which would keep the circle showing after the pointer left. */
+.photo-select-button {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.button-and-image-container:hover .photo-select-button,
+.button-and-image-container:has(:focus-visible) .photo-select-button,
+.button-and-image-container.selected .photo-select-button {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.video-duration-badge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 20;
+  border-radius: 9999px;
+  background-color: hsl(0 0% 0% / 0.6);
+  @apply text-white text-xs font-semibold;
+  line-height: 1;
+  padding: 6px 8px;
+  backdrop-filter: blur(2px);
+}
+
+.photo-favorite-badge {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  z-index: 20;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: hsl(0 0% 0% / 0.6);
+  @apply text-favorite;
+  filter: drop-shadow(0 1px 2px hsl(0 0% 0% / 0.45));
+  backdrop-filter: blur(2px);
+}
+
+.photo-in-gallery-skeleton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.button-and-image-container img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.25s linear;
+}
+
+.button-and-image-container img.loaded {
+  opacity: 1;
+}
+
+.photo-in-gallery-thumbnail-xs {
+  filter: blur(50%);
+  /* this is needed so Safari keeps sharp edges */
+  transform: scale(1);
+}

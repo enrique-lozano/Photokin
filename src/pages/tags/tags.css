@@ -1,0 +1,26 @@
+.tags-page {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+
+  --submenu-width: 364px;
+}
+
+.tags-page > div {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.page-sidebar {
+  .tree-container {
+    flex-grow: 2;
+    border-radius: 0;
+    background: transparent;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    max-height: 100%;
+    overflow: auto;
+  }
+}

@@ -1,0 +1,128 @@
+@reference '../../App.css';
+
+.albums-page {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+
+  --submenu-width: 364px;
+}
+
+.page-sidebar {
+  .album-auto-links {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .album-auto-link {
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: var(--sidebar-row-gap);
+    min-height: var(--sidebar-row-height);
+    padding: 0 10px;
+    border-radius: var(--sidebar-row-radius);
+    @apply text-sm text-muted-foreground;
+    text-align: left;
+  }
+
+  .album-auto-link svg {
+    width: var(--sidebar-icon-size);
+    height: var(--sidebar-icon-size);
+  }
+
+  .album-auto-link:hover {
+    background-color: hsl(var(--secondary-navbar-foreground) / 0.07);
+    @apply text-secondary-navbar-foreground;
+  }
+
+  .album-auto-link.selected {
+    background-color: hsl(var(--primary) / 0.08);
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.45);
+    cursor: auto;
+  }
+
+  .album-tree-label {
+    margin: 10px 2px 0;
+    @apply text-xs font-semibold text-muted-foreground;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tree-container {
+    flex-grow: 2;
+    border-radius: 0;
+    background: transparent;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+.add-albums-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-albums-preview {
+  border: 1px solid hsl(var(--border));
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-albums-line {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  @apply text-foreground;
+}
+
+.add-albums-line--success strong {
+  @apply text-primary;
+}
+
+.add-albums-warning {
+  margin-top: 8px;
+  border: 1px solid hsl(var(--destructive) / 0.5);
+  border-radius: 10px;
+  padding: 10px;
+  background-color: hsl(var(--destructive) / 0.06);
+}
+
+.add-albums-warning-title {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  @apply font-semibold text-destructive-text;
+}
+
+.add-albums-warning-subtitle {
+  margin: 6px 0 0;
+  @apply text-muted-foreground text-sm;
+}
+
+.add-albums-extension-list {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.add-albums-empty-state {
+  margin-top: 8px;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-muted-foreground;
+}

@@ -1,0 +1,14 @@
+---
+description: Rust Tauri command conventions for Photokin
+globs: src-tauri/**/*.rs
+alwaysApply: false
+---
+
+# Rust / Tauri
+
+- New IPC: `src-tauri/src/commands/<domain>.rs`, `mod.rs`, then `main.rs` handler.
+- Keep commands thin at the edge; heavy decode/hash/IO in Rust (`spawn_blocking`).
+- Pass paths across IPC, not image buffers.
+- Prefer existing Tauri plugins over custom commands when they already fit.
+- Reuse helpers in `commands/` (e.g. oriented image decode).
+- Return `Result` at the command boundary; don’t unwrap user-facing IO.

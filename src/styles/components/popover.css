@@ -1,0 +1,54 @@
+@reference '../../App.css';
+
+.album-context-heading {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  @apply text-sm text-muted-foreground;
+}
+
+.album-context-item-content {
+  display: flex;
+  align-items: flex-start;
+  min-width: 220px;
+  gap: 8px;
+  padding-right: 6px;
+}
+
+.album-context-item-icon {
+  margin-top: 1px;
+  width: 18px;
+  display: inline-flex;
+  justify-content: center;
+  @apply text-muted-foreground;
+  flex-shrink: 0;
+}
+
+.album-context-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.album-context-item-title {
+  @apply text-sm text-foreground;
+}
+
+.album-context-item-description {
+  @apply text-xs text-muted-foreground;
+}
+
+.album-context-item {
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.album-context-item[data-highlighted] {
+  background-color: hsl(var(--accent));
+}
+
+.album-context-item-danger .album-context-item-icon,
+.album-context-item-danger .album-context-item-title {
+  @apply text-destructive-text;
+}

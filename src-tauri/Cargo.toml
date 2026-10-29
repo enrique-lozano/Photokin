@@ -1,0 +1,64 @@
+[package]
+name = "photokin"
+version = "0.0.0"
+description = "Photokin - local photo gallery"
+authors = ["you"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", rev = "0e479e2804edc1a7e5f15ece2b48ee30858c2838" }
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri-plugin-os = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-http = "2.5"
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-opener = "2"
+# Newer minors require tauri 2.12 and Rust 1.90; keep them in step with the
+# tauri crate, `@tauri-apps/api`, and the CI toolchain before bumping.
+tauri-plugin-updater = "~2.12.0"
+tauri-plugin-process = "~2.3.1"
+# Pure-Rust image decoding (no system dependency). Default features cover
+# jpeg/png/gif/webp/bmp/tiff/ico and more; formats it cannot handle
+# (heic/heif/avif, ...) are routed to the ffmpeg sidecar instead.
+image = "0.25"
+mp4 = "0.14"
+# Lossy WebP encoding via libwebp (built from source by libwebp-sys).
+webp = "0.3"
+# Streaming SHA-256 for byte-identical (exact) duplicate detection, computed in
+# Rust so large media never has to be loaded into the webview's heap.
+sha2 = "0.10"
+# Cross-platform available/total filesystem space (statvfs on Unix, Win32 API on
+# Windows) without hand-rolling per-OS FFI. Used to show free disk space before
+# downloading large ML models.
+fs4 = "1.1.0"
+# Small blocking HTTP client used to stream ML model downloads straight to disk
+# in Rust (no per-chunk IPC hop through the webview), so a download keeps running
+# even if the user navigates away or closes the window.
+ureq = "2"
+# Unpacks the ExifTool Windows build downloaded during onboarding.
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+[dependencies.tauri-plugin-sql]
+features = ["sqlite"] 
+version = "2"
+
+[features]
+# This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+# Compile dependencies with full optimizations even in dev builds. Our own code
+# stays unoptimized (fast rebuilds, debuggable), but heavy native/image crates
+# (`image`, `jpeg-decoder`, `webp`) run at release speed — decoding a large
+# JPEG in an unoptimized dep is 10-50x slower, which dominated thumbnailing.
+[profile.dev.package."*"]
+opt-level = 3

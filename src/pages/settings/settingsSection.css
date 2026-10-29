@@ -1,0 +1,48 @@
+@reference '../../App.css';
+
+.settings-about-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settings-about-logo {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.settings-about-name {
+  margin: 0;
+  @apply text-xl font-semibold text-foreground;
+}
+
+.settings-about-version {
+  margin-left: 4px;
+  @apply text-sm font-normal text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-about-description {
+  margin: 4px 0 0;
+  @apply text-sm text-muted-foreground;
+}
+
+.settings-external-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  @apply text-sm font-medium text-primary;
+}
+
+.settings-external-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.settings-external-link:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 2px;
+}

@@ -1,0 +1,114 @@
+@reference '../../App.css';
+
+footer.outlet-footer {
+  width: 100%;
+  @apply text-xs font-semibold;
+  height: var(--footer-height);
+  display: flex;
+  align-items: center;
+  border-top: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  padding: 0 16px;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.footer-left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.footer-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-gallery-size-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-gallery-size-slider {
+  width: 80px;
+  cursor: grab;
+}
+
+.sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  @apply text-muted-foreground;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: 6px;
+}
+
+.sync-status:hover {
+  background: hsl(var(--accent));
+  @apply text-foreground;
+}
+
+.sync-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--success));
+  flex-shrink: 0;
+}
+
+.sync-status__dot--never {
+  background: hsl(var(--warning));
+}
+
+.sync-status__dot--busy {
+  background: hsl(var(--primary));
+  animation: sync-pulse 1s ease-in-out infinite;
+}
+
+@keyframes sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.footer-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  @apply text-muted-foreground;
+  white-space: nowrap;
+}
+
+.footer-count--filtered .footer-count__num {
+  @apply text-primary;
+}
+
+/* Page-status footer (Duplicates): "X to remove" sits with the left cluster,
+   while the photo-count summary moves to the far right like the default footer. */
+.footer-page-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}

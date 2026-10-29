@@ -1,0 +1,224 @@
+@reference '../../App.css';
+
+/* ----------------------------------------------------------------------------
+ * react-toastify theming. Maps the library's CSS variables onto the app's
+ * design tokens so toasts (and process notifications) match the rest of the UI
+ * and adapt to light/dark automatically.
+ * ------------------------------------------------------------------------- */
+
+.app-toast-container {
+  --toastify-toast-width: 360px;
+  --toastify-toast-bd-radius: 10px;
+  --toastify-toast-min-height: 0;
+  --toastify-toast-padding: 12px 14px;
+  --toastify-font-family: var(--app-font, 'Open Sans Variable', system-ui, sans-serif);
+
+  /* Above the fullscreen lightbox (999999) and the modal/tooltip layers
+     (1000000 / 1000001) so toasts fired from a dialog or the lightbox stay
+     visible and clickable on top. */
+  --toastify-z-index: 1000002;
+
+  --toastify-color-info: hsl(var(--primary));
+  --toastify-color-success: hsl(var(--success));
+  --toastify-color-warning: hsl(var(--warning));
+  --toastify-color-error: hsl(var(--destructive-text));
+
+  --toastify-spinner-color: hsl(var(--primary));
+
+  /* Radix modal dialogs disable pointer events on the document body. Keep the
+     stack transparent to clicks while allowing each toast to opt back in. */
+  pointer-events: none;
+}
+
+/* Dock the stack just above the footer status bar. */
+.app-toast-container.Toastify__toast-container--bottom-right {
+  right: 16px;
+  bottom: calc(var(--footer-height, 16px) + 12px);
+  transition: bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Clear the selection pill (20px off the footer, 52px tall) while it is shown. */
+body:has(.selection-pill--visible) .app-toast-container.Toastify__toast-container--bottom-right {
+  bottom: calc(var(--footer-height, 16px) + 84px);
+}
+
+/* Faster enter/exit animations (library default is 0.5s). */
+.app-toast-container .Toastify--animate {
+  animation-duration: 0.2s;
+}
+
+/* ---- Toast surface ------------------------------------------------------- */
+
+.app-toast-item {
+  background: hsl(var(--popover));
+  @apply text-popover-foreground text-sm;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  box-shadow:
+    0 10px 30px -10px hsl(var(--foreground) / 0.25),
+    0 2px 8px -2px hsl(var(--foreground) / 0.15);
+  pointer-events: auto;
+}
+
+.app-toast-item .Toastify__toast-body {
+  color: inherit;
+}
+
+.app-toast-item .Toastify__close-button {
+  @apply text-muted-foreground;
+  opacity: 0.7;
+  align-self: center;
+}
+
+.app-toast-item .Toastify__close-button:hover,
+.app-toast-item .Toastify__close-button:focus {
+  opacity: 1;
+}
+
+/* ---- Status icons -------------------------------------------------------- */
+
+/*
+ * Shared leading icons for both regular toasts and process notifications (see
+ * `ToastStatusIcon`). Replaces react-toastify's built-in glyphs/ring spinner
+ * with Tabler icons so every toast and process notification looks identical.
+ * Kept here (not in processCenter.css) so it applies wherever the toaster is
+ * mounted. Colors resolve against the container tokens defined above.
+ */
+.app-toast-status-icon--success {
+  @apply text-success;
+}
+
+.app-toast-status-icon--error {
+  @apply text-destructive-text;
+}
+
+.app-toast-status-icon--warning {
+  @apply text-warning;
+}
+
+.app-toast-status-icon--info {
+  @apply text-primary;
+}
+
+.app-toast__spinner {
+  @apply text-primary;
+  animation: app-toast-spin 0.9s linear infinite;
+}
+
+@keyframes app-toast-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Title + description layout ------------------------------------------ */
+
+.app-toast {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.app-toast__title {
+  @apply font-semibold;
+  line-height: 1.35;
+}
+
+/* Inline action (e.g. "Undo"), styled like the process-toast action link. */
+/* ---- Process notifications ----------------------------------------------- */
+
+/*
+ * Process toasts reuse the default toast layout (leading icon + title), so a
+ * running process and its success/error result are visually identical to any
+ * other toast. The only extra is a progress bar pinned to the bottom edge while
+ * the work is still running.
+ */
+/* Process toasts pin a progress bar to the true bottom edge; clip corners and
+   drop bottom padding so the bar sits flush inside the rounded shell. */
+.app-toast-item--process {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.app-process-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-bottom: 12px;
+}
+
+.app-process-toast:has(.app-process-toast__bar) {
+  padding-bottom: 15px;
+}
+
+/*
+ * Default tint for the running kind icon (import/sync/face-scan/...). The
+ * finished states render a shared `ToastStatusIcon`, which carries its own
+ * success/error/warning color.
+ */
+.app-process-toast__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  @apply text-primary;
+}
+
+.app-process-toast .app-toast {
+  flex: 1;
+}
+
+.app-process-toast .app-toast__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Clear the react-toastify close button (absolute top-right). */
+  padding-right: 20px;
+}
+
+.app-process-toast__title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-process-toast__percent {
+  margin-left: auto;
+  @apply text-xs font-semibold text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bar spans the full toast width, anchored to the shell bottom (not the padded body). */
+.app-toast-item--process .app-process-toast__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  overflow: hidden;
+  background: hsl(var(--muted));
+}
+
+.app-process-toast__bar-fill {
+  display: block;
+  height: 100%;
+  background: hsl(var(--primary));
+  transition: width 0.25s ease;
+}
+
+.app-process-toast__bar--indeterminate .app-process-toast__bar-fill {
+  position: absolute;
+  left: 0;
+  width: 40%;
+  animation: app-process-bar-slide 1.1s ease-in-out infinite;
+}
+
+@keyframes app-process-bar-slide {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}

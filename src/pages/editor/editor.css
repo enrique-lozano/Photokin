@@ -1,0 +1,438 @@
+@reference '../../App.css';
+
+.editor-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 0;
+  background: var(--color-background);
+  @apply text-foreground text-sm;
+}
+.editor-titlebar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--toolbar-height, 40px);
+  padding-left: 16px;
+  user-select: none;
+  background: var(--color-background);
+  @apply text-muted-foreground text-xs font-medium;
+  border-bottom: 1px solid var(--color-border);
+}
+.editor-titlebar-mac {
+  padding-left: 80px;
+}
+.editor-titlebar h1 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @apply text-sm font-medium;
+}
+.editor-titlebar .window-controls {
+  display: flex;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+.editor-titlebar .window-control-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  @apply text-foreground;
+  background: transparent;
+  border: 0;
+}
+.editor-titlebar .window-control-button:hover {
+  background: var(--color-accent);
+}
+.editor-titlebar .window-control-button-close:hover {
+  background: var(--color-destructive);
+  @apply text-destructive-foreground;
+}
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+}
+.editor-preview {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 0 0 20px;
+}
+.editor-preview-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  min-height: 56px;
+  flex-wrap: wrap;
+}
+.editor-compare-button {
+  margin-left: auto;
+  touch-action: none;
+}
+.editor-compare-button[aria-pressed='true'] {
+  @apply bg-accent text-accent-foreground;
+}
+.editor-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: color-mix(in srgb, var(--color-background) 94%, var(--color-foreground));
+  border: 1px solid color-mix(in srgb, var(--color-border) 55%, transparent);
+  border-radius: 6px;
+}
+.editor-stage > .ReactCrop {
+  flex-shrink: 0;
+  overflow: visible;
+}
+.editor-stage .ReactCrop .ReactCrop__crop-selection {
+  animation: none;
+  background-image: none;
+  border: 1px solid rgb(255 255 255 / 85%);
+}
+.editor-stage .ReactCrop__drag-handle {
+  --rc-drag-handle-size: 10px;
+  background: white;
+  border: 1px solid rgb(0 0 0 / 65%);
+}
+.editor-stage .ReactCrop__rule-of-thirds-hz,
+.editor-stage .ReactCrop__rule-of-thirds-vt {
+  opacity: 0;
+}
+.editor-stage .ReactCrop--active .ReactCrop__rule-of-thirds-hz,
+.editor-stage .ReactCrop--active .ReactCrop__rule-of-thirds-vt,
+.editor-stage .ReactCrop:focus-within .ReactCrop__rule-of-thirds-hz,
+.editor-stage .ReactCrop:focus-within .ReactCrop__rule-of-thirds-vt {
+  opacity: 1;
+}
+.editor-oriented {
+  position: relative;
+  overflow: hidden;
+}
+.editor-oriented > img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+.editor-face {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 50%);
+  box-shadow: 0 0 1px 1px rgb(0 0 0 / 35%);
+  pointer-events: none;
+}
+.editor-original {
+  position: absolute;
+  inset: 24px;
+  width: calc(100% - 48px);
+  height: calc(100% - 48px);
+  object-fit: contain;
+  pointer-events: none;
+}
+.editor-original[hidden] {
+  display: none;
+}
+.editor-original-label {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+.editor-stage-before > .ReactCrop {
+  visibility: hidden;
+}
+.editor-panel {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-height: 0;
+  padding: 20px 20px 20px 4px;
+}
+.editor-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.editor-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  @apply font-medium;
+}
+.editor-fields input {
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+.editor-transform-tools {
+  display: flex;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+.editor-tool-section {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+.editor-tool-section h2 {
+  margin: 0;
+  @apply text-xs font-semibold text-muted-foreground;
+  text-transform: uppercase;
+}
+.editor-transform-tools [aria-pressed='true'] {
+  background: var(--color-accent);
+  @apply text-accent-foreground;
+}
+.editor-quality {
+  display: grid;
+  gap: 8px;
+}
+.editor-quality-label {
+  @apply text-xs font-semibold;
+  text-transform: uppercase;
+}
+.editor-quality-slider {
+  padding-block: 8px;
+}
+.editor-quality-slider [data-slot='slider-track'] {
+  height: 4px;
+}
+.editor-quality-slider [data-slot='slider-thumb'] {
+  @apply border-2 border-primary bg-foreground;
+}
+.editor-quality-marks {
+  position: relative;
+  height: 30px;
+  margin-top: -4px;
+  @apply text-muted-foreground;
+}
+.editor-quality-marks > button {
+  position: absolute;
+  transform: translateX(-50%);
+  top: 4px;
+  @apply font-normal;
+}
+.editor-quality-marks > button::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 1px;
+  height: 8px;
+  background: var(--color-muted-foreground);
+  pointer-events: none;
+}
+.editor-quality-marks > .editor-quality-mark-active {
+  @apply text-foreground font-semibold;
+}
+.editor-file-size {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+  @apply text-xs;
+}
+.editor-file-size > span:first-child {
+  @apply text-muted-foreground;
+}
+.editor-file-size-values {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.editor-file-size [data-slot='badge'] {
+  padding-inline: 6px;
+}
+.editor-section-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  text-align: left;
+}
+.editor-section-trigger > svg {
+  margin-left: auto;
+}
+.editor-hint,
+.editor-canvas-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-xs font-normal text-muted-foreground;
+  line-height: 1.5;
+}
+.editor-canvas-caption {
+  margin: 0;
+  padding: 10px 0 12px;
+}
+.editor-file-name-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-top: 6px;
+  @apply text-xs text-muted-foreground;
+}
+.editor-file-name label {
+  padding: 12px 4px 4px;
+}
+.editor-file-name .collapsible-panel {
+  margin-inline: -4px;
+}
+.editor-stage-status {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: color-mix(in srgb, var(--color-background) 88%, transparent);
+}
+.editor-measure {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.editor-measure > span {
+  @apply text-muted-foreground;
+}
+.editor-warning {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  @apply text-foreground text-xs;
+}
+.editor-warning > svg {
+  flex-shrink: 0;
+}
+.editor-error {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  margin: 0;
+  @apply text-destructive-text;
+  border-top: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+  max-height: 100px;
+  overflow-y: auto;
+}
+.editor-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--color-border);
+}
+.editor-footer > div {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.editor-save-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 0;
+}
+.editor-save-button > button {
+  min-width: 148px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.editor-save-button > button:last-child {
+  min-width: 36px;
+  width: 36px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  border-left: 1px solid color-mix(in srgb, var(--color-action-foreground) 25%, transparent);
+}
+.editor-confirm {
+  display: grid;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.editor-confirm__details-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: -2px -6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.editor-confirm__details p {
+  padding-top: 6px;
+}
+.editor-loading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  text-align: center;
+}
+@media (max-width: 780px) {
+  .editor-body {
+    grid-template-columns: minmax(0, 1fr) 262px;
+    gap: 12px;
+  }
+  .editor-preview {
+    padding-left: 12px;
+  }
+  .editor-panel {
+    padding-right: 12px;
+  }
+  .editor-footer {
+    padding: 10px;
+  }
+}
+@media (max-width: 580px) {
+  .editor-body {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .editor-preview {
+    min-height: 320px;
+    padding-right: 12px;
+  }
+  .editor-panel {
+    min-height: 280px;
+    overflow-y: visible;
+    padding-left: 12px;
+  }
+}

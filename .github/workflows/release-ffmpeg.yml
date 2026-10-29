@@ -1,0 +1,51 @@
+name: Release FFmpeg Binaries
+
+# Mirrors prebuilt static ffmpeg/ffprobe builds (see scripts/ffmpeg/mirror_ffmpeg.py)
+# as the single `ffmpeg-sidecars` release (re-running overwrites its assets).
+# scripts/download_ffmpeg_sidecar.mjs
+# downloads from that release.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mirror-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download binaries
+        run: python3 scripts/ffmpeg/mirror_ffmpeg.py --output binaries
+
+      - name: Verify output
+        run: |
+          ls -lh binaries
+          cat binaries/SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ffmpeg-sidecars
+          name: FFmpeg sidecars
+          # Keep the app's own releases as "Latest"; re-running overwrites the assets.
+          make_latest: 'false'
+          prerelease: true
+          files: binaries/*
+          body: |
+            Prebuilt FFmpeg / FFprobe sidecar binaries for Photokin, repackaged
+            unmodified from their upstream publishers:
+
+            - macOS / Linux: https://ffmpeg.martin-riedl.de
+            - Windows x64: https://www.gyan.dev/ffmpeg/builds (release essentials)
+            - Windows arm64: https://github.com/BtbN/FFmpeg-Builds
+
+            These are GPL builds of FFmpeg (https://ffmpeg.org). Photokin runs them
+            as separate processes. FFmpeg source code and build configuration are
+            available from the upstream links above and from https://ffmpeg.org/download.html.
+
+            Integrity: `SHA256SUMS.txt`

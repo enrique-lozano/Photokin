@@ -1,0 +1,7 @@
+{
+  "identifier": "updater-capability",
+  "description": "Check for, install, and restart into signed app updates",
+  "platforms": ["macOS", "windows", "linux"],
+  "windows": ["main", "settings"],
+  "permissions": ["updater:default", "process:allow-restart"]
+}

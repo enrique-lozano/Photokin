@@ -1,0 +1,1589 @@
+@reference '../../App.css';
+
+@property --face-layout-scale {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+.people-page {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+
+  --submenu-width: 364px;
+}
+
+.people-page .page-content {
+  transition: --face-layout-scale 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .people-page .page-content {
+    transition: none;
+  }
+}
+
+.cluster-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cluster-chip {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: hsl(var(--muted));
+  cursor: pointer;
+  padding: 0;
+}
+
+.cluster-chip .face-thumbnail {
+  width: 100%;
+  height: 100%;
+}
+
+.cluster-chip.selected {
+  border-color: hsl(var(--primary));
+}
+
+.cluster-chip__count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: hsl(var(--background) / 0.82);
+  border-radius: 6px;
+  @apply text-xs font-semibold;
+  padding: 0 4px;
+}
+
+.people-page > div {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.page-sidebar {
+  .people-list-container {
+    flex-grow: 2;
+    padding: 6px 0 4px;
+    max-height: 100%;
+    overflow: auto;
+  }
+
+  .people-group-label {
+    margin: 8px 6px 4px;
+    @apply text-xs font-semibold text-muted-foreground;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .person-list-row {
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: var(--sidebar-row-radius);
+    min-height: var(--sidebar-row-height);
+    padding: 2px 10px;
+    display: flex;
+    align-items: center;
+    gap: var(--sidebar-row-gap);
+    cursor: pointer;
+    @apply text-muted-foreground;
+  }
+
+  /* Compact face avatar in the list — the mock uses a small swatch; we keep the
+     real face crop but at row scale. */
+  .person-list-row .face-thumbnail {
+    width: var(--sidebar-avatar-size);
+    height: var(--sidebar-avatar-size);
+    flex-shrink: 0;
+  }
+
+  .person-list-row--skeleton {
+    cursor: default;
+  }
+
+  .person-skeleton-avatar {
+    width: var(--sidebar-avatar-size);
+    height: var(--sidebar-avatar-size);
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  .person-skeleton-name {
+    height: 10px;
+    flex-grow: 1;
+    max-width: 140px;
+    border-radius: 999px;
+  }
+
+  .sidebar-count-skeleton {
+    display: inline-block;
+    width: 18px;
+    height: 10px;
+    border-radius: 999px;
+    vertical-align: middle;
+  }
+
+  .person-list-row:hover {
+    background-color: hsl(var(--secondary-navbar-foreground) / 0.07);
+    @apply text-secondary-navbar-foreground;
+  }
+
+  .person-list-row.selected {
+    background-color: hsl(var(--primary) / 0.08);
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.45);
+    @apply text-secondary-navbar-foreground;
+  }
+
+  .person-list-row--hidden {
+    opacity: 0.58;
+    font-style: italic;
+  }
+
+  .person-list-row.review {
+    @apply text-muted-foreground;
+  }
+
+  .person-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    @apply text-xs font-semibold text-secondary-navbar-foreground;
+    background-color: hsl(var(--secondary-navbar-foreground) / 0.2);
+    flex-shrink: 0;
+  }
+
+  .person-avatar.review {
+    border: 1px dashed hsl(var(--secondary-navbar-foreground) / 0.35);
+    background-color: transparent;
+    @apply text-muted-foreground;
+  }
+
+  .person-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    @apply text-sm;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Trailing badges: suggestions pill + confirmed count, hugging the right edge. */
+  .person-meta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .person-suggestions {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    border-radius: 999px;
+    padding: 2px 6px 2px 5px;
+    @apply text-xs font-semibold text-primary;
+    background-color: hsl(var(--primary) / 0.14);
+  }
+
+  .person-total {
+    @apply text-xs text-muted-foreground;
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+}
+
+/* ── Scan settings popover (shared by hero Scan / Identify actions) ───── */
+.scan-options-popover {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scan-options-group-label {
+  @apply text-xs font-semibold text-muted-foreground;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 6px;
+}
+
+.scan-options-group-label:first-child {
+  margin-top: 0;
+}
+
+.scan-options-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 6px 0;
+}
+
+.scan-options-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scan-options-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.scan-options-slider-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  @apply text-xs font-medium text-foreground;
+}
+
+.scan-options-slider-value {
+  width: 34px;
+  text-align: right;
+  @apply text-xs text-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Scan scope: album picker ────────────────────────────────────────── */
+.scan-scope-summary {
+  margin: 4px 10px 0;
+  @apply text-xs text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-scope-subalbums {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.scan-scope-subalbums[data-disabled] {
+  cursor: default;
+}
+
+/* ── Toolbar: suggestions badge + view toggle ────────────────────────── */
+/* ── Suggestion banner (content area) ────────────────────────────────── */
+.suggestion-banner {
+  margin: 12px 0 4px;
+  background-color: hsl(var(--primary) / 0.06);
+  border: 1px solid hsl(var(--primary) / 0.3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestion-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.suggestion-banner-spark {
+  @apply text-primary;
+  flex-shrink: 0;
+}
+
+.suggestion-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.suggestion-banner-strip {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  overflow: hidden;
+}
+
+.suggestion-banner-strip .suggestion-banner-face {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  border: 1.5px solid hsl(var(--primary) / 0.5);
+  flex-shrink: 0;
+}
+
+.suggestion-banner-more {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  @apply text-xs font-semibold text-muted-foreground;
+  background-color: hsl(var(--muted));
+  flex-shrink: 0;
+}
+
+.suggestion-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* ── Suggestions review modal ────────────────────────────────────────── */
+.suggestions-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Scrolling is the dialog body's job, so the grid only lays the faces out. */
+.suggestions-modal-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--face-tile-size-compact), 1fr));
+  gap: 8px;
+}
+
+.suggestions-modal-face {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px solid transparent;
+  border-radius: var(--face-tile-radius);
+  overflow: hidden;
+  cursor: pointer;
+  background-color: hsl(var(--muted));
+  padding: 0;
+  opacity: 0.55;
+  transition:
+    opacity 0.12s ease-out,
+    border-color 0.12s ease-out;
+}
+
+.suggestions-modal-face.selected {
+  opacity: 1;
+  border-color: hsl(var(--primary));
+}
+
+.suggestions-modal-face .suggestions-modal-face-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.suggestions-modal-check {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: hsl(0 0% 0% / 0.28);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.suggestions-modal-face:hover .suggestions-modal-check,
+.suggestions-modal-face:focus-visible .suggestions-modal-check,
+.suggestions-modal-face.selected .suggestions-modal-check {
+  opacity: 1;
+}
+
+.suggestions-modal-face.selected .suggestions-modal-check {
+  background: hsl(var(--accent));
+}
+
+.suggestions-modal-fate {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 50%;
+  @apply text-white;
+  background: hsl(0 0% 0% / 0.6);
+}
+
+.suggestions-modal-empty {
+  margin: 0;
+  padding: 12px 0;
+  @apply text-sm text-muted-foreground;
+}
+
+/* ── Faces grid (content area) ───────────────────────────────────────── */
+.person-faces-label {
+  @apply text-xs font-medium text-muted-foreground;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 0 6px;
+}
+
+.person-faces-grid {
+  --person-face-tile-size: 140px;
+
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(calc(var(--person-face-tile-size) * var(--face-layout-scale, 1)), 1fr)
+  );
+  gap: 6px;
+}
+
+.person-face-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.person-face-cell {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: var(--face-tile-radius);
+  overflow: hidden;
+  background-color: hsl(var(--muted));
+  transition: box-shadow 0.15s ease;
+}
+
+.person-face-skeleton {
+  aspect-ratio: 1;
+  width: 100%;
+  border-radius: var(--face-tile-radius);
+}
+
+.person-face-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+  @apply text-sm font-medium text-foreground;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.person-face-name.is-unassigned {
+  font-style: italic;
+  @apply text-muted-foreground;
+}
+
+.person-face-name.is-suggested {
+  @apply text-warning;
+}
+
+.person-face-cell .person-face-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  transition:
+    transform 0.2s ease,
+    border-radius 0.2s ease;
+}
+
+.person-face-cell.is-selection-mode.is-selected .person-face-image {
+  transform: scale(0.86);
+  border-radius: var(--face-tile-radius);
+}
+
+.person-face-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.person-face-open:focus-visible {
+  outline: none;
+}
+
+/* Ring lives on the rounded tile. A stroke on the square hit target gets
+   clipped by the corner radius and reads as a hard blue box. */
+.person-face-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 2px solid transparent;
+  border-radius: inherit;
+  box-sizing: border-box;
+  pointer-events: none;
+  transition: border-color 0.15s ease;
+}
+
+.person-face-cell:not(.is-selection-mode):hover::after,
+.person-face-cell:not(.is-selection-mode):focus-within::after,
+.person-face-cell:not(.is-selection-mode).is-assigning::after,
+.person-face-cell.is-selection-mode.is-selected::after {
+  border-color: hsl(var(--primary));
+}
+
+/* Unsorted faces: the circle shows on hover, and stays for every face once
+   anything is selected. It sits above the open button so it can be clicked. */
+.unsorted-face-select {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: inline-flex;
+  padding: 1px;
+  border: none;
+  border-radius: 999px;
+  background: hsl(0 0% 0% / 0.35);
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.unsorted-face-cell:hover .unsorted-face-select,
+.unsorted-face-cell:focus-within .unsorted-face-select,
+.unsorted-face-cell.is-selection-mode .unsorted-face-select {
+  opacity: 1;
+}
+
+.unsorted-face-select:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+.unsorted-face-cell.is-selected .unsorted-face-select {
+  background: hsl(var(--background));
+}
+
+/* Under the assign popover (z-50) and under a photo selection bar, so the
+   picker can open upward from the pill. */
+.face-selection-bar {
+  z-index: 40;
+}
+
+/* ── Verification card (unverified flow) ─────────────────────────────── */
+.verify-card {
+  margin: 12px 0;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.verify-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.verify-card-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: hsl(var(--warning));
+  flex-shrink: 0;
+}
+
+.verify-card-title {
+  @apply text-sm font-semibold;
+}
+
+.verify-card-hint {
+  @apply text-xs text-muted-foreground;
+}
+
+.verify-card-discard {
+  margin-left: auto;
+}
+
+.verify-card-body {
+  padding: 12px;
+}
+
+.verify-card-section-label {
+  @apply text-xs text-muted-foreground;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verify-card-section-label.with-icon {
+  margin-top: 14px;
+}
+
+.verify-card-strip {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.verify-card-strip .verify-card-sample {
+  width: 50px;
+  height: 50px;
+  border-radius: 6px;
+}
+
+.verify-suggestion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.verify-suggestion:hover {
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.verify-suggestion .verify-suggestion-avatar {
+  width: 34px;
+  height: 34px;
+}
+
+.verify-suggestion-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.verify-suggestion-name {
+  @apply text-sm font-medium;
+}
+
+.verify-suggestion-meta {
+  @apply text-xs text-muted-foreground;
+}
+
+.verify-card-create {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.verify-card-create-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Hero face actions (Scan / Identify) ─────────────────────────────── */
+.face-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* One rhythm for the whole dialog: 16px between blocks, 6px between a section
+   label and the controls it describes, so the labels read as headings. */
+.face-scan-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.face-scan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.face-scan-section__label {
+  @apply text-xs font-semibold text-muted-foreground;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* The body is a flex column *and* the modal's scroll container, so its children
+   would otherwise shrink to fit the viewport instead of scrolling — squashing
+   the expanded Advanced panel until its sliders are clipped away. */
+.face-scan-dialog__body > * {
+  flex: none;
+}
+
+.face-scan-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.face-scan-mode {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  background: hsl(var(--foreground) / 0.02);
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.face-scan-mode:hover {
+  background: hsl(var(--foreground) / 0.05);
+}
+
+.face-scan-mode.selected {
+  border-color: hsl(var(--primary) / 0.65);
+  background: hsl(var(--primary) / 0.13);
+  box-shadow: 0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+.face-scan-mode__icon {
+  display: inline-flex;
+  width: 27px;
+  height: 27px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: hsl(var(--foreground) / 0.06);
+  @apply text-muted-foreground;
+}
+
+.face-scan-mode.selected .face-scan-mode__icon {
+  background: hsl(var(--primary) / 0.18);
+  @apply text-primary;
+}
+
+.face-scan-mode__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.face-scan-mode__copy strong {
+  flex: none;
+  @apply text-sm font-semibold;
+}
+
+.face-scan-mode__copy small {
+  overflow: hidden;
+  @apply text-muted-foreground text-xs;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.face-scan-mode__time {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: hsl(var(--foreground) / 0.06);
+  @apply text-muted-foreground text-xs font-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+.face-scan-mode.selected .face-scan-mode__time {
+  background: hsl(var(--primary) / 0.2);
+  @apply text-primary;
+}
+
+/* Scope: the sub-albums toggle belongs to the album row above it, so it keeps
+   the same left padding instead of hanging off the dialog's edge. */
+.face-scan-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.face-scan-scope .scan-scope-subalbums {
+  padding: 5px 10px 0;
+}
+
+.face-scan-scope .scan-scope-subalbums[data-disabled] {
+  opacity: 0.55;
+}
+
+.face-scan-scope .scan-options-slider-label {
+  @apply text-muted-foreground font-normal;
+}
+
+.face-scan-video-note {
+  margin: 2px 10px 0;
+  @apply text-muted-foreground text-xs;
+}
+
+.face-scan-advanced {
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+}
+
+.face-scan-advanced__trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  @apply text-muted-foreground text-xs;
+  text-align: left;
+}
+
+.face-scan-advanced__trigger > span {
+  @apply text-foreground font-semibold;
+}
+
+/* Both take the free space in turn: the summary pushes itself to the right
+   edge, and the chevron still lands there when the summary is hidden. */
+.face-scan-advanced__trigger small,
+.face-scan-advanced__chevron {
+  margin-left: auto;
+}
+
+.face-scan-advanced__trigger small {
+  min-width: 0;
+  overflow: hidden;
+  @apply text-muted-foreground;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.face-scan-advanced__chevron {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+.face-scan-advanced__content {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 12px 12px;
+  border-top: 1px solid hsl(var(--border) / 0.7);
+}
+
+.face-scan-advanced__content .scan-options-group-label {
+  margin-top: 10px;
+}
+
+.face-scan-advanced__content .scan-options-group-label:first-child {
+  margin-top: 4px;
+}
+
+.face-scan-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid hsl(var(--warning) / 0.3);
+  border-radius: 10px;
+  background: hsl(var(--warning) / 0.08);
+  @apply text-foreground text-xs;
+}
+
+.face-scan-warning svg {
+  flex: none;
+  margin-top: 1px;
+  @apply text-warning;
+}
+
+.face-scan-warning strong {
+  @apply font-semibold text-foreground;
+}
+
+/* ── Face assignment card ────────────────────────────────────────────── */
+.assign-card {
+  width: 320px !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.assign-card__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.assign-card__photo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 10px 0;
+}
+
+.assign-card__photo-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 20px;
+  @apply text-xs text-muted-foreground;
+}
+
+.assign-card__photo-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-card__open {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 1px;
+  border: none;
+  background: transparent;
+  @apply text-xs font-medium text-primary;
+  cursor: pointer;
+}
+
+.assign-card__open:hover {
+  text-decoration: underline;
+}
+
+.assign-card__plural {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 0;
+}
+
+.assign-card__stack {
+  display: flex;
+  flex: none;
+}
+
+.assign-card__stack .assign-card__stack-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px hsl(var(--popover));
+}
+
+.assign-card__stack .assign-card__stack-avatar + .assign-card__stack-avatar {
+  margin-left: -10px;
+}
+
+.assign-card__plural-title {
+  min-width: 0;
+  @apply text-sm font-semibold;
+}
+
+.assign-card__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 10px 10px 4px;
+  padding: 7px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background));
+  @apply text-muted-foreground;
+}
+
+.assign-card__search:focus-within {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.35);
+}
+
+.assign-card__search input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  @apply text-sm text-foreground;
+}
+
+.assign-card__list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 6px 6px;
+}
+
+.assign-card__section {
+  margin: 0;
+  padding: 8px 8px 4px;
+  @apply text-xs font-semibold text-muted-foreground;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.assign-card__row,
+.assign-card__action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-foreground text-sm font-medium;
+  text-align: left;
+  cursor: pointer;
+}
+
+.assign-card__row.is-active,
+.assign-card__row:focus-visible,
+.assign-card__action:hover:not(:disabled),
+.assign-card__action:focus-visible {
+  background: hsl(var(--accent));
+  outline: none;
+}
+
+/* The keyboard-active row stays put while the pointer hovers an action; show only one highlight. */
+.assign-card__body:has(.assign-card__action:hover:not(:disabled)) .assign-card__row.is-active {
+  background: transparent;
+}
+
+.assign-card__row:disabled,
+.assign-card__action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.assign-card__row .assign-card__avatar {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.assign-card__row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-card__row-meta {
+  flex: none;
+  @apply text-xs text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+.assign-card__score {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: hsl(var(--primary) / 0.14);
+  @apply text-primary text-xs font-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+.assign-card__row--create svg {
+  flex: none;
+  width: 26px;
+  @apply text-primary;
+}
+
+.assign-card__row--create.is-active {
+  background: hsl(var(--primary) / 0.14);
+}
+
+.assign-card__empty {
+  margin: 0;
+  padding: 8px 8px 4px;
+  @apply text-xs text-muted-foreground;
+}
+
+.assign-card__actions {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.assign-card__action svg {
+  flex: none;
+  @apply text-muted-foreground;
+}
+
+.assign-card__action [data-slot='kbd'],
+.assign-card__action-hint {
+  margin-left: auto;
+}
+
+.assign-card__action--danger,
+.assign-card__action--danger svg {
+  @apply text-destructive-text;
+}
+
+.assign-card__action--danger:hover:not(:disabled) {
+  background: hsl(var(--destructive) / 0.12);
+}
+
+.overview-section__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Face groups (Unknown faces) ─────────────────────────────────────── */
+/* Wide enough that a row holds one card fewer than it used to: the faces are
+   the point of these cards, so they get the room rather than the column count. */
+.suggestion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.unknown-faces__more {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.unknown-faces__more-count {
+  @apply text-xs text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+/* Suggested faces: one banner per person, stacked. */
+.suggested-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggested-list .suggestion-banner {
+  margin: 0;
+}
+
+.suggestion-banner-header .suggested-person-avatar {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.suggested-person-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  @apply text-primary;
+  cursor: pointer;
+}
+
+.suggested-person-link:hover,
+.suggested-person-link:focus-visible {
+  text-decoration: underline;
+}
+
+.suggested-row-skeleton {
+  height: 104px;
+  border-radius: 10px;
+}
+
+.suggestion-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 14px 16px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  @apply text-foreground;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.suggestion-card-item {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.suggestion-card.is-selected {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 1px hsl(var(--primary));
+}
+
+.suggestion-card__select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  padding: 1px;
+  border: none;
+  border-radius: 999px;
+  background: hsl(0 0% 0% / 0.35);
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.suggestion-card-item:hover .suggestion-card__select,
+.suggestion-card-item:focus-within .suggestion-card__select,
+.suggestion-card-item.is-selecting .suggestion-card__select {
+  opacity: 1;
+}
+
+.suggestion-card-item.is-selected .suggestion-card__select {
+  background: hsl(var(--background));
+}
+
+.suggestion-card__select:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 1px;
+}
+
+.suggestion-card:hover,
+.suggestion-card:focus-visible {
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+  transform: translateY(-2px);
+}
+
+.suggestion-card:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.suggestion-card__faces {
+  --avatar-size: 84px;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: calc(var(--avatar-size) + 8px);
+}
+
+/* The size has to be explicit: an absolutely positioned box with `left` and an
+   auto width shrink-to-fits into whatever room is left before the container's
+   right edge, and `translateX` does not buy that room back — which squeezed the
+   right-most face into a vertical pill. */
+.suggestion-card__avatar-slot {
+  position: absolute;
+  left: calc(50% + var(--face-offset));
+  top: 2px;
+  z-index: var(--face-layer);
+  display: block;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  transform: translateX(-50%);
+  transition: left 0.2s ease;
+}
+
+/* Fanned out, the faces are placed across the card's own width — the first one
+   flush left, the last flush right — so the row can never reach past the card
+   however narrow the grid column gets. */
+.suggestion-card:hover .suggestion-card__avatar-slot,
+.suggestion-card:focus-visible .suggestion-card__avatar-slot {
+  left: calc(var(--avatar-size) / 2 + (100% - var(--avatar-size)) * var(--face-spread));
+}
+
+.suggestion-card__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  border: 2px solid hsl(var(--card));
+  box-shadow: 0 4px 14px hsl(var(--foreground) / 0.14);
+}
+
+.suggestion-card__badge {
+  position: absolute;
+  z-index: 6;
+  /* Tucked just inside the stack's right edge, whatever the avatars measure. */
+  left: calc(50% + var(--avatar-size) / 2 - 9px);
+  bottom: 1px;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  @apply text-xs font-semibold text-primary-foreground;
+  text-align: center;
+  background: hsl(var(--primary));
+  border: 2px solid hsl(var(--card));
+}
+
+/* ── Inline person details ────────────────────────────────────────────── */
+.person-about {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  @apply text-sm;
+}
+
+.person-about__ident {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  @apply text-foreground;
+}
+
+.person-about__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.person-about__fact svg {
+  @apply text-muted-foreground;
+}
+
+.person-about__fact svg.person-about__sex--male {
+  @apply text-blue-500 dark:text-blue-400;
+}
+
+.person-about__fact svg.person-about__sex--female {
+  @apply text-pink-500 dark:text-pink-400;
+}
+
+.person-about__fact svg.person-about__sex--other {
+  @apply text-purple-500 dark:text-purple-400;
+}
+
+.person-about__description {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1;
+  min-width: 100%;
+}
+
+.person-about__bio {
+  margin: 0;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+  @apply text-muted-foreground;
+  display: -webkit-box;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.person-about__bio--expanded {
+  display: block;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+/* ── Face issues: one card per face that carries several boxes ─────── */
+
+.face-issue-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.face-issue,
+.face-issue-skeleton {
+  border-radius: 10px;
+}
+
+.face-issue {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid hsl(var(--border));
+}
+
+.face-issue-skeleton {
+  width: 260px;
+  height: 180px;
+}
+
+.face-issue__box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 110px;
+}
+
+.face-issue__crop {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--face-tile-radius);
+  overflow: hidden;
+  background-color: hsl(var(--muted));
+}
+
+.face-issue__crop > * {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.face-issue__box .person-face-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Clean up unsorted faces ─────────────────────────────────────────── */
+.face-cleanup__rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.face-cleanup__label {
+  margin: 0 0 2px;
+  @apply text-xs font-semibold text-muted-foreground;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.face-cleanup__rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 10px;
+  @apply text-sm;
+}
+
+.face-cleanup__rule.is-checked {
+  border-color: hsl(var(--primary) / 0.45);
+  background: hsl(var(--primary) / 0.06);
+}
+
+.face-cleanup__rule-icon {
+  display: inline-flex;
+  flex: none;
+  @apply text-muted-foreground;
+}
+
+.face-cleanup__rule-name {
+  flex: none;
+  @apply font-semibold;
+  cursor: pointer;
+}
+
+.face-cleanup__rule-detail {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  @apply text-muted-foreground;
+}
+
+.face-cleanup__rule-detail .face-cleanup__value {
+  width: 4.5rem;
+  height: 30px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.face-cleanup__rule-count {
+  flex: none;
+  @apply font-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+.face-cleanup__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.face-cleanup__summary {
+  margin: 0;
+  @apply text-sm text-muted-foreground;
+}
+
+.face-cleanup__summary strong {
+  @apply font-semibold text-foreground;
+}
+
+.face-cleanup__strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.face-cleanup__strip.is-expanded {
+  flex-wrap: wrap;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.face-cleanup__strip .face-cleanup__face {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+}
+
+.face-cleanup__see-all {
+  flex: none;
+  margin-left: auto;
+}
+
+.face-cleanup__note {
+  margin: 0;
+  @apply text-sm text-muted-foreground;
+}
+
+.face-cleanup__info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: hsl(var(--muted) / 0.5);
+  @apply text-sm text-muted-foreground;
+}
+
+.face-cleanup__info svg {
+  flex: none;
+  margin-top: 1px;
+}

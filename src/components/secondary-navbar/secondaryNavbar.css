@@ -1,0 +1,291 @@
+@reference '../../App.css';
+
+.page-sidebar {
+  position: relative;
+  width: var(--page-sidebar-current-width, var(--submenu-width));
+  height: 100%;
+  flex-shrink: 0;
+
+  /* ── Shared left-navigator sizing tokens ──────────────────────────────
+     Every left sidebar (People, Tags, Albums, Places, Calendar, Duplicates)
+     renders inside `.page-sidebar`, so tuning these once rescales rows, icons,
+     avatars, counts and section labels consistently across the whole app. */
+  --sidebar-row-height: 34px;
+  --sidebar-row-radius: 8px;
+  --sidebar-row-gap: 10px;
+  --sidebar-icon-size: 20px;
+  --sidebar-avatar-size: 24px;
+}
+
+.page-sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 100%;
+  background-color: hsl(var(--primary));
+  pointer-events: none;
+  transition: width 0.12s ease-out;
+}
+
+.page-sidebar--resizing::after {
+  width: 4px;
+}
+
+.page-sidebar-main-rounded-container {
+  border-top-left-radius: var(--secondary-navbar-radius);
+  display: flex;
+  background: linear-gradient(
+    180deg,
+    hsl(var(--secondary-navbar) / 0.98) 0%,
+    hsl(var(--secondary-navbar) / 0.9) 100%
+  );
+  @apply text-secondary-navbar-foreground;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  border-left: 1px solid hsl(var(--secondary-navbar-foreground) / 0.08);
+  padding: 8px 8px;
+
+  .page-sidebar-body {
+    flex-grow: 2;
+    display: flex;
+    /* Visible so popovers anchored in the pinned bottom toolkit can escape
+       upward/rightward into the content area. The inner scroll wrappers
+       (`.sidebar-scroll-list`, `.tree-container`) own the actual scrolling. */
+    overflow: visible;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+/* Shared sidebar navigation primitives (All People, Unidentified, All Tags…). */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sidebar-row-gap);
+  width: 100%;
+  min-height: var(--sidebar-row-height);
+  padding: 0 10px;
+  border-radius: var(--sidebar-row-radius);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @apply text-secondary-navbar-foreground text-sm;
+  text-align: left;
+}
+
+.sidebar-nav-item__icon svg {
+  width: var(--sidebar-icon-size);
+  height: var(--sidebar-icon-size);
+}
+
+.sidebar-nav-item:hover {
+  background: hsl(var(--secondary-navbar-foreground) / 0.08);
+}
+
+/* Selected rows read as a bordered tile (subtle fill + primary ring) rather
+   than recoloring the text, so the label keeps the same colour as its siblings. */
+.sidebar-nav-item.selected {
+  background: hsl(var(--primary) / 0.08);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.45);
+}
+
+.sidebar-nav-item__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-nav-item__count {
+  @apply text-xs text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  margin: 12px 0 4px;
+  padding: 0 4px 0 10px;
+  @apply text-xs text-muted-foreground;
+  @apply font-semibold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Object count, sitting on the LEFT just before the section title
+   ("136  PEOPLE"). While a filter is active it reads "4 / 136". The title
+   keeps its own tracking; the rows below still count photos, never objects. */
+.sidebar-section-label__count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  @apply text-muted-foreground;
+}
+
+.sidebar-section-label__count--filtered {
+  letter-spacing: 0;
+}
+
+/* Compact sort control pinned to the right edge of the section label. */
+.sidebar-section-label .sidebar-sort {
+  margin-left: auto;
+}
+
+.sidebar-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-muted-foreground text-xs;
+  @apply font-semibold;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+/* Thin divider between the sidebar's zones. The index row ("All Photos", "All
+   People", …) and the smart rows below it are one zone, so the only divider is
+   the one that opens the items zone (filter + list). */
+.sidebar-zone-divider {
+  height: 1px;
+  margin: 10px 0px;
+  background: hsl(var(--secondary-navbar-foreground) / 0.1);
+}
+
+/* Compact filter field that sits directly on top of the item list. It reads as a
+   recessed well rather than a bordered control: it is a tool, not a destination,
+   so the rows below stay the loudest thing in the sidebar.
+   The wrapper is exactly as tall as the input, so both icons center on the text.
+   Input rules are scoped under `.page-sidebar` to outrank the input primitive's
+   Tailwind `bg-background` / `border-input` / `h-10` / `px-3` utilities. */
+.sidebar-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 30px;
+  margin-top: 2px;
+}
+
+.page-sidebar .sidebar-search-input {
+  height: 100%;
+  padding-left: 36px;
+  padding-right: 12px;
+  @apply text-sm text-secondary-navbar-foreground;
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.04);
+  border-color: transparent;
+}
+
+.page-sidebar .sidebar-search-input--filled {
+  padding-right: 34px;
+}
+
+.page-sidebar .sidebar-search-input::placeholder {
+  @apply text-muted-foreground;
+}
+
+.page-sidebar .sidebar-search-input:hover {
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.07);
+}
+
+/* Focus is a hairline ring inside the field; `SidebarSearchInput` drops the
+   global offset ring so the two don't stack. */
+.page-sidebar .sidebar-search-input:focus,
+.page-sidebar .sidebar-search-input:focus-visible {
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.07);
+  box-shadow: inset 0 0 0 1px hsl(var(--secondary-navbar-foreground) / 0.2);
+}
+
+.sidebar-search-input__icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  @apply text-muted-foreground;
+}
+
+.sidebar-search-input__clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  @apply text-muted-foreground;
+  cursor: pointer;
+}
+
+.sidebar-search-input__clear:hover {
+  background: hsl(var(--secondary-navbar-foreground) / 0.1);
+  @apply text-secondary-navbar-foreground;
+}
+
+.sidebar-search-input__clear:focus-visible {
+  outline: 1px solid hsl(var(--secondary-navbar-foreground) / 0.45);
+  outline-offset: 0;
+  @apply text-secondary-navbar-foreground;
+}
+
+.sidebar-scroll-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-sidebar + .page-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .main-page-header {
+    border-radius: 0;
+  }
+
+  .no-results__container {
+    flex: 1;
+    height: auto;
+  }
+}
+
+.page-sidebar-resize-handle {
+  position: absolute;
+  right: -4px;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  cursor: ew-resize;
+  z-index: 20;
+}

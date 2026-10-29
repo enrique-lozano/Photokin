@@ -1,0 +1,100 @@
+@reference '../../App.css';
+
+:root {
+  --face-tile-radius: 12px;
+  --face-tile-size: 96px;
+  /* 6 faces per row across the review dialog, and fewer as it narrows with the viewport. */
+  --face-tile-size-compact: 96px;
+  /* People pages override this from the footer thumbnail slider. */
+  --face-layout-scale: 1;
+}
+
+.face-thumbnail {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  object-fit: cover;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* The loading variant keeps this class for its sizing (callers resize it via
+   `.person-list-row .face-thumbnail` & co.) but must keep the shimmer fill. */
+.face-thumbnail:not(.skeleton) {
+  background: hsl(var(--secondary-navbar-foreground) / 0.12);
+}
+
+/* Crop of the original, covering the thumbnail crop underneath. Only mounted
+   once decoded, so it paints in one go; fills the tile, which the caller
+   positions. */
+.face-thumbnail-sharp {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.face-thumbnail.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  @apply text-muted-foreground;
+}
+
+/* Hover preview: the full photo with the face outlined and its surroundings dimmed. */
+.face-context-preview {
+  width: 260px;
+  max-width: min(320px, 70vw);
+}
+
+.face-context-preview__frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+  background: hsl(var(--muted) / 0.4);
+}
+
+.face-context-preview__image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.face-context-preview__box {
+  position: absolute;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 3px;
+  /* Huge spread dims everything outside the box; clipped by the frame. */
+  box-shadow: 0 0 0 9999px hsl(0 0% 0% / 0.45);
+  pointer-events: none;
+}
+
+.face-context-preview--band {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  overflow: hidden;
+  border-radius: 6px;
+  background: hsl(var(--muted) / 0.4);
+}
+
+.face-context-preview--band .face-context-preview__frame {
+  position: absolute;
+  inset-inline: 0;
+  border-radius: 0;
+}
+
+.face-context-preview--band .face-context-preview__loading {
+  width: 100%;
+  height: 100%;
+}
+
+.face-context-preview__loading {
+  width: 260px;
+  height: 160px;
+  border-radius: 6px;
+  background: hsl(var(--muted) / 0.4);
+}

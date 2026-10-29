@@ -1,0 +1,59 @@
+@reference '../../App.css';
+
+/* ----------------------------------------------------------------------------
+ * Footer status-bar indicator that re-opens autohidden process notifications.
+ * ------------------------------------------------------------------------- */
+
+.process-row-spinner {
+  animation: process-spin 2s infinite;
+}
+
+@keyframes process-spin {
+  0%,
+  62.5% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* The pause reads as "stalled" on a plain loader circle, so it spins steadily. */
+.process-row-spinner.tabler-icon-loader-2 {
+  animation: app-toast-spin 0.9s linear infinite;
+}
+
+/* ---- Footer status-bar indicator ----------------------------------------- */
+
+.process-footer-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  @apply text-xs font-semibold text-primary;
+  background-color: hsl(var(--primary) / 0.1);
+  max-width: 280px;
+  transition: background-color 0.15s ease;
+}
+
+.process-footer-indicator:hover {
+  background-color: hsl(var(--primary) / 0.18);
+}
+
+.process-footer-indicator--error {
+  @apply text-destructive-text;
+  background-color: hsl(var(--destructive) / 0.12);
+}
+
+.process-footer-indicator--error:hover {
+  background-color: hsl(var(--destructive) / 0.2);
+}
+
+.process-footer-indicator-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

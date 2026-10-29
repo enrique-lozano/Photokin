@@ -1,0 +1,7 @@
+*.spec
+build
+build_dist
+build_work
+dist
+env
+models

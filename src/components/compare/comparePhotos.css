@@ -1,0 +1,237 @@
+@reference '../../App.css';
+
+.compare-photos {
+  --lightbox-topbar-height: 52px;
+  --lightbox-info-panel-width: min(400px, 85vw);
+  --lightbox-info-panel-duration: 180ms;
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+  animation: none;
+  @apply bg-muted text-foreground;
+}
+
+.compare-photos .lightbox-topbar {
+  opacity: 1;
+}
+
+.compare-photos__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 0 8px;
+}
+
+.compare-photos .compare-photos__tool {
+  height: 32px;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 8px;
+  @apply text-xs text-muted-foreground;
+}
+
+.compare-photos .compare-photos__tool[aria-pressed='true'] {
+  background: hsl(var(--primary) / 0.12);
+  @apply text-primary;
+}
+
+.compare-photos .compare-photos__tool:hover {
+  background: hsl(var(--accent));
+  @apply text-foreground;
+}
+
+.compare-photos__window-controls {
+  align-self: stretch;
+  border-left: 1px solid hsl(var(--border));
+}
+
+.compare-photos__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.compare-photos__body.with-info {
+  width: calc(100% - var(--lightbox-info-panel-width));
+}
+
+.compare-photos__panes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  min-height: 0;
+}
+
+.compare-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 2px solid transparent;
+}
+
+.compare-pane + .compare-pane {
+  border-left-color: hsl(var(--border));
+}
+
+.compare-pane.is-active {
+  border-color: hsl(var(--primary) / 0.65);
+}
+
+.compare-pane__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 12px;
+  text-align: left;
+  @apply bg-background/80 text-sm;
+}
+
+.compare-pane__badge {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  @apply bg-accent text-muted-foreground text-xs font-semibold;
+}
+
+.is-active .compare-pane__badge {
+  @apply bg-primary text-primary-foreground;
+}
+
+.compare-pane__filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compare-pane__selected {
+  margin-left: auto;
+  @apply text-muted-foreground text-xs;
+}
+
+.compare-pane__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.dark .compare-pane__stage {
+  background: hsl(var(--background));
+}
+
+.compare-pane__stage.can-pan {
+  cursor: grab;
+}
+.compare-pane__stage.is-dragging {
+  cursor: grabbing;
+}
+
+.compare-pane__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+}
+
+.compare-pane__placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.5;
+}
+
+.compare-pane__status {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  padding: 8px 12px;
+  border-radius: 8px;
+  @apply bg-background text-muted-foreground text-xs;
+}
+
+.compare-pane__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  @apply text-foreground;
+}
+
+.compare-photos__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 16px;
+  border-top: 1px solid hsl(var(--border));
+  @apply bg-background;
+}
+
+.compare-photos__hint {
+  @apply text-xs text-muted-foreground;
+}
+
+.compare-photos__zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.compare-photos__zoom-value {
+  min-width: 48px;
+  text-align: center;
+  @apply text-xs text-muted-foreground;
+}
+
+.compare-photos button:focus-visible,
+.compare-pane__stage:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
+
+@media (max-width: 900px) {
+  .compare-photos__body.with-info {
+    width: 100%;
+  }
+  .compare-photos__hint,
+  .compare-pane__selected,
+  .compare-photos__details-label {
+    display: none;
+  }
+  .compare-photos__footer {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .compare-photos__link-label {
+    display: none;
+  }
+  .compare-photos__panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+}

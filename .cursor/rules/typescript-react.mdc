@@ -1,0 +1,14 @@
+---
+description: TypeScript and React conventions for Photokin
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript / React
+
+- Match local style. Named functional components. No drive-by refactors.
+- UI controls: reuse `src/components/ui/` before new primitives.
+- DB lists: `useLiveQuery` + services. Don’t add `useEffect` fetch loops.
+- Writes: `executeInDB` so table observables invalidate.
+- Native OS/image work: TS wrapper around `invoke`, not pixel buffers in JS.
+- Routes: `AppRoutes` in `router.tsx`. Zustand for session/UI state.

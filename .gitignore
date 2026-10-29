@@ -1,5 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
 node_modules
 dist
-out
+dist-ssr
+*.local
+
+# Editor directories and files
+.idea
+.project
+.classpath
+.c9/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# System Files
 .DS_Store
-*.log*
+**/*/.DS_Store
+# Local ffmpeg build output
+/build/

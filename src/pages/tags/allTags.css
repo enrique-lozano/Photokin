@@ -1,0 +1,275 @@
+@reference '../../App.css';
+
+.overview-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- Shared cover (default placeholder image) ---------------------------- */
+
+.tag-cover {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px hsl(var(--border) / 0.6);
+}
+
+.tag-cover__placeholder {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  @apply text-white/60;
+}
+
+.tag-cover__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tag-cover__sub-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  @apply text-xs font-semibold text-white;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+/* Color circle shown next to the tag name beneath each card. */
+.tag-card__dot {
+  display: inline-block;
+  vertical-align: middle;
+  width: 9px;
+  height: 9px;
+  margin-right: 7px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px hsl(var(--border) / 0.7);
+}
+
+/* ---- Featured (favorite) cards ------------------------------------------- */
+
+.tag-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.tag-feature-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.tag-feature-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tag-feature-card__main .tag-cover {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tag-feature-card:hover .tag-cover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--border) / 0.6),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Favorites empty placeholder ----------------------------------------- */
+
+.tag-favorites-empty {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px dashed hsl(var(--favorite) / 0.5);
+  background: hsl(var(--favorite) / 0.06);
+}
+
+.tag-favorites-empty__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  @apply text-favorite;
+  background: hsl(var(--favorite) / 0.15);
+}
+
+.tag-favorites-empty__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tag-feature-card__name {
+  margin-top: 8px;
+  @apply text-base font-semibold text-foreground;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Action cards (merge / clean up) ------------------------------------- */
+
+.tag-actions-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.tag-action-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tag-action-card:hover:not(:disabled) {
+  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--accent));
+}
+
+.tag-action-card:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.tag-action-card__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  @apply text-primary;
+  background: hsl(var(--primary) / 0.12);
+}
+
+.tag-action-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+/* ---- All tags grid ------------------------------------------------------- */
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.tag-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tag-card__main {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tag-card__main .tag-cover {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tag-card:hover .tag-cover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--border) / 0.6),
+    0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.tag-card__menu-trigger {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  @apply text-white;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tag-card:hover .tag-card__menu-trigger,
+.tag-feature-card:hover .tag-card__menu-trigger,
+.tag-card__menu-trigger:focus-visible,
+.tag-card__menu-trigger[data-state='open'] {
+  opacity: 1;
+}
+
+.tag-card__menu-trigger:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.tag-card__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px 2px 0;
+}
+
+.tag-card__name {
+  @apply text-sm font-semibold text-foreground;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-card__count {
+  @apply text-xs text-muted-foreground;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

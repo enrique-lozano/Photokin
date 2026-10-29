@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Photokin community support
+    url: https://github.com/enrique-lozano/Photokin/discussions/categories/q-a
+    about: Get help or advice on how to use the application

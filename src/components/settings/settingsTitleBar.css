@@ -1,0 +1,90 @@
+@reference '../../App.css';
+
+.settings-title-bar {
+  height: var(--toolbar-height);
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  user-select: none;
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  @apply text-foreground;
+}
+
+.settings-title-bar-spacer {
+  flex: 1;
+  align-self: stretch;
+}
+
+.settings-title-breadcrumb {
+  min-width: 0;
+  @apply text-sm font-semibold text-muted-foreground;
+}
+
+.settings-title-breadcrumb ol,
+.settings-title-breadcrumb li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-title-breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-title-breadcrumb button,
+.settings-title-breadcrumb span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-title-breadcrumb button {
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.settings-title-breadcrumb button:hover,
+.settings-title-breadcrumb [aria-current='page'] {
+  @apply text-foreground;
+}
+
+.settings-title-breadcrumb button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.settings-title-breadcrumb svg {
+  flex-shrink: 0;
+}
+
+.settings-window-controls {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.settings-window-control-button {
+  width: 46px;
+  height: var(--toolbar-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  @apply text-foreground;
+  background: transparent;
+  border: none;
+  cursor: default;
+  transition: background-color 0.15s ease;
+}
+
+.settings-window-control-button:hover {
+  background-color: hsl(var(--accent));
+}
+
+.settings-window-control-button-close:hover {
+  background-color: hsl(0 72% 51%);
+  @apply text-destructive-foreground;
+}

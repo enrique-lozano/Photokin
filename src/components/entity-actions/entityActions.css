@@ -1,0 +1,47 @@
+@reference '../../App.css';
+
+/* Rich action row (icon + title + description [+ trailing]) shared by the
+   sidebar right-click menu and the header ⋮ overflow menu. */
+.entity-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.entity-action__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  @apply text-muted-foreground;
+  flex-shrink: 0;
+}
+
+.entity-action__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.entity-action__title {
+  @apply font-medium;
+  line-height: 1.2;
+}
+
+.entity-action__desc {
+  @apply text-xs text-muted-foreground;
+  white-space: normal;
+}
+
+.entity-action__trailing {
+  margin-left: auto;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* Trailing adornment for the compact (single-line) row variant. */
+.entity-action__trailing-inline {
+  margin-left: auto;
+  flex-shrink: 0;
+}

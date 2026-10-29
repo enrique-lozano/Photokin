@@ -1,0 +1,30 @@
+@reference '../../App.css';
+
+.smart-search-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  margin: 12px 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  background-color: hsl(var(--muted) / 0.4);
+  @apply text-muted-foreground text-sm;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.smart-search-hint:hover {
+  background-color: hsl(var(--muted) / 0.65);
+}
+
+.smart-search-hint__icon {
+  @apply text-primary;
+  flex-shrink: 0;
+}
+
+.smart-search-hint strong {
+  @apply text-foreground font-semibold;
+}

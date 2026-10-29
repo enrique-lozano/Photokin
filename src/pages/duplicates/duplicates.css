@@ -1,0 +1,685 @@
+@reference '../../App.css';
+
+.duplicates-page {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  --submenu-width: 396px;
+
+  /* TODO: Make --page-inline-padding a global variable and remove this*/
+  --horizontal-content-padding: 16px;
+}
+
+.duplicates-page > div {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* Shared small primitives ------------------------------------------------- */
+.dup-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+.dup-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  gap: 12px;
+}
+
+.dup-rescan-when {
+  @apply text-xs text-muted-foreground;
+  margin: 0 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
+}
+
+/* Quiet "Refresh fingerprints" affordance under the re-scan options. */
+.dup-rescan-fingerprints {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.dup-rescan-fingerprints__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  @apply text-muted-foreground text-xs font-medium;
+  cursor: pointer;
+}
+
+.dup-rescan-fingerprints__btn:hover:not(:disabled) {
+  @apply text-primary;
+}
+
+.dup-rescan-fingerprints__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dup-rescan-btn {
+  border: 1px solid hsl(var(--foreground) / 0.16) !important;
+}
+
+.dup-ignored-link {
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  @apply text-muted-foreground text-xs font-semibold;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.dup-ignored-link:hover,
+.dup-ignored-link.active {
+  @apply text-primary;
+}
+
+.dup-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.dup-list-header__count {
+  @apply text-xs font-semibold text-muted-foreground;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Sort (icon-only) + Re-scan share the right edge of the list header. */
+.dup-list-header__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dup-sort-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-muted-foreground;
+  cursor: pointer;
+}
+
+.dup-sort-trigger:hover {
+  @apply text-secondary-navbar-foreground;
+  background: hsl(var(--secondary-navbar-foreground) / 0.08);
+}
+
+/* Set list */
+.dup-set-list {
+  gap: 3px;
+  padding-right: 2px;
+}
+
+.dup-list-empty {
+  @apply text-xs text-muted-foreground;
+  padding: 16px 6px;
+  text-align: center;
+}
+
+.dup-set-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  @apply text-secondary-navbar-foreground;
+}
+
+.dup-set-row:hover {
+  background: hsl(var(--secondary-navbar-foreground) / 0.06);
+}
+
+.dup-set-row.selected {
+  background: hsl(var(--primary) / 0.14);
+  border-color: hsl(var(--primary) / 0.4);
+}
+
+.dup-set-row__thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 7px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dup-set-row__count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: hsl(0 0% 0% / 0.7);
+  @apply text-white text-xs font-semibold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dup-set-row__body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dup-set-row__title {
+  @apply text-sm font-semibold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dup-set-row__sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-xs text-muted-foreground;
+}
+
+.dup-set-row__type {
+  white-space: nowrap;
+}
+
+/* Pinned bulk action (collapsible) */
+.dup-bulk {
+  flex-shrink: 0;
+  padding-top: 5px;
+  border-top: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
+}
+
+/* The summary line doubles as the collapse/expand toggle. */
+.dup-bulk__trigger {
+  padding-left: 2px;
+  padding-right: 2px;
+  @apply text-secondary-navbar-foreground;
+}
+
+.dup-bulk__content {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.dup-bulk__summary {
+  margin: 0;
+  @apply text-xs text-muted-foreground;
+  text-align: left;
+}
+
+.dup-bulk__cta {
+  width: 100%;
+}
+
+/* Keep rule control */
+.dup-keeprule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dup-keeprule__caption {
+  @apply text-xs text-muted-foreground;
+  white-space: nowrap;
+}
+
+.dup-keeprule__trigger {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--secondary-navbar-foreground) / 0.16);
+  background: hsl(var(--secondary-navbar-foreground) / 0.05);
+  @apply text-secondary-navbar-foreground text-xs font-semibold;
+  cursor: pointer;
+}
+
+.dup-keeprule__trigger:hover {
+  background: hsl(var(--secondary-navbar-foreground) / 0.1);
+}
+
+.dup-keeprule__label {
+  flex: 1;
+  text-align: left;
+}
+
+.dup-keeprule__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: hsl(var(--warning));
+  flex-shrink: 0;
+}
+
+.dup-keeprule__option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 9px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-foreground text-sm;
+  cursor: pointer;
+}
+
+.dup-keeprule__option:hover {
+  background: hsl(var(--accent));
+}
+
+.dup-keeprule__option[data-selected='true'] {
+  @apply text-primary;
+}
+
+.dup-keeprule__sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: hsl(var(--border));
+}
+
+/* Standalone keep selector used in the set header (not the sidebar control). */
+.dup-keeprule__trigger--solo {
+  flex: 0 0 auto;
+  height: 36px;
+}
+
+/* ── Selected-set content ──────────────────────────────────────────────── */
+.dup-set-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dup-set-view--empty {
+  align-items: center;
+  justify-content: center;
+  @apply text-muted-foreground;
+}
+
+.dup-set-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: var(--horizontal-content-padding);
+}
+
+.dup-set-header__titlerow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dup-set-header__title {
+  margin: 0;
+  letter-spacing: -0.02em;
+  @apply text-foreground;
+}
+
+.dup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  @apply text-xs font-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* Text uses the relationship colour (inline); tint the chip from it. */
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.dup-set-header__meta {
+  margin: 3px 0 0;
+  @apply text-muted-foreground;
+}
+
+.dup-set-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dup-set-reassure {
+  margin: 0 0 4px;
+  @apply text-muted-foreground;
+}
+
+.dup-set-content {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: calc(var(--horizontal-content-padding) / 2) var(--horizontal-content-padding);
+}
+
+.dup-member-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* ── Member tile ───────────────────────────────────────────────────────── */
+.dup-tile {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: hsl(var(--card));
+  /* Clip the photo to the rounded frame (inner radius follows the border). */
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+.dup-tile--keep {
+  border-color: hsl(var(--success) / 0.8);
+}
+
+.dup-tile--remove {
+  border-color: hsl(var(--border));
+}
+
+.dup-tile__hit {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Drawn inside: the tile clips anything outside its rounded frame. */
+.dup-tile__hit:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: -2px;
+}
+
+.dup-tile__thumb {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: 0;
+}
+
+.dup-tile--remove .dup-tile__thumb {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.dup-tile--remove:hover .dup-tile__thumb {
+  opacity: 0.7;
+}
+
+.dup-tile__chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  @apply text-xs font-semibold;
+  pointer-events: none;
+}
+
+.dup-tile__chip--keep {
+  background: hsl(var(--success));
+  @apply text-success-foreground;
+}
+
+.dup-tile__chip--remove {
+  background: hsl(var(--destructive) / 0.9);
+  @apply text-destructive-foreground;
+}
+
+.dup-tile__hover-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.dup-tile:hover .dup-tile__hover-actions {
+  opacity: 1;
+}
+
+.dup-tile__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: hsl(0 0% 0% / 0.55);
+  @apply text-white;
+  cursor: pointer;
+}
+
+.dup-tile__action:hover {
+  background: hsl(0 0% 0% / 0.78);
+}
+
+.dup-tile__caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  padding: 8px 10px 9px;
+}
+
+.dup-tile__meta {
+  min-width: 0;
+  @apply text-xs text-muted-foreground;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dup-tile__tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.dup-tile__keep-tag {
+  @apply text-xs font-semibold text-success;
+  background: hsl(var(--success) / 0.14);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.dup-tile__reference {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  @apply text-xs font-semibold text-muted-foreground;
+  cursor: help;
+}
+
+/* Small tiles: tags drop to their own row under the size; Reference keeps only its icon. */
+@container (max-width: 220px) {
+  .dup-tile__chip {
+    top: 6px;
+    left: 6px;
+    padding: 2px 6px;
+    @apply text-xs;
+  }
+
+  .dup-tile__caption {
+    padding: 6px 8px 7px;
+  }
+
+  .dup-tile__reference-label {
+    display: none;
+  }
+}
+
+/* ── Empty / first-run state ───────────────────────────────────────────── */
+.dup-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.dup-empty__card {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.dup-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: hsl(var(--primary) / 0.12);
+  @apply text-primary;
+}
+
+.dup-empty__title {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.dup-empty__text {
+  margin: 0;
+  @apply text-muted-foreground;
+}
+
+/* Scan options (shared by empty state + re-scan popover) */
+.dup-scan-options {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.dup-scan-options--inline {
+  margin-top: 12px;
+  padding: 18px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 14px;
+  background: hsl(var(--card));
+  text-align: left;
+}
+
+.dup-scan-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dup-scan-option__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dup-scan-option__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  @apply text-xs font-semibold text-foreground;
+}
+
+.dup-scan-option__value {
+  @apply text-xs text-primary font-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+.dup-scan-cta {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* ── Review & remove dialog ────────────────────────────────────────────── */
+.dup-review-summary {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dup-review-summary__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  @apply text-sm;
+}
+
+.dup-review-summary__label {
+  flex: 1;
+  @apply text-foreground;
+}
+
+.dup-review-summary__row--total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.dup-review-note {
+  margin: 14px 0 0;
+  @apply text-muted-foreground;
+}
+
+/* ── Album-scope picker styles (mirrors the Faces scan picker) ─────────── */
+.scan-scope-subalbums {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 2px;
+}

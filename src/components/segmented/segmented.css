@@ -1,0 +1,58 @@
+@reference '../../App.css';
+
+/* Shared segmented (tab) control — see Segmented.tsx. One filled pill track,
+   primary-tinted active segment. `--fill` stretches segments to full width and
+   `--stacked` puts the label over a larger count. */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 8px;
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.06);
+  flex-shrink: 0;
+}
+
+.segmented--fill {
+  display: flex;
+  width: 100%;
+}
+
+.segmented__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-muted-foreground text-xs font-semibold;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.segmented--fill .segmented__option {
+  flex: 1;
+}
+
+.segmented__option.active {
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.14);
+  @apply text-secondary-navbar-foreground;
+  box-shadow:
+    0 1px 2px hsl(0 0% 0% / 0.22),
+    inset 0 0 0 1px hsl(var(--secondary-navbar-foreground) / 0.08);
+}
+
+/* Stacked layout — label over a larger count (Duplicates type filter). */
+.segmented--stacked .segmented__option {
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 4px;
+}
+
+.segmented--stacked .segmented__count {
+  @apply text-sm;
+}

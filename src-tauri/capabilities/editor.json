@@ -1,0 +1,6 @@
+{
+  "identifier": "editor",
+  "description": "Allow the editor close-request handler to finish closing its window",
+  "windows": ["editor"],
+  "permissions": ["core:window:allow-destroy"]
+}

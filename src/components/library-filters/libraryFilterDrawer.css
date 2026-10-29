@@ -1,0 +1,388 @@
+@reference '../../App.css';
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__title-wrap {
+  display: grid;
+  gap: 2px;
+}
+
+.library-filter-drawer__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ── Accordion overrides (scoped to drawer) ──────────────────────────────── */
+
+.library-filter-drawer .accordion-header button {
+  min-height: 44px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  @apply text-base font-semibold;
+  @apply text-foreground;
+}
+
+.library-filter-drawer .accordion-header button:hover {
+  text-decoration: none;
+  @apply text-primary;
+}
+
+.library-filter-drawer .accordion-item {
+  border-color: hsl(var(--border) / 0.5);
+}
+
+.library-filter-drawer .accordion-item[data-active='true'] .library-filter-drawer__section-label svg {
+  @apply text-primary;
+}
+
+/* ── Section label (icon + text in AccordionTrigger) ─────────────────────── */
+
+.library-filter-drawer__section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.25rem;
+}
+
+.library-filter-drawer__section-label svg {
+  width: 18px;
+  height: 18px;
+  @apply text-muted-foreground;
+  flex-shrink: 0;
+}
+
+/* Collapsed header meta: the set value as a pill */
+
+.library-filter-drawer .library-filter-drawer__section-trigger {
+  gap: 10px;
+}
+
+.library-filter-drawer__section-trigger .library-filter-drawer__section-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.library-filter-drawer__section-pill {
+  min-width: 0;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.library-filter-drawer__section-pill {
+  background: hsl(var(--primary) / 0.15);
+  @apply text-primary;
+  @apply text-xs font-semibold;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Quick toggles ───────────────────────────────────────────────────────── */
+
+.library-filter-drawer__quick-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* ── Section content ─────────────────────────────────────────────────────── */
+
+/* The accordion clips its content for the open/close animation; this gutter
+   keeps the fields' focus rings (2px + 2px offset) from being cut off. */
+.library-filter-drawer .accordion-content {
+  padding: 4px;
+  margin: -4px;
+}
+
+.library-filter-drawer__section-content {
+  display: grid;
+  gap: 12px;
+  padding-left: 26px;
+}
+
+/* ── Date fields ─────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__date-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.library-filter-drawer__date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.library-filter-drawer__field-label {
+  @apply text-xs font-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  @apply text-muted-foreground;
+}
+
+/* Restore native date-picker chrome and make it readable in dark themes */
+.library-filter-drawer input[type='date'] {
+  color-scheme: dark;
+  cursor: pointer;
+  padding-right: 4px;
+}
+
+:root:not(.dark) .library-filter-drawer input[type='date'] {
+  color-scheme: light;
+}
+
+/* ── Chips row ───────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.library-filter-drawer__chips-row--presets {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 18px), transparent);
+}
+
+.library-filter-drawer__chips-row--presets::-webkit-scrollbar {
+  display: none;
+}
+
+.library-filter-drawer__chips-row--presets > * {
+  flex-shrink: 0;
+}
+
+/* ── Rating ──────────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__rating-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.library-filter-drawer__operator-toggle {
+  display: inline-flex;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.library-filter-drawer__operator-toggle button {
+  border: none;
+  background: transparent;
+  padding: 5px 11px;
+  @apply text-muted-foreground;
+  @apply text-sm font-medium;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+  white-space: nowrap;
+}
+
+.library-filter-drawer__operator-toggle button.active {
+  background: hsl(var(--primary) / 0.15);
+  @apply text-primary;
+  @apply font-semibold;
+}
+
+.library-filter-drawer__stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.library-filter-drawer__stars button {
+  border: none;
+  background: transparent;
+  @apply text-border;
+  @apply text-2xl;
+  line-height: 1;
+  cursor: pointer;
+  padding: 1px 2px;
+  transition:
+    color 0.12s,
+    transform 0.1s;
+}
+
+.library-filter-drawer__stars button:hover {
+  transform: scale(1.2);
+  @apply text-primary;
+}
+
+.library-filter-drawer__stars button.active {
+  @apply text-primary;
+}
+
+/* Face beside a person in the people picker (list rows and chips) */
+.library-filter-drawer__option-face {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Slider block ────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__slider-block {
+  display: grid;
+  gap: 10px;
+}
+
+.library-filter-drawer__slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.library-filter-drawer__slider-label-text {
+  @apply text-xs font-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  @apply text-muted-foreground;
+}
+
+.library-filter-drawer__count-value {
+  @apply text-sm font-semibold;
+  @apply text-foreground;
+  background: hsl(var(--accent));
+  border-radius: 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+/* ── Camera & EXIF ────────────────────────────────────────────────────── */
+
+.library-filter-drawer__group {
+  display: grid;
+  gap: 8px;
+}
+
+.library-filter-drawer__inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.library-filter-drawer__inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-sm;
+}
+
+.library-filter-drawer__inline-label svg {
+  @apply text-muted-foreground;
+}
+
+.library-filter-drawer__exposure {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.library-filter-drawer__exposure-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  @apply text-sm;
+}
+
+.library-filter-drawer__exposure-value {
+  @apply text-muted-foreground;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.library-filter-drawer__exposure[data-active] .library-filter-drawer__exposure-value {
+  @apply text-primary;
+  @apply font-semibold;
+}
+
+/* Bars sit right on the track; the slider is pulled up to overlap their base. */
+.library-filter-drawer__histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+}
+
+.library-filter-drawer__histogram span {
+  flex: 1;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+
+.library-filter-drawer__histogram span[data-in-range] {
+  background: hsl(var(--primary) / 0.75);
+}
+
+.library-filter-drawer .library-filter-drawer__exposure-slider {
+  margin-top: -8px;
+}
+
+.library-filter-drawer__exposure-slider [data-slot='slider-track'] {
+  height: 4px;
+}
+
+.library-filter-drawer__exposure:not([data-active]) [data-slot='slider-range'] {
+  background: transparent;
+}
+
+.library-filter-drawer__exposure-ends {
+  display: flex;
+  justify-content: space-between;
+  @apply text-muted-foreground;
+  @apply text-xs;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.library-filter-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.library-filter-drawer__reset {
+  border: none;
+  background: transparent;
+  padding: 0;
+  @apply text-muted-foreground;
+  @apply text-sm font-semibold;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.library-filter-drawer__footer-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.library-filter-drawer__matches {
+  display: grid;
+  justify-items: end;
+  @apply text-muted-foreground;
+  @apply text-xs;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

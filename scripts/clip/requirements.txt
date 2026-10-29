@@ -1,0 +1,11 @@
+# CLIP image/text embeddings run through ONNX Runtime; Pillow handles image
+# preprocessing and the HuggingFace tokenizers library handles text. Models
+# themselves are downloaded to the app data dir at runtime, not bundled here.
+#
+# Intel Macs (x86_64-apple-darwin) are not supported: onnxruntime publishes no
+# macOS x86_64 wheel on PyPI (only macosx_14_0_arm64, in every release up to
+# 1.31.0), so this sidecar cannot be built there. See release.yml.
+numpy==2.4.6
+onnxruntime==1.24.4
+pillow==11.3.0
+tokenizers==0.23.1

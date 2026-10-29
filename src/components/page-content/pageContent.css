@@ -1,0 +1,627 @@
+@reference '../../App.css';
+
+/* ----------------------------------------------------------------------------
+ * Reusable content containers: PageHero, ContentSubHeader, FilterChip and the
+ * single ScrollablePageContent scroll region.
+ * ------------------------------------------------------------------------- */
+
+.page-scroll {
+  /* Heights of the pinned layers, consumed by every sticky `top` below so the
+     offsets compose. They stay 0 unless the matching layer is present. */
+  --compact-hero-h: 0px;
+  --chip-row-h: 0px;
+  /* Scroll-linked 0→1 hero handoff progress, written by ScrollablePageContent.
+     0 = full hero, 1 = compact hero. */
+  --hero-progress: 0;
+  /* Shared horizontal padding so the heroes and sub-header line up with the
+     photo grid (the scroll body) below them. */
+  --page-inline-padding: 16px;
+
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background-color: hsl(var(--background));
+
+  /* Keep the last row clear of the floating selection pill / bottom scrim so
+     scrolling to the end never traps it behind the basket indicator (§5). */
+  scroll-padding-bottom: 72px;
+
+  @media (min-width: 1024px) {
+    --page-inline-padding: 20px;
+  }
+
+  @media (min-width: 1200px) {
+    --page-inline-padding: 24px;
+  }
+}
+
+/* A timeline gallery brings its own scrollbar (`TimelineScrubber`), so the
+   native one would be a second, redundant scroll affordance next to it. */
+.page-scroll:has(.photo-grid__sections) {
+  scrollbar-width: none;
+}
+
+.page-scroll:has(.photo-grid__sections)::-webkit-scrollbar {
+  display: none;
+}
+
+.page-scroll-layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.page-scroll--has-compact-hero {
+  --compact-hero-h: 44px;
+}
+
+.page-scroll--has-subheader {
+  --chip-row-h: 48px;
+}
+
+.page-scroll__body {
+  /* Own stacking context (z-index 0) so timeline content — photo hover/select
+     overlays, video badges, sticky date labels — can use any internal z-index
+     without ever painting over the pinned heroes/sub-header (z-index 5–7). */
+  position: relative;
+  z-index: 0;
+  padding: 0 var(--page-inline-padding) 24px;
+}
+
+/* Block under the hero but above the sticky sub-header (person "about" strip).
+   Shares the hero's inline padding and scrolls away with it (no sticky), so on
+   scroll it passes under the compact bar just like the full hero. A trailing
+   divider groups it with the header above so it never reads as attached to the
+   filter row below. */
+.page-scroll--has-hero-below .page-hero {
+  border-bottom: none;
+  padding-bottom: 8px;
+}
+
+.page-scroll__hero-below {
+  padding: 6px var(--page-inline-padding) 16px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/* ───── Compact pinned hero (slim variant of the full hero) ───── */
+.compact-hero {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 var(--page-inline-padding);
+  /* Translucent + blurred so photos scroll under it once the full hero has
+     lifted away. The full hero (opaque, z-index 7) still fully covers it at
+     rest, so the cross-fade handoff is unaffected. */
+  background-color: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/* Right-aligned reduced action cluster (primary + overflow) in the compact bar.
+   Never richer than the full hero it replaces. */
+.compact-hero__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.compact-hero__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.compact-hero__icon--round {
+  border-radius: 50%;
+}
+
+.compact-hero__icon .hero-icon {
+  box-shadow: none;
+  padding: 2px;
+}
+
+.compact-hero__title {
+  @apply text-base font-semibold;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compact-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 35%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  @apply text-muted-foreground;
+  @apply text-sm;
+}
+
+/* ───── Page hero ───── */
+.page-hero {
+  position: relative;
+  /* Above the compact hero so it fully hides it while at the top of the scroll. */
+  z-index: 7;
+  display: flex;
+  /* Top-align, not centre: the action row anchors to the title line rather than
+     floating in the middle of the block. That single change is the whole fix for
+     the "floating buttons" feeling (see lum-header-scroll-study). */
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px var(--page-inline-padding) 16px;
+  border-bottom: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+}
+
+/* Pull the full hero up over the (sticky) compact hero that precedes it, so
+   only the full hero is visible at rest. Scrolling cross-fades to the compact
+   bar via `--hero-progress` (set by ScrollablePageContent). The full hero
+   dissolves and lifts; the compact bar reaches full opacity *before* the full
+   hero is gone, so there is never a content-bleed or double-header frame. */
+.page-scroll--has-compact-hero .page-hero {
+  margin-top: calc(var(--compact-hero-h) * -1);
+  opacity: clamp(0, calc((0.7 - var(--hero-progress)) * 3.333), 1);
+  transform: translateY(calc(var(--hero-progress) * -8px));
+  transform-origin: top center;
+}
+
+.page-scroll--has-compact-hero .compact-hero {
+  opacity: clamp(0, calc(var(--hero-progress) * 2.5), 1);
+}
+
+.page-hero__cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.page-hero__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.page-hero__cover .face-thumbnail {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* Colored icon badge that fills the hero cover. */
+.hero-icon {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  @apply text-primary-foreground;
+  background: hsl(var(--primary));
+  box-shadow: 0 8px 24px hsl(var(--primary) / 0.25);
+}
+
+.page-hero__title-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-hero__cover--round {
+  border-radius: 50%;
+}
+
+.page-hero__info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ───── Parent trail above the hero title (Albums › demo) ───── */
+.hero-breadcrumb {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 18px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  @apply text-xs font-medium;
+  @apply text-muted-foreground;
+}
+
+.hero-breadcrumb__segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.hero-breadcrumb__link,
+.hero-breadcrumb__label {
+  min-width: 0;
+  padding: 1px 4px;
+  margin: 0 -2px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-breadcrumb__segment:first-child .hero-breadcrumb__link,
+.hero-breadcrumb__segment:first-child .hero-breadcrumb__label {
+  margin-left: -4px;
+}
+
+.hero-breadcrumb__link:hover {
+  background: hsl(var(--accent));
+  @apply text-foreground;
+}
+
+.hero-breadcrumb__separator {
+  flex-shrink: 0;
+  margin: 0 2px;
+  opacity: 0.6;
+}
+
+/* Pinned bar: just the nearest parent, inline before the name. */
+.compact-hero__breadcrumb {
+  display: inline-flex;
+  vertical-align: middle;
+  height: auto;
+  margin: 0 4px 0 0;
+  @apply text-sm font-normal;
+}
+
+.page-hero__title {
+  margin: 0;
+  @apply text-2xl font-semibold leading-8;
+  letter-spacing: -0.015em;
+  @apply text-foreground;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.page-hero__meta {
+  margin-top: 4px;
+  @apply text-muted-foreground;
+  @apply text-sm;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.page-hero__actions {
+  /* Anchored to the top of the hero (via its `align-items: flex-start`), level
+     with the cover's top edge, whether or not a breadcrumb sits above the title. */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ───── Content sub-header ───── */
+.content-subheader {
+  position: sticky;
+  top: var(--compact-hero-h, 0px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px var(--page-inline-padding);
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+  container-type: inline-size;
+}
+
+/* Chip rows must never wrap (wrapping shifts layout as counts change under
+   filters); they scroll horizontally with a soft edge fade instead. The fade
+   widths are written by `useHorizontalScrollFades`, so an edge only fades while
+   there is more to scroll that way. */
+.content-subheader__filters {
+  /* Positioned so chips animating out (which leave the flow) can be pinned to
+     their last spot while their neighbours reflow. */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: none;
+  --fade-start: 0px;
+  --fade-end: 0px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+}
+
+.content-subheader__filters::-webkit-scrollbar {
+  display: none;
+}
+
+.content-subheader__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ───── Hero toggle (labelled switch) ───── */
+.hero-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  @apply text-foreground;
+  @apply text-sm;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hero-toggle:hover {
+  background: hsl(var(--accent));
+}
+
+.hero-toggle--active {
+  border-color: hsl(var(--primary) / 0.4);
+  background: hsl(var(--primary));
+  @apply text-primary-foreground;
+}
+
+.hero-toggle--active:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.hero-toggle--active .hero-toggle__icon {
+  color: inherit;
+}
+
+.gallery-layout-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 7px 0 8px;
+  border: none;
+  border-radius: 8px;
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.06);
+  @apply text-muted-foreground;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.gallery-layout-control:hover,
+.gallery-layout-control[data-state='open'] {
+  background-color: hsl(var(--secondary-navbar-foreground) / 0.12);
+  @apply text-secondary-navbar-foreground;
+}
+
+.gallery-layout-control:disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.gallery-layout-control__chevron {
+  opacity: 0.7;
+}
+
+@container (max-width: 1100px) {
+  .hero-toggle__label {
+    display: none;
+  }
+
+  .hero-toggle {
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+.hero-toggle__icon {
+  display: inline-flex;
+  align-items: center;
+  @apply text-muted-foreground;
+}
+
+/* ───── Filter chip ───── */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background: transparent;
+  @apply text-foreground;
+  @apply text-sm;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  /* Smoothly tween the selected/idle look. Movement, enter and exit are driven
+     by inline transitions from FilterChipRow (FLIP), which override this while
+     they run and then hand control back here. */
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.filter-chip:hover:not(:disabled) {
+  background: hsl(var(--accent));
+}
+
+/* Chips are locked while their counts are being recomputed. */
+.filter-chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.filter-chip--active {
+  background: hsl(var(--primary) / 0.14);
+  border-color: hsl(var(--primary) / 0.4);
+  @apply text-primary;
+  @apply font-medium;
+}
+
+.filter-chip--active .filter-chip__count {
+  @apply text-primary;
+}
+
+.filter-chip__leading {
+  display: inline-flex;
+  align-items: center;
+  @apply text-muted-foreground;
+}
+
+/* Chips without an icon render an empty adornment; collapse it so the flex gap
+   doesn't add a phantom leading space. */
+.filter-chip__leading:empty {
+  display: none;
+}
+
+.filter-chip--active .filter-chip__leading {
+  @apply text-primary;
+}
+
+/* Person chips lead with the face itself, sized to the label's line box. */
+.filter-chip .filter-chip__face {
+  width: 18px;
+  height: 18px;
+  margin-left: -3px;
+}
+
+/* ───── Overview pages (All Faces / All Tags) ───── */
+.overview-header {
+  position: sticky;
+  top: var(--compact-hero-h, 0px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 32px;
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.overview-header__title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  @apply text-foreground;
+}
+
+.overview-header__title h2 {
+  margin: 0;
+  @apply text-xl font-semibold;
+  letter-spacing: -0.02em;
+}
+
+.overview-header__title p {
+  margin: 0;
+  @apply text-sm;
+  @apply text-muted-foreground;
+}
+
+.overview-header__search {
+  width: 280px;
+  max-width: 40vw;
+}
+
+/* Vertical rhythm only: `.page-scroll__body` already applies the shared
+   `--page-inline-padding`, so adding a horizontal padding here pushed section
+   titles and grids ~30px further in than the hero title above them. */
+.overview-body {
+  padding: 20px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.overview-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 16px;
+}
+
+.overview-section__title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  @apply text-xl font-semibold;
+  letter-spacing: -0.01em;
+  @apply text-foreground;
+}
+
+/* Supporting figure, not a second title: the section name leads. */
+.overview-section__count {
+  @apply text-sm font-medium;
+  font-variant-numeric: tabular-nums;
+  @apply text-muted-foreground;
+}
+
+.overview-section__heading {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.overview-section__title-icon {
+  align-self: center;
+  @apply text-primary;
+}

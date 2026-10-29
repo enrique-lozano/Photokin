@@ -1,0 +1,107 @@
+@reference '../../App.css';
+
+.location-map {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--muted) / 0.45);
+}
+
+.location-map__canvas {
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  font-family: inherit;
+  @apply text-sm font-normal;
+}
+
+.location-map .leaflet-control-attribution {
+  background-color: hsl(var(--background) / 0.7);
+  @apply text-xs text-muted-foreground;
+}
+
+.location-map .leaflet-control-attribution a {
+  @apply text-foreground;
+}
+
+.location-map__controls {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 500;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background-color: hsl(var(--background) / 0.78);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.location-map:hover .location-map__controls,
+.location-map:focus-within .location-map__controls,
+.location-map--editable .location-map__controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.location-map__control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  @apply text-foreground;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.location-map__control:hover {
+  background-color: hsl(var(--accent));
+}
+
+.location-map__control:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.location-map__empty,
+.location-map__offline,
+.location-map__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  z-index: 450;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--background) / 0.86);
+  @apply text-muted-foreground text-xs;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+/*
+ * Centered, because it answers a gesture the pointer just made over the map,
+ * and above the other chips so it is never hidden behind one.
+ */
+.location-map__hint {
+  top: 50%;
+  bottom: auto;
+  z-index: 550;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  @apply text-foreground;
+}
