@@ -54,16 +54,18 @@ const openFirstPhoto = async (page) => {
 
 /**
  * Screens to capture. `route` is opened first, then `prepare` (if any) runs;
+ * `readySelector` overrides the default gallery-photo readiness check.
  * `theme` applies one of {@link THEMES} for that capture.
  */
 export const SHOTS = [
   { name: 'albums', route: '/albums' },
-  { name: 'people', route: '/people/all' },
+  { name: 'people', route: '/people/all', readySelector: '.face-card img' },
   {
     name: 'places',
     route: '/places',
-    // The world map: pins load real map tiles, so give them time to arrive.
-    prepare: (page) => page.locator('.places-view-tabs').getByText('Map', { exact: true }).click(),
+    // Map pins load real map tiles, so give them time to arrive.
+    prepare: (page) => page.locator('.places-map').getByRole('button', { name: 'Map', exact: true }).click(),
+    readySelector: '.places-map .photo-map-pin',
     settleMs: 6000,
   },
   {
@@ -71,7 +73,7 @@ export const SHOTS = [
     route: `/search?q=${encodeURIComponent('safari animals')}`,
     waitUntilGone: 'Searching',
   },
-  { name: 'tags', route: '/tags/all' },
+  { name: 'tags', route: '/tags/all', readySelector: '.tag-card__main .tag-cover__img' },
   { name: 'calendar', route: '/calendar' },
   {
     name: 'viewer',

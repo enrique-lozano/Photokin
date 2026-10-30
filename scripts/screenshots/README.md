@@ -28,6 +28,11 @@ pnpm screenshots --slides   # export slides and unframed images from the last ca
    and exports unframed captures to `website/public/screenshots/app/*.webp`
    with the installed Microsoft Edge, and closes the app.
 
+Consecutive theme captures reuse the Albums page, changing only its settings.
+Image encoding keeps the same WebP quality; encoded bytes are transferred as
+base64 rather than JSON byte arrays. The command logs elapsed time for startup,
+import/indexing, captures, exports and the total run.
+
 Commit both sets of exported `.webp` files; the README and the website use them.
 Raw captures and the app log stay in `node_modules/.cache/photokin-screenshots/`.
 The website's Appearance segment switches between the six `theme-*` captures
@@ -61,7 +66,10 @@ generated images, or serve `scripts/screenshots/slides/` with any static server.
 ## Adding a screen
 
 1. Add an entry to `SHOTS` in `config.mjs`: a route, plus a `prepare` step if
-   it needs a click first, or a `theme`.
+   it needs a click first, or a `theme`. Preparation runs before the capture
+   readiness check. For screens without gallery photos, set `readySelector`
+   to a visible, loaded element (for example a person thumbnail or map pin).
+   The Places capture opens the sidebar Map accordion without opening the map modal.
 2. Add a slide to `SLIDES` in `slides/slides.js` that uses that shot.
 3. Run `pnpm screenshots`. Reference the slide from the README, or add the
    unframed image to the website tour in

@@ -37,6 +37,8 @@ const HIDE_CSS = `
 
 const log = (message) => console.log(`[screenshots] ${message}`);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const logDuration = (phase, startedAt) =>
+  log(`${phase}: ${((performance.now() - startedAt) / 1000).toFixed(1)}s`);
 
 async function _waitFor(check, { timeoutMs, intervalMs = 1000, what }) {
   const deadline = Date.now() + timeoutMs;
@@ -89,9 +91,12 @@ async function _waitUntilIdle(page) {
   );
 }
 
-async function _settle(page, ms) {
+async function _settle(page, shot, ms) {
   await page.waitForLoadState('load');
-  await page.locator('#root .photo-open-button').first().waitFor({ timeout: 120_000 });
+  await page
+    .locator(shot.readySelector ?? '#root .photo-open-button')
+    .first()
+    .waitFor({ timeout: 120_000 });
   await page.addStyleTag({ content: HIDE_CSS });
   await page.waitForFunction(
     () =>
@@ -115,6 +120,7 @@ async function captureApp() {
 
   const appLog = join(CAPTURES_DIR, 'app.log');
   log(`Starting the app on a fresh "${PROFILE}" library (log: ${appLog})…`);
+  const startupStartedAt = performance.now();
   const app = startApp(PROFILE, {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: {
@@ -148,6 +154,7 @@ async function captureApp() {
     await page.waitForFunction(() => document.getElementById('root')?.childElementCount, null, {
       timeout: 60_000,
     });
+    logDuration('App startup', startupStartedAt);
     const pageErrors = [];
     page.on('pageerror', (error) => {
       pageErrors.push(error.message);
@@ -155,11 +162,11 @@ async function captureApp() {
     });
 
     const cdp = await page.context().newCDPSession(page);
-    await cdp.send('Emulation.setDeviceMetricsOverride', { ...VIEWPORT, mobile: false });
     const savedSettings = await page.evaluate(() => localStorage.getItem('photokin-settings'));
 
     try {
       log('Importing demo/showcase…');
+      const importStartedAt = performance.now();
       await _inApp(
         page,
         async (folders) => {
@@ -182,23 +189,27 @@ async function captureApp() {
       await _applySettings(page, BASE_SETTINGS);
       log('Waiting for thumbnails and smart search indexing…');
       await _waitUntilIdle(page);
+      logDuration('Import and indexing', importStartedAt);
 
+      const captureStartedAt = performance.now();
+      let previousShot;
       for (const shot of SHOTS) {
         pageErrors.length = 0;
         log(`Capturing ${shot.name}…`);
-        await page.goto(`${APP_URL}${shot.route}`);
-        await _applySettings(page, { ...BASE_SETTINGS, ...(shot.theme ? THEMES[shot.theme] : {}) });
-        await _settle(page, shot.settleMs ?? 1500);
-        if (shot.prepare) {
-          await shot.prepare(page);
-          await _settle(page, 1500);
+        const url = `${APP_URL}${shot.route}`;
+        if (!(shot.theme && previousShot?.theme && previousShot.route === shot.route && page.url() === url)) {
+          await page.goto(url);
         }
+        await cdp.send('Emulation.setDeviceMetricsOverride', { ...VIEWPORT, mobile: false });
+        await _applySettings(page, { ...BASE_SETTINGS, ...(shot.theme ? THEMES[shot.theme] : {}) });
+        if (shot.prepare) await shot.prepare(page);
+        await _settle(page, shot, shot.settleMs ?? 1500);
         if (shot.waitUntilGone) {
           await page.waitForFunction((text) => !document.body.innerText.includes(text), shot.waitUntilGone, {
             timeout: 120_000,
             polling: 500,
           });
-          await _settle(page, 1500);
+          await _settle(page, shot, 1500);
         }
         if (pageErrors.length) throw new Error(`${shot.name}: ${pageErrors.join('; ')}`);
         if (await page.getByText("Smart search isn't working right now", { exact: false }).count()) {
@@ -207,9 +218,16 @@ async function captureApp() {
         // Park the cursor in an empty corner so no hover state is captured.
         await page.mouse.move(VIEWPORT.width - 10, VIEWPORT.height - 60);
         await page.waitForTimeout(400);
-        await page.screenshot({ path: join(CAPTURES_DIR, `${shot.name}.png`) });
+        // An explicit CDP clip honors the emulated pixel ratio instead of Windows display scaling.
+        const { data } = await cdp.send('Page.captureScreenshot', {
+          format: 'png',
+          clip: { x: 0, y: 0, width: VIEWPORT.width, height: VIEWPORT.height, scale: 1 },
+        });
+        await writeFile(join(CAPTURES_DIR, `${shot.name}.png`), Buffer.from(data, 'base64'));
         log(`✓ ${shot.name}`);
+        previousShot = shot;
       }
+      logDuration('App captures', captureStartedAt);
     } finally {
       await page.evaluate((value) => {
         if (value) localStorage.setItem('photokin-settings', value);
@@ -258,10 +276,16 @@ async function toWebp(page, image, squareSize) {
         }
         bitmap.close();
         const blob = await canvas.convertToBlob({ type: 'image/webp', quality: 0.9 });
-        return [...new Uint8Array(await blob.arrayBuffer())];
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.slice(reader.result.indexOf(',') + 1));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
       },
       { base64: image.toString('base64'), squareSize },
     ),
+    'base64',
   );
 }
 
@@ -321,8 +345,12 @@ if (process.platform !== 'win32') {
 }
 
 try {
+  const startedAt = performance.now();
   if (!process.argv.includes('--slides')) await captureApp();
+  const exportStartedAt = performance.now();
   await exportSlides();
+  logDuration('Slide and image exports', exportStartedAt);
+  logDuration('Total', startedAt);
   log(`Done. Slides and unframed app captures are in ${OUTPUT_DIR}`);
 } catch (error) {
   console.error(`[screenshots] ${error.message}`);
