@@ -1,8 +1,7 @@
 # Photo safety
 
-Photokin is preparing for its first public release. Start with copies and keep
-independent backups of irreplaceable photos. A local library or app-managed Trash
-is not a backup.
+Photokin is young software. Start with copies and keep independent backups of
+irreplaceable photos. A local library or app-managed Trash is not a backup.
 
 ## Understand what an action changes
 

@@ -18,10 +18,11 @@ import {
 import { ThumbnailSize } from '@/media/thumbnails/thumbnailOptions.model';
 import { AssetThumbnail } from '@/components/asset-thumbnail/AssetThumbnail';
 import type { BulkOutcome } from '@/system/bulkOutcome';
-import { IconPlus, IconSearch, IconTagOff, IconX } from '@tabler/icons-react';
+import { IconPlus, IconSearch, IconTag, IconTagOff, IconX } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../ui/button';
 import { Collapse } from '../ui/collapse';
+import { EmptyState } from '../ui/empty-state';
 import { MetadataImpactNotice } from '../ui/confirmation-dialog';
 import {
   Dialog,
@@ -277,8 +278,8 @@ function EditTagsContent({
           <Input
             value={addInput}
             onChange={(event) => setAddInput(event.target.value)}
-            placeholder="Add a keyword (use Parent/Child for a nested one)"
-            aria-label="Add a keyword"
+            placeholder="Add a tag (use Parent/Child for a nested one)"
+            aria-label="Add a tag"
           />
           <Button type="submit" variant="outline" disabled={!addInput.trim()}>
             <IconPlus size={16} />
@@ -308,18 +309,30 @@ function EditTagsContent({
           <Input
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
-            placeholder="Filter keywords"
-            aria-label="Filter keywords"
+            placeholder="Filter tags"
+            aria-label="Filter tags"
           />
         </div>
 
         <div className="edit-tags-tree-scroll">
           {isLoading ? (
-            <p className="edit-tags-empty">Loading keywords…</p>
+            <p className="edit-tags-empty">Loading tags…</p>
           ) : filteredTree.length === 0 ? (
-            <p className="edit-tags-empty">
-              {tree.length === 0 ? 'No keywords yet. Add one above.' : 'No keywords match your filter.'}
-            </p>
+            tree.length === 0 ? (
+              <EmptyState
+                size="panel"
+                icon={IconTag}
+                title="No tags yet"
+                description="Type a name above to create your first one."
+              />
+            ) : (
+              <EmptyState
+                size="panel"
+                icon={IconSearch}
+                title="No matching tags"
+                description="Try a different word, or clear the filter."
+              />
+            )
           ) : (
             <TagCheckboxTree
               nodes={filteredTree}
@@ -391,12 +404,12 @@ export function EditTagsDialog() {
           <DialogTitle>Edit tags</DialogTitle>
           <DialogDescription>
             {phase === 'running'
-              ? 'Saving keyword changes to the library and photo files.'
+              ? 'Saving tag changes to the library and photo files.'
               : phase === 'result'
                 ? 'Review what was updated and any files that could not be written.'
                 : rendered.length === 1
-                  ? 'Check the keywords to apply to this photo.'
-                  : `Check the keywords to apply to all ${rendered.length} photos. A dash means only some already have that keyword.`}
+                  ? 'Check the tags to apply to this photo.'
+                  : `Check the tags to apply to all ${rendered.length} photos. A dash means only some already have that tag.`}
           </DialogDescription>
         </DialogHeader>
         {open && rendered.length > 0 && (

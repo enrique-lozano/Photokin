@@ -140,7 +140,7 @@ describe('information panel state matrix', () => {
       expect(hidden).not.toContain('aria-label="Description"');
       expect(hidden).not.toContain('Add a description...');
       expect(hidden).toContain('aria-label="Title"');
-      expect(hidden).toContain('Add keyword');
+      expect(hidden).toContain('Add tag');
       expect(hidden).toContain('File details');
       expect(photo.metadata.description).toBe(description);
 
@@ -152,7 +152,7 @@ describe('information panel state matrix', () => {
   );
   it('renders empty keywords and disables clearing', () => {
     const html = renderToStaticMarkup(<TagsSegment asset={asset} tags={[]} faces={[]} disabled={false} />);
-    expect(html).toContain('No keywords yet');
+    expect(html).toContain('No tags yet');
     expect(html).toMatch(/disabled=""[^>]*>[^<]*<svg[^>]*tabler-icon-tag-off/);
     expect(html).toContain('No people in this photo');
   });

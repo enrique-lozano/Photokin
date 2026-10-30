@@ -1,4 +1,3 @@
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { faceCropViewBox } from '@/components/face-thumbnail/FaceThumbnail';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
@@ -13,6 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
+import { toastOnError } from '@/components/ui/toast';
 import { TagCover as TagCoverData, TagsService } from '@/db/api/services/tags.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { TagInClient } from '@/db/models/TagDTO';
@@ -25,17 +26,19 @@ import {
   IconChevronDown,
   IconDots,
   IconEdit,
+  IconExternalLink,
   IconGitMerge,
-  IconHash,
   IconHeart,
   IconHeartFilled,
   IconPhoto,
   IconPlus,
   IconStar,
+  IconTag,
   IconTags,
   IconTrash,
   IconTrashX,
 } from '@tabler/icons-react';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../stores/appState';
@@ -50,6 +53,8 @@ import { toggleTagFavorite } from './tagActions';
 import { useTagsOutletContext } from './tags';
 
 type TagSort = 'name' | 'count';
+
+const TAGS_GUIDE_URL = 'https://enrique-lozano.github.io/Photokin/guide/tags';
 
 const TAG_SORT_LABELS: Record<TagSort, string> = {
   name: 'Alphabetical',
@@ -350,11 +355,23 @@ export function AllTags() {
   // Only once `tags` answered: an empty list while loading isn't "no tags".
   const content =
     tags !== null && visibleTags.length === 0 ? (
-      <NoResultsIndicator
-        icon={<IconHash size={56} strokeWidth={1.4} />}
+      <EmptyState
+        icon={IconTag}
         title="No tags yet"
-        description="Tags found in your photos' metadata will appear here."
+        description="Tags are labels like “Beach” or “Family” that help you find photos later. Tags already saved in your photos appear here automatically, or you can create your own."
         pendingImport="metadata"
+        action={
+          <>
+            <Button onClick={openCreateDialog}>
+              <IconPlus size={16} />
+              New tag
+            </Button>
+            <Button variant="link" onClick={() => void toastOnError(openUrl(TAGS_GUIDE_URL))}>
+              How tags work
+              <IconExternalLink size={14} aria-hidden />
+            </Button>
+          </>
+        }
       />
     ) : (
       <div className="overview-body">

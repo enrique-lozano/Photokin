@@ -1,4 +1,4 @@
-import { IconCircleCheck, IconCircleCheckFilled, IconMoodEmpty } from '@tabler/icons-react';
+import { IconCircleCheck, IconCircleCheckFilled, IconPhoto } from '@tabler/icons-react';
 import clsx from 'clsx';
 import React, {
   createContext,
@@ -26,8 +26,9 @@ import { ProcessKind, useProcessStore } from '../../stores/processStore';
 import { TimelineGroupBy, useSettingsStore } from '../../stores/settingsStore.ts';
 import { formatDate } from '../../utils/dateFormatter';
 import { getScrollParent } from '../../utils/scrollParent';
-import { NoResultsIndicator } from '../NoResultsIndicator.tsx';
+import { ClearLibraryFiltersButton, useHasActiveLibraryFilters } from '../app-shell/ClearLibraryFilters';
 import { PhotoInGallery } from '../photo-in-gallery/PhotoInGallery.tsx';
+import { EmptyState } from '../ui/empty-state';
 import {
   computeSegmentLayout,
   estimateSectionHeight,
@@ -119,6 +120,27 @@ type TimelineGalleryProps = {
   onNoResults?: JSX.Element;
   pendingImport?: 'metadata' | 'places';
 };
+
+function TimelineEmptyState({ pendingImport }: Pick<TimelineGalleryProps, 'pendingImport'>) {
+  const hasLibraryFilters = useHasActiveLibraryFilters();
+
+  return hasLibraryFilters ? (
+    <EmptyState
+      icon={IconPhoto}
+      title="No photos match your filters"
+      description="Remove a library filter, or clear them all, to see more."
+      action={<ClearLibraryFiltersButton />}
+      pendingImport={pendingImport}
+    />
+  ) : (
+    <EmptyState
+      icon={IconPhoto}
+      title="No photos or videos here"
+      description="When there are photos or videos that belong in this view, they’ll appear here."
+      pendingImport={pendingImport}
+    />
+  );
+}
 
 export function TimelineGallery({
   searchQuery,
@@ -351,16 +373,7 @@ export function TimelineGallery({
   }, [sections, timelineConfig, layoutMode]);
 
   if (sections && sections.length === 0) {
-    return (
-      onNoResults ?? (
-        <NoResultsIndicator
-          icon={<IconMoodEmpty size={64} strokeWidth={1} />}
-          title="No photos/videos here"
-          description="You might have better luck on another page"
-          pendingImport={pendingImport}
-        />
-      )
-    );
+    return onNoResults ?? <TimelineEmptyState pendingImport={pendingImport} />;
   }
 
   return (

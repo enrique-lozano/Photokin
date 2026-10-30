@@ -1,21 +1,22 @@
 import { EntityOverflowMenu } from '@/components/entity-actions/HeaderActionsBar';
 import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PersonInfo } from '@/db/models/PersonInfo';
 import { TagInClient } from '@/db/models/TagDTO';
-import { personDetailPath } from '@/router';
+import { AppRoutes, personDetailPath } from '@/router';
 import { useHiddenItemsStore } from '@/stores/hiddenItemsStore';
-import { IconEye, IconEyeOff, IconGitMerge, IconMoodNerd, IconUsers } from '@tabler/icons-react';
+import { IconEye, IconEyeOff, IconGitMerge, IconUserQuestion, IconUsers } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../stores/appState';
 import { SecondaryTitleAndScrollableContent } from '../search/SecondaryTitleAndScrollableContent';
 import { MergeTagsDialog } from '../tags/MergeTagsDialog';
 import './allFaces.css';
-import { FaceActionsBar } from './FaceActionsBar';
+import { FaceActionsBar, FindFacesButton } from './FaceActionsBar';
 import { usePeopleOutletContext } from './PeopleLayout';
 
 /** Enough placeholder cards to fill the first viewport of the grid. */
@@ -63,6 +64,7 @@ export function AllFaces() {
   const { people, loading } = usePeopleOutletContext();
   const setBreadcrumb = useAppStore((state) => state.setBreadcrumb);
   const [mergeOpen, setMergeOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setBreadcrumb([{ label: 'People' }]);
@@ -76,6 +78,7 @@ export function AllFaces() {
     [knownPeople, showHiddenPeople],
   );
   const hiddenCount = knownPeople.filter((person) => person.tag?.isHidden === 1).length;
+  const hasUnknownFaces = (people ?? []).some((person) => person.kind !== 'known');
 
   usePageChrome('entities', useCountStatus(people && visiblePeople.length, 'person', 'people'));
   const personTags = useMemo(
@@ -137,13 +140,30 @@ export function AllFaces() {
               </section>
             </div>
           ) : visiblePeople.length === 0 ? (
-            <NoResultsIndicator
-              icon={<IconMoodNerd size={56} strokeWidth={1.4} />}
+            <EmptyState
+              icon={IconUsers}
               title={hiddenCount > 0 ? 'All people are hidden' : 'No people yet'}
               description={
                 hiddenCount > 0
-                  ? 'Use the People actions menu to show hidden people.'
-                  : 'Find faces in your photos and name them to see people here.'
+                  ? 'Everyone you named is hidden. Show them again to see them here.'
+                  : hasUnknownFaces
+                    ? 'Faces were found in your photos but none has a name yet. Name a face and that person appears here.'
+                    : 'Find faces spots the people in your photos. Give them names and everyone you name appears here.'
+              }
+              action={
+                hiddenCount > 0 ? (
+                  <Button variant="outline" onClick={() => setShowHiddenPeople(true)}>
+                    <IconEye size={16} />
+                    Show hidden people
+                  </Button>
+                ) : hasUnknownFaces ? (
+                  <Button variant="outline" onClick={() => navigate(AppRoutes.peopleUnidentified)}>
+                    <IconUserQuestion size={16} />
+                    Name unknown faces
+                  </Button>
+                ) : (
+                  <FindFacesButton />
+                )
               }
             />
           ) : (

@@ -1,6 +1,7 @@
 import { isMetadataMode, isWriteBackTiming } from '@/common/metadataOptions';
 import { RatingMode } from '@/common/ratingModeOptions';
 import { isResyncMode } from '@/common/resyncOptions';
+import { isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 import { TimelineGroupBy, useSettingsStore, ViewerMouseWheel } from '../stores/settingsStore';
@@ -19,6 +20,8 @@ export function useSettingsSync(): void {
   }, [appearance, lightTheme, darkTheme, scale, font]);
 
   useEffect(() => {
+    // Cross-window sync only exists inside Tauri (the UI kit also runs in a browser).
+    if (!isTauri()) return;
     const unlisteners: Array<() => void> = [];
 
     void (async () => {

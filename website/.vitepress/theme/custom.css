@@ -1,0 +1,311 @@
+/* Photokin palette, taken from the app icon. */
+:root {
+  --pk-navy: #070c1c;
+  --pk-navy-2: #14234a;
+  --pk-blue: #2f6df0;
+  --pk-violet: #5b3df0;
+  --pk-sky: #8db4ff;
+  --pk-amber: #f0b860;
+
+  --vp-c-brand-1: #2f6df0;
+  --vp-c-brand-2: #4a80f2;
+  --vp-c-brand-3: #2f6df0;
+  --vp-c-brand-soft: rgb(47 109 240 / 0.14);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(
+    120deg,
+    var(--pk-sky) 0%,
+    var(--pk-blue) 50%,
+    var(--pk-violet) 100%
+  );
+}
+
+.dark {
+  --vp-c-bg: #0a0f1e;
+  --vp-c-bg-alt: #070c1c;
+  --vp-c-bg-soft: #111a33;
+  --vp-c-brand-1: #8db4ff;
+  --vp-c-brand-2: #a9c6ff;
+  --vp-c-brand-3: #2f6df0;
+  --vp-c-brand-soft: rgb(141 180 255 / 0.16);
+}
+
+.VPHero.VPHomeHero {
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: calc(var(--vp-nav-height) + 48px);
+  padding-bottom: 48px;
+}
+
+.VPHero.VPHomeHero.has-image .container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+  max-width: 1440px;
+  text-align: left;
+}
+
+.VPHero.VPHomeHero.has-image .main {
+  order: 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+}
+
+.VPHero.has-image .image {
+  order: 1;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
+
+.VPHero.has-image .image-container {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform: none;
+}
+
+.VPHero .image-bg {
+  display: none;
+}
+
+.VPHero.VPHomeHero.has-image .name,
+.VPHero.VPHomeHero.has-image .text,
+.VPHero.VPHomeHero.has-image .tagline {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.VPHero.VPHomeHero.has-image .name {
+  margin-bottom: 12px;
+  font-size: 20px;
+  line-height: 32px;
+}
+
+.VPHero .text {
+  max-width: none;
+  font-size: clamp(38px, 4vw, 64px);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+}
+
+.VPHero .hero-emphasis {
+  color: var(--vp-c-brand-1);
+}
+
+.VPHero .tagline {
+  max-width: 500px;
+  font-size: 17px;
+  line-height: 1.75;
+}
+
+.VPHero.VPHomeHero.has-image .actions {
+  justify-content: flex-start;
+}
+
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 12px;
+  color: var(--vp-c-text-2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hero-facts li + li::before {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin-right: 8px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--vp-c-text-3);
+  content: '';
+}
+
+@media (min-width: 960px) {
+  .VPHero.VPHomeHero.has-image .container {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr);
+    gap: clamp(24px, 3vw, 64px);
+  }
+}
+
+@media (max-width: 959px) {
+  .VPHero.VPHomeHero {
+    padding-top: calc(var(--vp-nav-height) + 24px);
+    padding-bottom: 32px;
+  }
+
+  .VPHero .tagline {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .VPHero .actions {
+    padding-top: 24px;
+  }
+}
+
+@media (min-width: 960px) and (max-height: 860px) {
+  .VPHero.VPHomeHero {
+    padding-top: calc(var(--vp-nav-height) + 24px);
+    padding-bottom: 32px;
+  }
+
+  .VPHero .text {
+    font-size: clamp(36px, 3.4vw, 48px);
+  }
+
+  .VPHero .tagline {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .VPHero .actions {
+    padding-top: 24px;
+  }
+}
+
+@media (min-width: 768px) {
+  .VPNavBarSearch .DocSearch-Button {
+    --docsearch-muted-color: var(--vp-c-text-1);
+    border-color: color-mix(in srgb, var(--vp-c-text-1) 55%, var(--vp-c-bg));
+    background: var(--vp-c-bg-soft);
+    color: var(--vp-c-text-1);
+  }
+
+  .VPNavBarSearch .DocSearch-Button:hover {
+    border-color: var(--vp-c-brand-1);
+    background: var(--vp-c-bg-soft);
+  }
+
+  .VPNavBarSearch .DocSearch-Button-Placeholder,
+  .VPNavBarSearch .DocSearch-Search-Icon {
+    color: var(--vp-c-text-1);
+  }
+}
+
+@media (min-width: 1280px) {
+  .VPNavBarSearch #local-search {
+    width: clamp(240px, 24vw, 380px);
+    max-width: 100%;
+  }
+
+  .VPNavBarSearch .DocSearch-Button {
+    justify-content: space-between;
+  }
+}
+
+.VPFeature .icon {
+  background-color: var(--vp-c-brand-soft);
+}
+
+@keyframes pk-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pk-preview-in {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  .VPHero .name,
+  .VPHero .text,
+  .VPHero .tagline,
+  .VPHero .actions {
+    animation: pk-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .VPHero .text {
+    animation-delay: 70ms;
+  }
+
+  .VPHero .tagline {
+    animation-delay: 140ms;
+  }
+
+  .VPHero .actions {
+    animation-delay: 210ms;
+  }
+
+  .showcase .screenshot-button img {
+    animation: pk-preview-in 220ms ease-out;
+  }
+
+  .showcase .appearance-choice {
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease;
+  }
+
+  .showcase .VPFeature {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 250ms ease,
+      background-color 250ms ease;
+  }
+
+  /* Unsupported browsers keep the content visible without a scroll reveal. */
+  @supports (animation-timeline: view()) and (animation-range: entry 0% entry 25%) {
+    .showcase .guide-cards .item,
+    .VPHome .download {
+      animation: pk-enter linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 25%;
+    }
+
+    .showcase .guide-cards .item:focus-within,
+    .VPHome .download:focus-within {
+      animation: none;
+    }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .showcase .VPFeature:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px -16px rgb(7 12 28 / 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase .VPFeature {
+    transition: none;
+  }
+}
+
+/* Screenshots inside guide pages. */
+.vp-doc img.screenshot {
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -20px rgb(7 12 28 / 0.45);
+}
+
+.vp-doc .tip-ai {
+  border-color: var(--pk-amber);
+}

@@ -70,6 +70,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SidebarNoMatches } from '@/components/secondary-navbar/SidebarNoMatches';
 import { InfoHint } from '@/components/ui/infoHint';
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
@@ -80,6 +82,7 @@ import { SearchCombobox } from '@/components/ui/search-combobox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionCheck } from '@/components/ui/selection-check';
 import { Separator } from '@/components/ui/separator';
+import { SeparatedListView } from '@/components/ui/separated-list-view';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { SplitButton, SplitButtonMain, SplitButtonMenu } from '@/components/ui/split-button';
@@ -100,6 +103,7 @@ import {
   IconInfoCircle,
   IconMoodSmile,
   IconPhoto,
+  IconPlus,
   IconScan,
   IconSearch,
   IconTag,
@@ -171,6 +175,10 @@ const COLOR_TOKENS = [
 const TEXT_SIZES = ['text-xs', 'text-sm', 'text-base', 'text-lg', 'text-xl', 'text-2xl'];
 
 const PEOPLE = ['Alice', 'Bob', 'Charlie', 'Dana', 'Eve', 'Frank', 'Grace'];
+const LIST_ITEMS = Array.from({ length: 10000 }, (_, index) => ({
+  id: index,
+  label: `Item ${(index + 1).toLocaleString()}`,
+}));
 
 function Section({ title, source, children }: { title: string; source: string; children: ReactNode }) {
   return (
@@ -728,6 +736,73 @@ function BannersSection() {
   );
 }
 
+function EmptyStatesSection() {
+  return (
+    <Section title="EmptyState" source="components/ui/empty-state.tsx">
+      <Row label='size="page" + action' className="block rounded-lg border border-border">
+        <EmptyState
+          icon={IconTag}
+          title="No tags yet"
+          description="Tags are labels like “Beach” or “Family” that help you find photos later."
+          action={
+            <>
+              <Button>
+                <IconPlus size={16} />
+                New tag
+              </Button>
+              <Button variant="link">How tags work</Button>
+            </>
+          }
+        />
+      </Row>
+      <Row label='size="page"' className="block rounded-lg border border-border">
+        <EmptyState
+          icon={IconTrash}
+          title="Trash is empty"
+          description="Photos and videos you delete wait here for 30 days, so you can restore them if you change your mind."
+        />
+      </Row>
+      <Row label='size="panel"' className="flex flex-wrap items-start gap-3">
+        <div className="w-64 rounded-lg border border-border">
+          <EmptyState
+            size="panel"
+            icon={IconSearch}
+            title="No matching folders"
+            description="Try a different name, or clear the search."
+          />
+        </div>
+        <div className="w-64 rounded-lg border border-border">
+          <EmptyState
+            size="panel"
+            icon={IconFolder}
+            title="No folders yet"
+            description="Add a folder from the Albums page first."
+            action={
+              <Button size="sm" variant="outline">
+                <IconPlus size={16} />
+                Add Photos
+              </Button>
+            }
+          />
+        </div>
+      </Row>
+      <Row label='size="sidebar"' className="flex flex-wrap items-start gap-3">
+        <div className="w-72 rounded-lg bg-secondary-navbar p-2">
+          <EmptyState
+            size="sidebar"
+            icon={IconTag}
+            title="No tags yet"
+            description="Tags you create or import show up here."
+          />
+        </div>
+        <div className="w-72 rounded-lg bg-secondary-navbar p-2">
+          <SidebarNoMatches noun="places" onClear={() => {}} />
+        </div>
+      </Row>
+    </Section>
+  );
+}
+
 function LayoutSection() {
   const [open, setOpen] = useState(true);
 
@@ -786,6 +861,51 @@ function LayoutSection() {
   );
 }
 
+function SeparatedListSection() {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [filter, setFilter] = useState('');
+  const items = LIST_ITEMS.filter((item) => item.label.toLowerCase().includes(filter.toLowerCase()));
+
+  return (
+    <Section title="SeparatedListView" source="components/ui/separated-list-view.tsx">
+      <p className="text-sm text-muted-foreground">
+        10,000 variable-height rows; only visible rows and a small buffer are mounted. Use Tab, arrow keys,
+        Home and End to navigate.
+      </p>
+      <Input
+        aria-label="Filter demo list"
+        placeholder="Filter items"
+        value={filter}
+        onChange={(event) => setFilter(event.target.value)}
+      />
+      <div className="flex h-72 max-w-md flex-col rounded-md border">
+        <SeparatedListView
+          key={filter}
+          aria-label="Virtual list demo"
+          items={items}
+          itemKey={(item) => item.id}
+          estimateSize={44}
+          separatorBuilder={() => <Separator />}
+          emptyState={<p className="p-3 text-sm text-muted-foreground">No matching items</p>}
+          renderItem={(item) => (
+            <button
+              type="button"
+              className="w-full px-3 py-2 text-left text-sm hover:bg-accent aria-pressed:bg-accent"
+              aria-pressed={selected === item.id}
+              onClick={() => setSelected(item.id)}
+            >
+              {item.label}
+              {item.id % 7 === 0 && (
+                <span className="block text-xs text-muted-foreground">An extra line of detail</span>
+              )}
+            </button>
+          )}
+        />
+      </div>
+    </Section>
+  );
+}
+
 function FoundationsSection() {
   return (
     <Section title="Colors & typography" source="App.css (--color-*)">
@@ -834,7 +954,9 @@ export function ComponentsPage() {
               <OverlaysSection />
               <FeedbackSection />
               <BannersSection />
+              <EmptyStatesSection />
               <LayoutSection />
+              <SeparatedListSection />
             </div>
           }
         />

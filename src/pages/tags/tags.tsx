@@ -1,9 +1,11 @@
-import { IconTags } from '@tabler/icons-react';
+import { IconTag, IconTags } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SecondaryNavbar } from '../../components/secondary-navbar/SecondaryNavbar';
 import { formatSidebarFilterCount } from '../../components/secondary-navbar/sidebarFilterCount';
+import { SidebarNoMatches } from '../../components/secondary-navbar/SidebarNoMatches';
 import { SidebarSearchInput } from '../../components/secondary-navbar/SidebarSearchInput';
 import { SidebarSortMenu, SidebarSortOption } from '../../components/secondary-navbar/SidebarSortMenu';
 import { countTreeNameMatches } from '../../components/tree/filterTreeItems';
@@ -216,28 +218,40 @@ export function TagsLayout() {
           {/* Filter opens the items zone; the title below carries the total count
               on the left and the sort on the right. While filtering, the count
               is the matches over that same total. */}
-          <SidebarSearchInput
-            placeholder="Filter tags"
-            value={searchFilter ?? ''}
-            onValueChange={setSearchFilter}
-          />
-          <p className="sidebar-section-label">
-            <span
-              className={clsx(
-                'sidebar-section-label__count',
-                tags && matchedTagCount !== null && 'sidebar-section-label__count--filtered',
-              )}
-            >
-              {formatSidebarFilterCount(tags?.length ?? 0, tags ? matchedTagCount : null)}
-            </span>
-            <span>Tags</span>
-            <SidebarSortMenu
-              value={sort}
-              options={TAGS_SORT_OPTIONS}
-              onChange={(value) => setSort('tags', value)}
-              ariaLabel="Sort tags"
+          {tags?.length === 0 ? (
+            <EmptyState
+              size="sidebar"
+              icon={IconTag}
+              title="No tags yet"
+              description="Tags you create or import show up here."
             />
-          </p>
+          ) : (
+            <>
+              <SidebarSearchInput
+                placeholder="Filter tags"
+                value={searchFilter ?? ''}
+                onValueChange={setSearchFilter}
+              />
+              <p className="sidebar-section-label">
+                <span
+                  className={clsx(
+                    'sidebar-section-label__count',
+                    tags && matchedTagCount !== null && 'sidebar-section-label__count--filtered',
+                  )}
+                >
+                  {formatSidebarFilterCount(tags?.length ?? 0, tags ? matchedTagCount : null)}
+                </span>
+                <span>Tags</span>
+                <SidebarSortMenu
+                  value={sort}
+                  options={TAGS_SORT_OPTIONS}
+                  onChange={(value) => setSort('tags', value)}
+                  ariaLabel="Sort tags"
+                />
+              </p>
+            </>
+          )}
+          {matchedTagCount === 0 && <SidebarNoMatches noun="tags" onClear={() => setSearchFilter('')} />}
 
           <section className="tree-container">
             {preparedTreeData && (

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/ui/empty-state';
 import { IconCopy } from '@tabler/icons-react';
 import { ScanOptionsForm } from './ScanOptionsForm';
 
@@ -14,20 +15,16 @@ type Props = {
 export function DuplicatesEmptyState({ onScan, scanning }: Props) {
   return (
     <div className="dup-empty">
-      <div className="dup-empty__card">
-        <div className="dup-empty__icon">
-          <IconCopy size={30} />
-        </div>
-        <h2 className="dup-empty__title text-2xl font-semibold tracking-tight">
-          Find duplicates in your library
-        </h2>
-        <p className="dup-empty__text text-sm leading-6">
-          Photokin scans your photos for exact copies, near-identical look-alikes and burst sequences, then
-          proposes which one to keep in each set. Nothing is removed until you review.
-        </p>
-
-        <ScanOptionsForm onScan={onScan} scanning={scanning} layout="inline" />
-      </div>
+      <EmptyState
+        icon={IconCopy}
+        title="Find duplicates in your library"
+        description="Photokin looks for exact copies, near-identical look-alikes and burst shots, then suggests which one to keep in each set. Nothing is removed until you review it."
+        action={
+          <div className="w-full max-w-md">
+            <ScanOptionsForm onScan={onScan} scanning={scanning} layout="inline" />
+          </div>
+        }
+      />
     </div>
   );
 }

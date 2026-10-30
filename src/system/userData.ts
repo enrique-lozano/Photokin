@@ -1,5 +1,6 @@
 import { dbName, getDbDir } from '@/db/connection/db.service';
 import { closeAppDB, resumeAppDB, suspendAppDB } from '@/db/connection/dbInstance';
+import { stopTextSession } from '@/media/smartSearch/clipSidecar';
 import { CLIP_MODELS, getModelsBasePath, isModelDownloaded } from '@/media/smartSearch/models';
 import { deleteAllThumbnails, getThumbnailsBasePath } from '@/media/thumbnails/thumbnail';
 import { clearDuplicatesCache } from '@/pages/duplicates/duplicatesCache';
@@ -162,6 +163,8 @@ export async function removeAllUserData(options: RemoveAllUserDataOptions = {}) 
     await clearDuplicatesCache();
 
     if (options.deleteAiModels) {
+      // A loaded model would lock its files on Windows.
+      await stopTextSession();
       await _removeWithRetries(await getModelsBasePath(), true);
     }
   } catch (error) {

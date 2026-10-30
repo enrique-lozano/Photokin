@@ -1,8 +1,9 @@
 # Privacy and network access
 
 Photokin is a local-first desktop photo gallery maintained by Enrique Lozano.
-It is preparing for its first public release. This notice describes the current
-implementation; it does not promise that every feature works without a network.
+This notice describes the current implementation; it does not promise that
+every feature works without a network. A plain-language summary is in the
+[user guide](https://enrique-lozano.github.io/Photokin/guide/privacy).
 
 ## What stays on your computer
 

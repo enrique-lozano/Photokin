@@ -1,7 +1,7 @@
 import { FilterCriteria } from '@/common/query/filters/FilterCriteria';
+import { ChipFiltersEmptyState } from '@/components/page-content/ChipFiltersEmptyState';
 import { EntityOverflowMenu, HeaderActionsBar } from '@/components/entity-actions/HeaderActionsBar';
 import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
 import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
@@ -9,20 +9,14 @@ import { Segmented } from '@/components/segmented/Segmented';
 import { type GalleryScope, GalleryScopeProvider } from '@/components/selection-actions/galleryScope';
 import { TimelineGallery } from '@/components/timeline-gallery/TimelineGallery';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { toastOnError } from '@/components/ui/toast';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { RegionsService } from '@/db/api/services/regions.service';
 import { TagsService } from '@/db/api/services/tags.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { AppRoutes } from '@/router';
-import {
-  IconAlertTriangle,
-  IconArrowLeft,
-  IconCamera,
-  IconMoodSad,
-  IconPhoto,
-  IconUser,
-} from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowLeft, IconCamera, IconPhoto, IconUser } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { mergeSearchQueries } from '../../common/searchQueryUtils';
@@ -140,6 +134,7 @@ export function PersonDetail() {
     chips,
     activeChipIds,
     toggleChip,
+    clear: clearChips,
     conditions,
     isLoading: chipsLoading,
     isRefreshing: chipsRefreshing,
@@ -172,12 +167,12 @@ export function PersonDetail() {
   if (people && !person) {
     return (
       <div className="page-scroll">
-        <NoResultsIndicator
-          icon={<IconMoodSad size={56} strokeWidth={1.4} />}
+        <EmptyState
+          icon={IconUser}
           title="Person not found"
-          description="This person may have been removed."
-          extraContent={
-            <Button variant="outline-primary" onClick={() => navigate(AppRoutes.allFaces)}>
+          description="This person may have been deleted or merged with someone else."
+          action={
+            <Button variant="outline" onClick={() => navigate(AppRoutes.allFaces)}>
               <IconArrowLeft size={16} /> Back to people
             </Button>
           }
@@ -309,10 +304,14 @@ export function PersonDetail() {
 
             {regions !== null &&
               (photoCount === 0 ? (
-                <NoResultsIndicator
-                  icon={<IconMoodSad size={56} strokeWidth={1.4} />}
+                <EmptyState
+                  icon={IconUser}
                   title="No confirmed photos yet"
-                  description="Confirm this person's suggested faces to populate their timeline."
+                  description={
+                    hasReview
+                      ? 'Confirm the suggested faces above and the photos they appear in show up here.'
+                      : 'Once faces of this person are confirmed, the photos they appear in show up here.'
+                  }
                 />
               ) : viewMode === 'faces' ? (
                 <>
@@ -332,7 +331,13 @@ export function PersonDetail() {
                   />
                 </>
               ) : (
-                <TimelineGallery assetIdsFilter={confirmedAssetIds} searchQuery={galleryQuery} />
+                <TimelineGallery
+                  assetIdsFilter={confirmedAssetIds}
+                  searchQuery={galleryQuery}
+                  onNoResults={
+                    activeChipIds.length > 0 ? <ChipFiltersEmptyState onClear={clearChips} /> : undefined
+                  }
+                />
               ))}
 
             <ProfilePhotoDialog

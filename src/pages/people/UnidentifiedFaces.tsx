@@ -1,5 +1,4 @@
 import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
 import { SidebarSortMenu, SidebarSortOption } from '@/components/secondary-navbar/SidebarSortMenu';
@@ -7,6 +6,7 @@ import '@/components/selection-bar/selectionBar.css';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirmationDialogStore';
 import { SelectionCheck } from '@/components/ui/selection-check';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast, toastOnError } from '@/components/ui/toast';
 import { LightboxImageContext } from '@/context/LightboxContext';
@@ -48,7 +48,7 @@ import { SecondaryTitleAndScrollableContent } from '../search/SecondaryTitleAndS
 import { AssignFacePopover } from './AssignFacePopover';
 import { CleanUpFacesDialog } from './CleanUpFacesDialog';
 import { discardFacesWithUndo } from './discardFaces';
-import { FaceActionsBar } from './FaceActionsBar';
+import { FaceActionsBar, FindFacesButton } from './FaceActionsBar';
 import {
   assignFaces,
   assignFacesWithUndo,
@@ -623,10 +623,11 @@ export function UnidentifiedFaces() {
       </section>
     </div>
   ) : allRegions.length === 0 ? (
-    <NoResultsIndicator
-      icon={<IconUserQuestion size={56} strokeWidth={1.4} />}
+    <EmptyState
+      icon={IconUserQuestion}
       title="No unknown faces"
-      description="Every detected face is named, suggested for someone, or ignored. Find faces to discover more."
+      description="Every face found so far has a name, a suggestion or was ignored. Find faces again to look for more."
+      action={<FindFacesButton />}
     />
   ) : (
     <div className="overview-body">

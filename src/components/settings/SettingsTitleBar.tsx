@@ -9,11 +9,10 @@ interface SettingsTitleBarProps {
 }
 
 export function SettingsTitleBar({ title, breadcrumbs }: SettingsTitleBarProps) {
-  const appWindow = getCurrentWindow();
-
+  // Resolved on use, not on render, so the UI kit also renders in a plain browser.
   async function handleCloseWindow() {
     try {
-      await appWindow.close();
+      await getCurrentWindow().close();
     } catch (error) {
       console.error('Failed to close window', error);
     }
@@ -25,7 +24,7 @@ export function SettingsTitleBar({ title, breadcrumbs }: SettingsTitleBarProps) 
     }
 
     try {
-      await appWindow.startDragging();
+      await getCurrentWindow().startDragging();
     } catch (error) {
       console.error('Failed to start window drag', error);
     }

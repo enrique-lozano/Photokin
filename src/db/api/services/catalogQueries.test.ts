@@ -343,4 +343,20 @@ describe('Tag aggregate queries', () => {
       person: { assetId: 'photo', path: 'C:\\photos\\visible\\photo.jpg' },
     });
   });
+
+  it('gives a tag without photos of its own a cover from its sub-tags', async () => {
+    _asset('fox');
+    db.exec(`
+      INSERT INTO tags (id, parentId, name) VALUES ('animals', NULL, 'Animals'), ('mammals', 'animals', 'Mammals'),
+        ('fox-tag', 'mammals', 'Fox'), ('empty', NULL, 'Empty');
+      INSERT INTO fileTags VALUES ('fox-tag', 'fox');
+    `);
+
+    const covers = await TagsService.getTagCovers();
+
+    const fox = { assetId: 'fox', path: 'C:\\photos\\visible\\fox.jpg' };
+    expect(covers.animals).toEqual(fox);
+    expect(covers.mammals).toEqual(fox);
+    expect(covers.empty).toBeUndefined();
+  });
 });

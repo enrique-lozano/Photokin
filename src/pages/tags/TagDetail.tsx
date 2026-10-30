@@ -1,5 +1,5 @@
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
+import { ChipFiltersEmptyState } from '@/components/page-content/ChipFiltersEmptyState';
 import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { HeroToggle } from '@/components/page-content/HeroToggle';
@@ -7,12 +7,13 @@ import { useContentFilterChips } from '@/components/page-content/useContentFilte
 import { SecondaryTitleAndScrollableContent } from '../search/SecondaryTitleAndScrollableContent';
 import { TimelineGallery } from '@/components/timeline-gallery/TimelineGallery';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { EntityOverflowMenu, HeaderActionsBar } from '@/components/entity-actions/HeaderActionsBar';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { TagsService } from '@/db/api/services/tags.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { FilterCriteria } from '@/common/query/filters/FilterCriteria';
-import { IconArrowLeft, IconHash, IconHierarchy, IconMoodEmpty } from '@tabler/icons-react';
+import { IconArrowLeft, IconHierarchy, IconTag } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AppRoutes, tagDetailPath } from '@/router';
@@ -99,6 +100,7 @@ export function TagDetail() {
     chips,
     activeChipIds,
     toggleChip,
+    clear: clearChips,
     conditions,
     isLoading: chipsLoading,
     isRefreshing: chipsRefreshing,
@@ -146,12 +148,12 @@ export function TagDetail() {
   if (tags && !tag) {
     return (
       <div className="page-scroll">
-        <NoResultsIndicator
-          icon={<IconMoodEmpty size={56} strokeWidth={1.4} />}
+        <EmptyState
+          icon={IconTag}
           title="Tag not found"
-          description="This tag may have been removed."
-          extraContent={
-            <Button variant="outline-primary" onClick={() => navigate(AppRoutes.allTags)}>
+          description="This tag may have been deleted or merged into another one."
+          action={
+            <Button variant="outline" onClick={() => navigate(AppRoutes.allTags)}>
               <IconArrowLeft size={16} /> Back to tags
             </Button>
           }
@@ -190,7 +192,7 @@ export function TagDetail() {
 
   return (
     <SecondaryTitleAndScrollableContent
-      cover={<HeroIcon icon={<IconHash size={28} />} color={color} />}
+      cover={<HeroIcon icon={<IconTag size={28} />} color={color} />}
       title={tag?.name ?? 'Tag'}
       subtitle={[`${count.toLocaleString()} ${count === 1 ? 'photo' : 'photos'}`, dateMeta]
         .filter(Boolean)
@@ -222,7 +224,13 @@ export function TagDetail() {
       galleryLayout
       content={
         <>
-          <TimelineGallery key={id} searchQuery={galleryQuery} />
+          <TimelineGallery
+            key={id}
+            searchQuery={galleryQuery}
+            onNoResults={
+              activeChipIds.length > 0 ? <ChipFiltersEmptyState onClear={clearChips} /> : undefined
+            }
+          />
 
           <TagFormDialog open={isEditOpen} onOpenChange={setIsEditOpen} tag={tag ?? null} />
           <MergeTagsDialog

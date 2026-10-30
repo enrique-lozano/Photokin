@@ -16,6 +16,7 @@ class StreamEncodingTests(unittest.TestCase):
             ("image", ["unused.json"]),
             ("image-session", []),
             ("text", ["caf\u00e9"]),
+            ("text-session", []),
         ]:
             with self.subTest(mode=mode):
                 result = subprocess.run(
@@ -66,6 +67,41 @@ class StreamEncodingTests(unittest.TestCase):
             self.assertIn('========> EMB: {"id": "photo-1"', output)
             self.assertIn('========> BATCH: {"batchId": 1}', output)
             self.assertIn("Encoding caf\u00e9 [1/1]", diagnostic)
+
+    def test_text_session_loads_once_and_answers_each_query(self):
+        requests = "".join(
+            json.dumps(request, ensure_ascii=False) + "\n"
+            for request in [
+                {"id": "1", "text": "caf\u00e9"},
+                {"id": "2", "text": "dog"},
+                {"type": "shutdown"},
+                {"id": "3", "text": "ignored after shutdown"},
+            ]
+        )
+        loads = []
+
+        def encoder(_model_dir):
+            loads.append(True)
+            return lambda text: [float(len(text))]
+
+        with (
+            io.TextIOWrapper(io.BytesIO(requests.encode("utf-8")), encoding="utf-8") as stdin,
+            io.TextIOWrapper(io.BytesIO(), encoding="utf-8") as stdout,
+        ):
+            with (
+                patch.object(sys, "stdin", stdin),
+                patch.object(sys, "stdout", stdout),
+                patch.object(sys, "argv", ["clip", "text-session", "--model-dir", "unused"]),
+                patch.object(clip, "text_encoder", side_effect=encoder),
+            ):
+                clip.main()
+                stdout.flush()
+                output = stdout.buffer.getvalue().decode("utf-8")
+
+        self.assertEqual(len(loads), 1)
+        self.assertIn('========> EMB: {"id": "1", "embedding": [4.0]}', output)
+        self.assertIn('========> EMB: {"id": "2", "embedding": [3.0]}', output)
+        self.assertNotIn('"id": "3"', output)
 
 
 if __name__ == "__main__":

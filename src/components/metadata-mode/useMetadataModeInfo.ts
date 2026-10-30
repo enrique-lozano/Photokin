@@ -23,7 +23,7 @@ export function useMetadataModeInfo(): MetadataModeInfo {
       variant: 'secondary',
       Icon: IconLock,
       label: 'Library only',
-      hint: 'Your edits stay in Photokin’s library. Your photo files are not modified. Change this in Settings › Data.',
+      hint: 'Your edits stay in Photokin’s library. Your photo files are not modified.',
     };
   }
 

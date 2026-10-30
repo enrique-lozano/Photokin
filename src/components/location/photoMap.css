@@ -1,0 +1,114 @@
+@reference '../../App.css';
+
+/* Fills its parent, unlike the small embedded `.location-map`. */
+.photo-map.location-map {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Keep controls visible on the contextual map. */
+.photo-map .location-map__controls {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.photo-map__expand,
+.photo-map__area-action {
+  position: absolute;
+  z-index: 500;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.photo-map__expand {
+  top: 8px;
+  right: 8px;
+}
+
+.photo-map__area-action {
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.photo-map__apply {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.photo-map__apply--hidden,
+.photo-map--moving .location-map__controls,
+.photo-map--moving .photo-map__expand,
+.photo-map--moving .photo-map__area-action {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.photo-map__apply--hidden,
+.photo-map--moving .location-map__controls,
+.photo-map--moving .photo-map__expand {
+  transform: translateY(-4px);
+}
+
+.photo-map .location-map__controls {
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.photo-map-dialog[role='dialog'] {
+  width: calc(100vw - 32px);
+  height: calc(100dvh - 32px);
+  max-height: none;
+}
+
+.photo-map-dialog .photo-map {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-map .location-map__controls,
+  .photo-map__expand,
+  .photo-map__area-action,
+  .photo-map__apply {
+    transition: none;
+  }
+}
+
+.photo-map-pin {
+  background: transparent;
+  border: 0;
+}
+
+.photo-map-pin__photo {
+  width: 56px;
+  height: 56px;
+  border: 3px solid white;
+  border-radius: 12px;
+  background: hsl(var(--muted)) center / cover no-repeat;
+  box-shadow: 0 6px 16px -4px rgb(0 0 0 / 0.5);
+  transition: transform 0.15s ease-out;
+}
+
+.photo-map-pin:hover .photo-map-pin__photo {
+  transform: scale(1.08);
+}
+
+.photo-map-pin__count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  @apply text-xs font-semibold;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

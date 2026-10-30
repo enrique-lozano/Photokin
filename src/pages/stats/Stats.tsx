@@ -8,12 +8,16 @@ import {
   ISO_RANGE_BOUNDS,
   SHUTTER_SPEED_RANGE_BOUNDS,
 } from '@/common/statsRanges';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
+import {
+  ClearLibraryFiltersButton,
+  useHasActiveLibraryFilters,
+} from '@/components/app-shell/ClearLibraryFilters';
 import { Segmented } from '@/components/segmented/Segmented';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SecondaryTitleAndScrollableContent } from '@/pages/search/SecondaryTitleAndScrollableContent';
 import { useAppStore } from '@/stores/appState';
 import { formatBytes } from '@/utils/numberFormatter';
-import { IconChartBar, IconChartBarOff } from '@tabler/icons-react';
+import { IconChartBar } from '@tabler/icons-react';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 import { CaptureSettingsList } from './CaptureSettingsList';
 import './stats.css';
@@ -95,6 +99,7 @@ export function StatsPage() {
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const setBreadcrumb = useAppStore((state) => state.setBreadcrumb);
+  const hasLibraryFilters = useHasActiveLibraryFilters();
   const queries = useStatsQueries(searchQuery);
   const overview = queries.overview.data;
 
@@ -183,10 +188,15 @@ export function StatsPage() {
 
   const content =
     overview?.totalAssets === 0 ? (
-      <NoResultsIndicator
-        title="No items to analyze"
-        description="Adjust the library filters or import photos to see statistics."
-        icon={<IconChartBarOff size={64} strokeWidth={1} />}
+      <EmptyState
+        icon={IconChartBar}
+        title={hasLibraryFilters ? 'No photos match your filters' : 'Nothing to analyze yet'}
+        description={
+          hasLibraryFilters
+            ? 'Remove a library filter, or clear them all, to see statistics.'
+            : 'Charts about your photos, like when you take them and which cameras you use, appear here once you add photos in Albums.'
+        }
+        action={hasLibraryFilters ? <ClearLibraryFiltersButton /> : undefined}
       />
     ) : (
       <div className="stats-content">

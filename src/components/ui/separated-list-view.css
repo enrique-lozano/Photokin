@@ -1,0 +1,21 @@
+.separated-list-view {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overflow-anchor: none;
+}
+
+.separated-list-view__content {
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.separated-list-view__item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flow-root;
+}

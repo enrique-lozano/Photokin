@@ -1,4 +1,4 @@
-import { Channel, convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { Channel, convertFileSrc, invoke, isTauri } from '@tauri-apps/api/core';
 import * as path from '@tauri-apps/api/path';
 import { revealItemInDir } from '@tauri-apps/plugin-opener';
 import { epochMsToDate } from '@/utils/date.utils';
@@ -50,9 +50,9 @@ export interface FileTimestamps {
 /** Return your current platform-specific path segment separator:
 
 - `\` on Windows
-- `/` on POSIX 
+- `/` on POSIX (and outside Tauri, e.g. the UI kit in a plain browser)
 */
-export const currentOsPathSep = path.sep();
+export const currentOsPathSep = isTauri() ? path.sep() : '/';
 
 export const normalizedPathSep = '/';
 

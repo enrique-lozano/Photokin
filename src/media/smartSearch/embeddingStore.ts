@@ -39,66 +39,32 @@ async function _getEmbeddings() {
   return embeddingCache;
 }
 
-/** Below this many indexed assets the similarity spread is too noisy to cut a
- * tail from, so everything is returned ranked instead. */
-const MIN_SAMPLES_FOR_CUTOFF = 20;
-
 /**
  * Rank assets by cosine distance to `query`. When `candidateIds` is given the
  * results are restricted to those assets (e.g. the current filter scope).
- * `minSigma` drops weak matches so the tail isn't padded with irrelevant photos
- * (without it, a small library returns *every* asset ranked) — see
- * {@link _weakTailCutoff} for why the cutoff is relative and not a raw similarity.
+ * `maxDistance` drops weak matches so the tail isn't padded with irrelevant
+ * photos; the caller derives it from the model (see `smartSearch`).
  */
 export async function searchAssets(
   query: number[],
-  options: { candidateIds?: string[]; limit: number; offset?: number; minSigma?: number },
+  options: { candidateIds?: string[]; limit: number; offset?: number; maxDistance?: number },
 ): Promise<SearchHit[]> {
   const normalizedQuery = new Float32Array(normalize(query));
   const embeddings = await _getEmbeddings();
+  const maxDistance = options.maxDistance ?? Infinity;
+  const candidates = options.candidateIds ? new Set(options.candidateIds) : null;
 
-  // Everything is scored, even outside the scope, because the cutoff below
-  // needs the library-wide similarity spread to mean anything: a narrow scope
-  // such as a single album is far too small a sample to derive it from.
-  const scored: SearchHit[] = [];
+  const hits: SearchHit[] = [];
   for (const { assetId, embedding } of embeddings) {
-    const distance = cosineDistance(embedding, normalizedQuery);
+    if (candidates && !candidates.has(assetId)) continue;
     // An infinite distance means the stored vector has a different
     // dimensionality, so it was indexed with another model and simply isn't
     // comparable to this query.
-    if (Number.isFinite(distance)) scored.push({ assetId, distance });
+    const distance = cosineDistance(embedding, normalizedQuery);
+    if (Number.isFinite(distance) && distance <= maxDistance) hits.push({ assetId, distance });
   }
-
-  const maxDistance = _weakTailCutoff(scored, options.minSigma);
-  const candidates = options.candidateIds ? new Set(options.candidateIds) : null;
-  const hits = scored.filter(
-    (hit) => hit.distance <= maxDistance && (!candidates || candidates.has(hit.assetId)),
-  );
 
   hits.sort((a, b) => a.distance - b.distance);
   const offset = options.offset ?? 0;
   return hits.slice(offset, offset + options.limit);
-}
-
-/**
- * Distance beyond which a hit counts as noise: `minSigma` standard deviations
- * closer than the library's average distance to this query.
- *
- * The cutoff has to be relative, because the *absolute* scale of text↔image
- * similarity is a property of the model rather than of relevance. Over the same
- * photos CLIP ViT-B/32 centres its similarities around 0.20 and a strong match
- * reaches ~0.31, while SigLIP2 centres around 0.03 and a strong match reaches
- * only ~0.15 — so any fixed similarity floor keeps every photo for one model
- * and none for the other. How far a match stands out from the pack, on the
- * other hand, is comparable across models (and across queries).
- */
-function _weakTailCutoff(hits: SearchHit[], minSigma?: number): number {
-  if (minSigma === undefined || hits.length < MIN_SAMPLES_FOR_CUTOFF) return Infinity;
-
-  const mean = hits.reduce((total, hit) => total + hit.distance, 0) / hits.length;
-  const variance = hits.reduce((total, hit) => total + (hit.distance - mean) ** 2, 0) / hits.length;
-  const deviation = Math.sqrt(variance);
-  if (deviation <= Number.EPSILON) return Infinity;
-
-  return mean - minSigma * deviation;
 }

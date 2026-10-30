@@ -305,6 +305,26 @@ export async function getFileCountByPlace(params: { searchQuery?: SearchQuery })
 }
 
 /**
+ * Every geotagged asset in scope as bare coordinates, newest first, for the
+ * Places map. Lightweight on purpose: the map clusters thousands of these and
+ * only loads full assets for the few clusters it shows.
+ */
+export async function getGeoPoints(params: { searchQuery?: SearchQuery }) {
+  return selectFromDB(
+    kyselyDB
+      .selectFrom(scopedAssetsSubquery(params.searchQuery))
+      .select([
+        'filesQueryRes.id as id',
+        'filesQueryRes.latitude as latitude',
+        'filesQueryRes.longitude as longitude',
+      ])
+      .where('filesQueryRes.latitude', 'is not', null)
+      .where('filesQueryRes.longitude', 'is not', null)
+      .orderBy('filesQueryRes.date', 'desc'),
+  ) as Promise<{ id: string; latitude: number; longitude: number }[]>;
+}
+
+/**
  * Counts the assets matching a scope. Used by the intelligent filter chips to
  * score each candidate by how many results it would yield.
  */

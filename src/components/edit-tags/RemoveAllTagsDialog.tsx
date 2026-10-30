@@ -25,8 +25,8 @@ function _photosLabel(count: number): string {
   return `${count} ${count === 1 ? 'photo' : 'photos'}`;
 }
 
-function _keywordsLabel(count: number): string {
-  return `${count} ${count === 1 ? 'keyword' : 'keywords'}`;
+function _tagsLabel(count: number): string {
+  return `${count} ${count === 1 ? 'tag' : 'tags'}`;
 }
 
 async function _run(
@@ -120,12 +120,12 @@ export function RemoveAllTagsDialog() {
           </DialogTitle>
           <DialogDescription>
             {bulkAction.phase.kind === 'running'
-              ? 'Removing keywords from the library and photo files.'
+              ? 'Removing tags from the library and photo files.'
               : bulkAction.phase.kind === 'result'
                 ? 'Review what was updated and any files that could not be written.'
                 : tagCount === 0
                   ? `${assets.length === 1 ? 'This photo has' : 'These photos have'} no tags to remove.`
-                  : `Remove ${_keywordsLabel(tagCount)} from ${_photosLabel(assets.length)}.`}
+                  : `Remove ${_tagsLabel(tagCount)} from ${_photosLabel(assets.length)}.`}
           </DialogDescription>
         </DialogHeader>
 

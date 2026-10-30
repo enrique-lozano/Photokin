@@ -36,13 +36,13 @@ interface LocationMapProps {
   onMarkerChange?: (id: string, latitude: number, longitude: number) => void;
 }
 
-interface MapTheme {
+export interface MapTheme {
   name: 'standard' | 'satellite';
   url: string;
   attribution: string;
 }
 
-const MAP_THEMES: MapTheme[] = [
+export const MAP_THEMES: MapTheme[] = [
   {
     name: 'standard',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -55,7 +55,7 @@ const MAP_THEMES: MapTheme[] = [
   },
 ];
 
-const MAP_THEME_STORAGE_KEY = 'photokin.lightbox.mapThemeIndex';
+export const MAP_THEME_STORAGE_KEY = 'photokin.lightbox.mapThemeIndex';
 const MIN_ZOOM = 0;
 const MAX_ZOOM = 18;
 /** How long the "hold the modifier to zoom" hint stays up after a bare wheel. */
@@ -72,7 +72,7 @@ export function isValidLatLon(latitude: number, longitude: number): boolean {
   );
 }
 
-function readStoredThemeIndex(): number {
+export function readStoredThemeIndex(): number {
   const stored = Number(localStorage.getItem(MAP_THEME_STORAGE_KEY));
   return stored === 1 ? 1 : 0;
 }

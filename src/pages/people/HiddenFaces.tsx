@@ -1,6 +1,6 @@
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toastOnError } from '@/components/ui/toast';
 import { RegionsService } from '@/db/api/services/regions.service';
@@ -73,10 +73,10 @@ export function HiddenFaces() {
       </section>
     </div>
   ) : hiddenRegions.length === 0 ? (
-    <NoResultsIndicator
-      icon={<IconEyeOff size={56} strokeWidth={1.4} />}
+    <EmptyState
+      icon={IconEyeOff}
       title="No ignored faces"
-      description="Faces you ignore while reviewing land here, where you can name them or send them back for review."
+      description="Faces you choose to ignore while reviewing are kept here. You can still name them or send them back for review later."
     />
   ) : (
     <div className="overview-body">

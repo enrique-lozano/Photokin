@@ -5,6 +5,12 @@ import { getModelDir } from './models';
 type EmbeddingLine = { id?: string; embedding: number[] };
 type BatchLine = { batchId: number };
 const BATCH_TIMEOUT_MS = 5 * 60_000;
+/**
+ * The first query has to load the text model, and while background indexing
+ * runs it competes with the image session for CPU. Bound the wait so a search
+ * falls back to name/tag matches instead of spinning until indexing finishes.
+ */
+const TEXT_EMBED_TIMEOUT_MS = 45_000;
 
 function _parseEmbedding(line: string): EmbeddingLine | null {
   const match = line.match(/========> EMB: (.*)/);
@@ -184,19 +190,113 @@ export class ClipImageSession {
   }
 }
 
+/**
+ * Keeps the text model loaded between searches. The process exits by itself
+ * after a few idle minutes (see `TEXT_SESSION_IDLE_SECONDS` in clip.py), and
+ * the next search simply starts it again.
+ */
+class ClipTextSession {
+  private child: Child | null = null;
+  private startPromise: Promise<Child> | null = null;
+  private processPromise: Promise<unknown> | null = null;
+  private waiting = new Map<
+    string,
+    { resolve: (embedding: number[]) => void; reject: (error: Error) => void }
+  >();
+  private sequence = 0;
+
+  constructor(readonly modelId: string) {}
+
+  async embed(query: string): Promise<number[]> {
+    const child = await this._start();
+    const id = String(++this.sequence);
+    return new Promise<number[]>((resolve, reject) => {
+      // A slow first load (e.g. while indexing) fails this query but keeps
+      // loading, so the next search is fast instead of starting over.
+      const timeout = setTimeout(() => {
+        this.waiting.delete(id);
+        reject(new Error(`CLIP text encoding timed out after ${TEXT_EMBED_TIMEOUT_MS}ms`));
+      }, TEXT_EMBED_TIMEOUT_MS);
+      this.waiting.set(id, {
+        resolve: (embedding) => {
+          clearTimeout(timeout);
+          resolve(embedding);
+        },
+        reject: (error) => {
+          clearTimeout(timeout);
+          reject(error);
+        },
+      });
+      child.write(`${JSON.stringify({ id, text: query })}\n`).catch((error) => {
+        this.waiting.get(id)?.reject(new Error(String(error)));
+        this.waiting.delete(id);
+      });
+    });
+  }
+
+  async shutdown(): Promise<void> {
+    const child = this.child;
+    if (child) {
+      try {
+        await child.write(`${JSON.stringify({ type: 'shutdown' })}\n`);
+      } catch {
+        await child.kill().catch(() => {});
+      }
+    }
+    await this.processPromise?.catch(() => {});
+  }
+
+  private async _start(): Promise<Child> {
+    if (this.child) return this.child;
+    if (this.startPromise) return this.startPromise;
+
+    const modelDir = await getModelDir(this.modelId);
+    this.startPromise = new Promise<Child>((resolve, reject) => {
+      let started = false;
+      const exited = (error: Error) => {
+        this.child = null;
+        this.startPromise = null;
+        for (const { reject: rejectQuery } of this.waiting.values()) rejectQuery(error);
+        this.waiting.clear();
+        if (!started) reject(error);
+      };
+      this.processPromise = spawnSidecar('resources/clip/clip', {
+        args: ['text-session', '--model-dir', modelDir],
+        onExecutionStarted: (child) => {
+          started = true;
+          this.child = child;
+          resolve(child);
+        },
+        onStdout: (output) => {
+          for (const line of output.split(/\r?\n/)) {
+            const parsed = _parseEmbedding(line);
+            if (!parsed?.id) continue;
+            this.waiting.get(parsed.id)?.resolve(parsed.embedding);
+            this.waiting.delete(parsed.id);
+          }
+        },
+      })
+        .then(() => exited(new Error('CLIP text session exited')))
+        .catch((error) => exited(error instanceof Error ? error : new Error(String(error))));
+    });
+    return this.startPromise;
+  }
+}
+
+let textSession: ClipTextSession | null = null;
+
 /** Encode a text query into the shared CLIP embedding space. */
-export async function embedText(modelId: string, query: string): Promise<number[]> {
-  const modelDir = await getModelDir(modelId);
-  let embedding: number[] | null = null;
+export function embedText(modelId: string, query: string): Promise<number[]> {
+  if (textSession?.modelId !== modelId) {
+    void textSession?.shutdown();
+    textSession = new ClipTextSession(modelId);
+  }
+  return textSession.embed(query);
+}
 
-  await spawnSidecar('resources/clip/clip', {
-    args: ['text', query, '--model-dir', modelDir],
-    onStdout: (line) => {
-      const parsed = _parseEmbedding(line);
-      if (parsed) embedding = parsed.embedding;
-    },
-  });
-
-  if (!embedding) throw new Error('CLIP text encoding produced no embedding');
-  return embedding;
+/** Closes the text model process, e.g. before its files are deleted. */
+export async function stopTextSession(): Promise<void> {
+  const session = textSession;
+  textSession = null;
+  await session?.shutdown();
 }

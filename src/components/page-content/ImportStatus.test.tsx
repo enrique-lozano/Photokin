@@ -1,7 +1,8 @@
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { NoResultsIndicator } from '../NoResultsIndicator';
+import { IconTag } from '@tabler/icons-react';
+import { EmptyState } from '../ui/empty-state';
 import { ImportStatus, ImportStatusProvider } from './ImportStatus';
 
 const state = vi.hoisted(() => ({
@@ -68,7 +69,7 @@ describe('ImportStatus', () => {
     state.data.metadata = 1;
     const markup = renderToStaticMarkup(
       <ImportStatusProvider>
-        <NoResultsIndicator title="No tags yet" pendingImport="metadata" />
+        <EmptyState icon={IconTag} title="No tags yet" pendingImport="metadata" />
       </ImportStatusProvider>,
     );
     expect(markup).toContain('No matches yet');
@@ -80,7 +81,7 @@ describe('ImportStatus', () => {
     state.running = false;
     const markup = renderToStaticMarkup(
       <ImportStatusProvider>
-        <NoResultsIndicator title="No tags yet" pendingImport="metadata" />
+        <EmptyState icon={IconTag} title="No tags yet" pendingImport="metadata" />
       </ImportStatusProvider>,
     );
     expect(markup).toContain('Import is unfinished');
@@ -91,7 +92,7 @@ describe('ImportStatus', () => {
     state.data.locations = 1;
     const markup = renderToStaticMarkup(
       <ImportStatusProvider>
-        <NoResultsIndicator title="No tags yet" pendingImport="metadata" />
+        <EmptyState icon={IconTag} title="No tags yet" pendingImport="metadata" />
       </ImportStatusProvider>,
     );
     expect(markup).toContain('No tags yet');
@@ -102,7 +103,7 @@ describe('ImportStatus', () => {
     state.data.locations = 1;
     const markup = renderToStaticMarkup(
       <ImportStatusProvider>
-        <NoResultsIndicator title="No photos/videos here" pendingImport="places" />
+        <EmptyState icon={IconTag} title="No places yet" pendingImport="places" />
       </ImportStatusProvider>,
     );
     expect(markup).toContain('No matches yet');
@@ -112,7 +113,7 @@ describe('ImportStatus', () => {
     const renderEmpty = () =>
       renderToStaticMarkup(
         <ImportStatusProvider>
-          <NoResultsIndicator title="Tag not found" />
+          <EmptyState icon={IconTag} title="Tag not found" />
         </ImportStatusProvider>,
       );
     expect(renderEmpty()).toContain('Tag not found');

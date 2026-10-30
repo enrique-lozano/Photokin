@@ -3,6 +3,7 @@
 import './system/devErrorOverlay';
 
 import { toast } from '@/components/ui/toast';
+import { isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { platform } from '@tauri-apps/plugin-os';
 import ReactDOM from 'react-dom/client';
@@ -29,7 +30,8 @@ import { WIPE_USER_DATA_EVENT, WipeUserDataPayload, removeAllUserData } from './
 initSettings();
 
 // Lets CSS adapt the window chrome per OS, e.g. room for the macOS traffic lights.
-document.documentElement.dataset.platform = platform();
+// Skipped outside Tauri so the UI kit (/components) also opens in a plain browser.
+if (isTauri()) document.documentElement.dataset.platform = platform();
 
 // Suppress the WebView's own context menu so the app's menus are the only ones.
 document.addEventListener('contextmenu', (event) => event.preventDefault());

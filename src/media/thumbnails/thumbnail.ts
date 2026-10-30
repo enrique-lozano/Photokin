@@ -4,12 +4,12 @@ import {
   WEBVIEW_DISPLAYABLE_IMAGE_FORMATS,
 } from '@/common/supportedFormats';
 import { storeAssetPerceptualHash } from '@/db/api/services/assetFingerprints.service';
+import { getLibraryDataDir } from '@/db/connection/libraryDataDir';
 import { AssetInClient } from '@/db/models/AssetInClient';
 import { debugLog } from '@/system/devLogger';
 import { joinPathSync, tauriFileStat } from '@/system/diskManager';
 import { TaskQueue } from '@/utils/taskQueue/taskQueue';
 import { invoke } from '@tauri-apps/api/core';
-import { appLocalDataDir } from '@tauri-apps/api/path';
 import { exists, mkdir, remove } from '@tauri-apps/plugin-fs';
 import { encodeWebpDerivative, libwebpEncodeArgs, runFfmpeg } from './imageEncoding';
 import { default_thumbnail_options, ThumbnailOptions, ThumbnailSize } from './thumbnailOptions.model';
@@ -110,11 +110,11 @@ type ThumbnailAsset = Pick<AssetInClient, 'id' | 'fullPath'> &
 
 const thumbnailResolutionInFlight = new Map<string, Promise<string | null>>();
 
-/** The base path where all the thumbnails are stored. Cached: `appLocalDataDir()` is IPC. */
+/** The base path where all the thumbnails are stored. Cached: resolving it is IPC. */
 let cachedThumbnailsBasePath: Promise<string> | null = null;
 
 export async function getThumbnailsBasePath() {
-  cachedThumbnailsBasePath ??= appLocalDataDir()
+  cachedThumbnailsBasePath ??= getLibraryDataDir()
     .then((path) => joinPathSync(path, 'thumbnails'))
     .catch((error) => {
       cachedThumbnailsBasePath = null;

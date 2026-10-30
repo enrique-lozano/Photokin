@@ -1,10 +1,10 @@
 import { EntityOverflowMenu } from '@/components/entity-actions/HeaderActionsBar';
 import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
 import { Button } from '@/components/ui/button';
 import { confirm } from '@/components/ui/confirmationDialogStore';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RegionsService } from '@/db/api/services/regions.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
@@ -172,10 +172,10 @@ export function SuggestedFaces() {
       </div>
     </div>
   ) : groups.length === 0 ? (
-    <NoResultsIndicator
-      icon={<IconSparkles size={56} strokeWidth={1.4} />}
+    <EmptyState
+      icon={IconSparkles}
       title="No suggestions to review"
-      description="When face matching links a face to someone you've named, it waits here for your OK."
+      description="When Photokin thinks a face belongs to someone you’ve named, it waits here for you to confirm."
     />
   ) : (
     <div className="overview-body">

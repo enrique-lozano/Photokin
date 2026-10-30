@@ -12,14 +12,17 @@ import {
   IconAlertTriangle,
   IconEyeOff,
   IconSparkles,
+  IconUser,
   IconUserQuestion,
   IconUsers,
 } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { CSSProperties, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
+import { EmptyState } from '@/components/ui/empty-state';
 import { SecondaryNavbar } from '../../components/secondary-navbar/SecondaryNavbar';
 import { formatSidebarFilterCount } from '../../components/secondary-navbar/sidebarFilterCount';
+import { SidebarNoMatches } from '../../components/secondary-navbar/SidebarNoMatches';
 import { SidebarSearchInput } from '../../components/secondary-navbar/SidebarSearchInput';
 import { SidebarSortMenu, SidebarSortOption } from '../../components/secondary-navbar/SidebarSortMenu';
 import { useHiddenItemsStore } from '../../stores/hiddenItemsStore';
@@ -111,6 +114,7 @@ export function PeopleLayout() {
   const legacyHiddenMigrated = useRef(false);
 
   const knownPeople = useMemo(() => (people ?? []).filter((person) => person.kind === 'known'), [people]);
+  const noPeople = !loading && knownPeople.length === 0;
   useEffect(() => {
     if (people === null || legacyHiddenMigrated.current) return;
     legacyHiddenMigrated.current = true;
@@ -330,28 +334,42 @@ export function PeopleLayout() {
           {/* Real items: the filter opens the zone, then the title with the total
               count on the left and the sort on the right. While filtering, the
               count is the matches over that same total. */}
-          <SidebarSearchInput placeholder="Filter people" value={filter} onValueChange={setFilter} />
-          <div className="sidebar-section-label">
-            <span
-              className={clsx(
-                'sidebar-section-label__count',
-                filter.trim() && 'sidebar-section-label__count--filtered',
-              )}
-            >
-              {loading ? (
-                <Skeleton className="sidebar-count-skeleton" />
-              ) : (
-                formatSidebarFilterCount(knownPeople.length, filter.trim() ? visiblePeople.length : null)
-              )}
-            </span>
-            <span>People</span>
-            <SidebarSortMenu
-              value={activeSort}
-              options={sortOptions}
-              onChange={(value) => setSort('people', value)}
-              ariaLabel="Sort people"
+          {noPeople ? (
+            <EmptyState
+              size="sidebar"
+              icon={IconUser}
+              title="No people yet"
+              description="People you name show up here."
             />
-          </div>
+          ) : (
+            <>
+              <SidebarSearchInput placeholder="Filter people" value={filter} onValueChange={setFilter} />
+              <div className="sidebar-section-label">
+                <span
+                  className={clsx(
+                    'sidebar-section-label__count',
+                    filter.trim() && 'sidebar-section-label__count--filtered',
+                  )}
+                >
+                  {loading ? (
+                    <Skeleton className="sidebar-count-skeleton" />
+                  ) : (
+                    formatSidebarFilterCount(knownPeople.length, filter.trim() ? visiblePeople.length : null)
+                  )}
+                </span>
+                <span>People</span>
+                <SidebarSortMenu
+                  value={activeSort}
+                  options={sortOptions}
+                  onChange={(value) => setSort('people', value)}
+                  ariaLabel="Sort people"
+                />
+              </div>
+            </>
+          )}
+          {!loading && filter.trim() && visiblePeople.length === 0 && (
+            <SidebarNoMatches noun="people" onClear={() => setFilter('')} />
+          )}
 
           <section className="sidebar-scroll-list people-list-container">
             {loading ? (

@@ -291,7 +291,7 @@ function PanelBody({
               >
                 <button disabled={disabled} onClick={() => useEditTagsDialog.getState().openDialog([asset])}>
                   <IconPlus size={14} />
-                  {tags.length ? 'Add' : 'Add keyword'}
+                  {tags.length ? 'Add' : 'Add tag'}
                 </button>
               </Badge>
             </div>

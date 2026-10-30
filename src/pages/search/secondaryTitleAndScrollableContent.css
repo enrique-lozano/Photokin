@@ -96,7 +96,7 @@
   padding: 0 16px;
 }
 
-.search-page .photo-grid__sections:has(> .no-results__container) {
+.search-page .photo-grid__sections:has(> .empty-state) {
   display: flex;
   flex: 1;
 }

@@ -115,6 +115,8 @@ src/
 src-tauri/
 └── src/commands/         # Tauri IPC (thin; heavy work in Rust)
 scripts/                  # Sidecar setup (ffmpeg, face recognition)
+website/                  # Public website + user guide (VitePress, GitHub Pages)
+screenshots/              # README/website screenshot capture + slide template
 ```
 
 ## Run Targets

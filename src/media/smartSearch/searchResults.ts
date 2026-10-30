@@ -84,7 +84,17 @@ function _orderedUnique(ids: string[], limit: number): string[] {
  */
 export async function resolveSearchResults(
   query: string,
-  options: { candidateIds?: string[]; limit?: number; onPartial?: (ids: string[]) => void } = {},
+  options: {
+    candidateIds?: string[];
+    limit?: number;
+    onPartial?: (ids: string[]) => void;
+    /** Also rank photos below the model's match cutoff ("Show weaker matches"). */
+    includeWeak?: boolean;
+    /** The semantic pass ran, so weaker matches may exist beyond the cutoff. */
+    onSemanticRan?: () => void;
+    /** The semantic pass failed, so only text matches were returned. */
+    onSemanticError?: (error: unknown) => void;
+  } = {},
 ): Promise<string[]> {
   const trimmed = query.trim();
   if (!trimmed) return [];
@@ -97,10 +107,16 @@ export async function resolveSearchResults(
   const modelId = useSmartSearchSettingsStore.getState().activeModel;
   if (await isModelDownloaded(modelId)) {
     try {
-      const hits = await smartSearch(trimmed, { candidateIds: options.candidateIds, limit });
+      const hits = await smartSearch(trimmed, {
+        candidateIds: options.candidateIds,
+        limit,
+        includeWeak: options.includeWeak,
+      });
       semanticIds = hits.map((hit) => hit.assetId);
+      options.onSemanticRan?.();
     } catch (error) {
       console.error('Semantic search failed; showing text matches only:', error);
+      options.onSemanticError?.(error);
     }
   }
 

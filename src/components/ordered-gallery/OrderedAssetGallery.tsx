@@ -1,8 +1,12 @@
-import { IconMoodEmpty } from '@tabler/icons-react';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
+import { IconSearch } from '@tabler/icons-react';
+import { ReactNode, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ClearLibraryFiltersButton,
+  useHasActiveLibraryFilters,
+} from '@/components/app-shell/ClearLibraryFilters';
 import { PhotoInGallery } from '@/components/photo-in-gallery/PhotoInGallery';
 import { computeSegmentLayout } from '@/components/timeline-gallery/galleryLayout';
+import { EmptyState } from '@/components/ui/empty-state';
 import '@/components/timeline-gallery/timelineGallery.css';
 import { LightboxImageContext, LightboxOrigin } from '@/context/LightboxContext';
 import { AssetsService } from '@/db/api/services/assets.service';
@@ -15,13 +19,23 @@ import { useAppStore } from '@/stores/appState';
  * lightbox so it stays visually consistent; navigation inside the lightbox is
  * scoped to the same id set.
  */
-export function OrderedAssetGallery({ assetIds, isLoading }: { assetIds: string[]; isLoading?: boolean }) {
+export function OrderedAssetGallery({
+  assetIds,
+  isLoading,
+  emptyAction,
+}: {
+  assetIds: string[];
+  isLoading?: boolean;
+  /** Next step offered when there are no results (besides clearing filters). */
+  emptyAction?: ReactNode;
+}) {
   const galleryThumbnailSize = useAppStore((state) => state.galleryThumbnailSize);
   const layoutMode = useAppStore((state) => state.layoutMode);
   const setDisplayedElementsCount = useAppStore((state) => state.setDisplayedElementsCount);
   const setDisplayedElementsSizeBytes = useAppStore((state) => state.setDisplayedElementsSizeBytes);
   const setGallerySelectionScope = useAppStore((state) => state.setGallerySelectionScope);
   const { openLightbox } = useContext(LightboxImageContext);
+  const hasLibraryFilters = useHasActiveLibraryFilters();
 
   const [assets, setAssets] = useState<AssetInClient[]>([]);
   const [containerWidth, setContainerWidth] = useState(550);
@@ -88,10 +102,22 @@ export function OrderedAssetGallery({ assetIds, isLoading }: { assetIds: string[
   return (
     <div ref={containerRef} className="photo-grid__sections">
       {showEmpty ? (
-        <NoResultsIndicator
-          icon={<IconMoodEmpty size={64} strokeWidth={1} />}
+        <EmptyState
+          icon={IconSearch}
           title="No results"
-          description="Try a different search or adjust the filters"
+          description={
+            hasLibraryFilters
+              ? 'Nothing matches this search with the current library filters. Try other words, or clear the filters.'
+              : 'Try other words, a shorter search, or check the spelling.'
+          }
+          action={
+            hasLibraryFilters || emptyAction ? (
+              <>
+                {emptyAction}
+                {hasLibraryFilters && <ClearLibraryFiltersButton />}
+              </>
+            ) : undefined
+          }
         />
       ) : (
         <div

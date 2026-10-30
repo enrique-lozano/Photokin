@@ -110,7 +110,32 @@ The workflow signs with the `TAURI_SIGNING_PRIVATE_KEY` repository secret (and
 key outside the repository: if it is lost, installed copies can no longer verify,
 and therefore never receive, new updates.
 
+## Website and screenshots
+
+The public website and user guide live in `website/` (VitePress) and deploy to
+GitHub Pages when `website/` changes on `main`:
+
+```powershell
+pnpm website:dev       # live preview at http://localhost:5173/Photokin/
+pnpm website:build     # what CI runs; fails on broken internal links
+```
+
+When a change affects how users do something, update the matching page in
+`website/guide/`. README and website screenshots are generated from a demo
+library; see [Screenshots](../screenshots/README.md).
+
 ## Development tools
+
+To try things without touching your own library, run the app on a separate
+library profile:
+
+```powershell
+pnpm dev:demo            # its own database, thumbnails and Trash, kept between runs
+pnpm dev:demo --reset    # start that library from scratch
+```
+
+Add `demo/` (or any folder) to it. Search models are shared, so they aren't
+downloaded twice.
 
 `pnpm run dev` starts the frontend tooling on port 1420, but it is not a fully
 functional browser edition. Native features require Tauri.

@@ -4,9 +4,9 @@ Thank you for helping make photo organization simpler. You can contribute throug
 bug reports, ideas, documentation, design, or code; you do not need to be a
 developer.
 
-Please follow our [Code of Conduct](CODE_OF_CONDUCT.md). Photokin is preparing
-for its first public release, so public repository links may not be available
-until it opens.
+Please follow our [Code of Conduct](CODE_OF_CONDUCT.md). New to Photokin as a
+user? The [user guide](https://enrique-lozano.github.io/Photokin/guide/) explains
+how everything works.
 
 ## Report a bug or suggest a feature
 
@@ -37,9 +37,13 @@ sensitive originals. See [Photo safety](docs/PHOTO_SAFETY.md).
 
 Help us make the app understandable both to casual users and to photographers
 who need precise metadata controls. Suggest plain-language wording, explain a
-confusing workflow, fix documentation, or share a UI mockup in an issue.
+confusing workflow, fix documentation, or share a UI mockup in an issue. The
+user guide lives in [`website/guide/`](website/guide/); every page has a
+"Suggest a change to this page" link.
 
-For documentation screenshots, use a separate test library with licensed,
+The README and website screenshots are generated from a demo library of
+public-domain photos; see [Screenshots](screenshots/README.md). For other
+documentation images, use a separate test library with licensed,
 non-sensitive images. Hide personal paths, GPS details, and face names. Capture
 the current UI, check both the image and its metadata, and include meaningful
 alternative text. Do not present mockups as released features.
@@ -61,7 +65,7 @@ and results. Mention anything you could not verify.
 
 ## Support the project
 
-You can also [support development with a donation](README.md#support-the-project).
+You can also [support development with a donation](README.md#support-the-project-).
 Donations are optional; useful reports, documentation, and thoughtful feedback
 matter just as much.
 

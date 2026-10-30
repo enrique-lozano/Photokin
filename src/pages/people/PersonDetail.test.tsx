@@ -48,7 +48,7 @@ vi.mock('@/components/page-content/usePageChrome', () => ({
   useCountStatus: vi.fn(),
   usePageChrome: vi.fn(),
 }));
-vi.mock('@/components/NoResultsIndicator', () => ({ NoResultsIndicator: () => null }));
+vi.mock('@/components/ui/empty-state', () => ({ EmptyState: () => null }));
 vi.mock('@/components/page-content/FilterChipRow', () => ({
   FilterChipRow: () => null,
   FilterChipPlaceholders: () => null,

@@ -3,9 +3,11 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { confirm } from '@/components/ui/confirmationDialogStore';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SeparatedListView } from '@/components/ui/separated-list-view';
 import { TRASH_RETENTION_DAYS } from '@/system/trash';
 import { formatBytes } from '@/utils/numberFormatter';
-import { IconArrowsSort, IconCheck, IconTrash } from '@tabler/icons-react';
+import { IconArrowsSort, IconCheck, IconEyeOff, IconFilter, IconTrash } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
 import { DuplicateRelationship } from './duplicateTypes';
@@ -159,10 +161,16 @@ export function DuplicatesSidebar() {
         </div>
       </div>
 
-      <div className="sidebar-scroll-list dup-set-list">
-        {listSets.map((set) => (
+      <SeparatedListView
+        key={`${typeFilter}:${sort}`}
+        className="dup-set-list"
+        aria-label="Duplicate sets"
+        items={listSets}
+        itemKey={(set) => set.id}
+        estimateSize={63}
+        separatorBuilder={() => <div style={{ height: 3 }} />}
+        renderItem={(set) => (
           <SetListRow
-            key={set.id}
             set={set}
             active={!showingIgnored && set.id === activeSetId}
             decisions={decisions}
@@ -174,13 +182,15 @@ export function DuplicatesSidebar() {
               setActiveSet(set.id);
             }}
           />
-        ))}
-        {listSets.length === 0 && (
-          <p className="dup-list-empty">
-            {showingIgnored ? 'No ignored sets.' : 'No sets match this filter.'}
-          </p>
         )}
-      </div>
+        emptyState={
+          <EmptyState
+            size="sidebar"
+            icon={showingIgnored ? IconEyeOff : IconFilter}
+            title={showingIgnored ? 'No ignored sets' : 'No sets of this type'}
+          />
+        }
+      />
 
       {!showingIgnored && (
         <Accordion type="single" collapsible className="dup-bulk">

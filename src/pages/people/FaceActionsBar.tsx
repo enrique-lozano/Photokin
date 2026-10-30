@@ -44,11 +44,41 @@ import { ProcessKind, useProcessStore } from '@/stores/processStore';
 import { IconAlertTriangle, IconCopy, IconRefresh, IconScan, IconSettings } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { useEffect, useMemo, useState } from 'react';
+import { create } from 'zustand';
 import { AlbumScopePicker } from './AlbumScopePicker';
 import { buildFaceScanSearchQuery, useFaceScanActions } from './useFaceScanActions';
 
 const TEST_SCAN_SIZE = 250;
 const TEST_SCAN_THRESHOLD = 1000;
+
+/** Lets empty states open the Find faces dialog that lives in the page header. */
+const useFindFacesDialogStore = create<{ open: boolean; setOpen: (open: boolean) => void }>((set) => ({
+  open: false,
+  setOpen: (open) => set({ open }),
+}));
+
+function _useFaceRunRunning() {
+  return useProcessStore((state) =>
+    state.processes.some(
+      (process) =>
+        process.status === 'running' &&
+        (process.kind === ProcessKind.FaceDetect || process.kind === ProcessKind.FaceRecognize),
+    ),
+  );
+}
+
+/** A "Find faces" button for empty states; it opens the header's dialog. */
+export function FindFacesButton() {
+  const running = _useFaceRunRunning();
+  const setOpen = useFindFacesDialogStore((state) => state.setOpen);
+
+  return (
+    <Button variant="outline" disabled={running} onClick={() => setOpen(true)}>
+      <IconScan size={16} />
+      {running ? 'Finding faces…' : 'Find faces'}
+    </Button>
+  );
+}
 
 type RunMode = 'full' | 'test' | 'recognize';
 
@@ -248,16 +278,11 @@ function CommonFaceSettings({ showDetection }: { showDetection: boolean }) {
 export function FaceActionsBar() {
   const { findFaces, recognizeFaces } = useFaceScanActions();
   const [runningAction, setRunningAction] = useState<RunMode | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const dialogOpen = useFindFacesDialogStore((state) => state.open);
+  const setDialogOpen = useFindFacesDialogStore((state) => state.setOpen);
   const [mode, setMode] = useState<RunMode>('full');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const faceRunRunning = useProcessStore((state) =>
-    state.processes.some(
-      (process) =>
-        process.status === 'running' &&
-        (process.kind === ProcessKind.FaceDetect || process.kind === ProcessKind.FaceRecognize),
-    ),
-  );
+  const faceRunRunning = _useFaceRunRunning();
   const recognizeRunning = useProcessStore((state) =>
     state.processes.some(
       (process) => process.status === 'running' && process.kind === ProcessKind.FaceRecognize,
@@ -360,8 +385,15 @@ export function FaceActionsBar() {
     }
   }
 
+  // Every opening starts on the default mode, whoever opened it.
+  useEffect(() => {
+    if (dialogOpen) setMode('full');
+  }, [dialogOpen]);
+
+  // An open request must not outlive the page, or the next one would pop it up.
+  useEffect(() => () => setDialogOpen(false), [setDialogOpen]);
+
   function openDialog() {
-    setMode('full');
     setDialogOpen(true);
   }
 

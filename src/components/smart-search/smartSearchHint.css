@@ -20,6 +20,12 @@
   background-color: hsl(var(--muted) / 0.65);
 }
 
+.smart-search-hint--static,
+.smart-search-hint--static:hover {
+  cursor: default;
+  background-color: hsl(var(--muted) / 0.4);
+}
+
 .smart-search-hint__icon {
   @apply text-primary;
   flex-shrink: 0;

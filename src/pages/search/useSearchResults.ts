@@ -26,6 +26,11 @@ interface UseSearchResultsResult {
   isSearching: boolean;
   /** The filters matched nothing, so these results come from a semantic retry. */
   didFallBack: boolean;
+  /** Smart search failed, so only filename, tag and person matches are shown. */
+  smartSearchFailed: boolean;
+  /** Smart search ran with its match cutoff, so weaker matches can be asked for. */
+  canShowWeaker: boolean;
+  showWeaker: () => void;
   parsed: ParsedSearchInput;
 }
 
@@ -96,9 +101,21 @@ export function useSearchResults(query: string): UseSearchResultsResult {
   const [assetIds, setAssetIds] = useState<string[]>([]);
   const [didFallBack, setDidFallBack] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [smartSearchFailed, setSmartSearchFailed] = useState(false);
+  const [semanticRan, setSemanticRan] = useState(false);
+  // Keyed to the search it was asked for, so a new search starts strict again.
+  const searchKey = `${trimmed}\0${filterKey}`;
+  const [weakFor, setWeakFor] = useState<string | null>(null);
+  const includeWeak = weakFor === searchKey;
 
   useEffect(() => {
     let cancelled = false;
+    const onSemanticError = () => {
+      if (!cancelled) setSmartSearchFailed(true);
+    };
+    const onSemanticRan = () => {
+      if (!cancelled) setSemanticRan(true);
+    };
 
     const showTimeline = () => {
       setMode('timeline');
@@ -109,6 +126,11 @@ export function useSearchResults(query: string): UseSearchResultsResult {
     setIsSearching(true);
     setAssetIds([]);
     setDidFallBack(false);
+    setSmartSearchFailed(false);
+    setSemanticRan(false);
+    // Free text always ends up ranked, so don't flash the unfiltered timeline
+    // (the whole library) while the results are still being resolved.
+    if (parsed.freeText) setMode('ordered');
 
     (async () => {
       const filters = await _resolveEntityFilters(parsedSearchFilters(parsed));
@@ -120,7 +142,11 @@ export function useSearchResults(query: string): UseSearchResultsResult {
 
       /** Rank everything typed, dropping the filters that matched nothing. */
       const runFallback = async () => {
-        const ids = await resolveSearchResults(parsed.fallbackText || parsed.freeText);
+        const ids = await resolveSearchResults(parsed.fallbackText || parsed.freeText, {
+          includeWeak,
+          onSemanticRan,
+          onSemanticError,
+        });
         if (cancelled) return;
         setMode('ordered');
         setAssetIds(ids);
@@ -153,6 +179,9 @@ export function useSearchResults(query: string): UseSearchResultsResult {
       if (candidateIds?.length !== 0) {
         const ids = await resolveSearchResults(parsed.freeText, {
           candidateIds,
+          includeWeak,
+          onSemanticRan,
+          onSemanticError,
           // Render the fast filename/tag/person matches while the semantic
           // (sidecar) pass is still running.
           onPartial: (partial) => {
@@ -185,7 +214,17 @@ export function useSearchResults(query: string): UseSearchResultsResult {
     return () => {
       cancelled = true;
     };
-  }, [trimmed, filterKey]);
+  }, [trimmed, filterKey, includeWeak]);
 
-  return { mode, searchQuery, assetIds, isSearching, didFallBack, parsed };
+  return {
+    mode,
+    searchQuery,
+    assetIds,
+    isSearching,
+    didFallBack,
+    smartSearchFailed,
+    canShowWeaker: semanticRan && !includeWeak,
+    showWeaker: () => setWeakFor(searchKey),
+    parsed,
+  };
 }

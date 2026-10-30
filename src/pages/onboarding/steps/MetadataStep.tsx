@@ -41,7 +41,7 @@ export function MetadataStep({ goNext, goBack }: OnboardingStepProps) {
 
   return (
     <OnboardingStep
-      start={<p className="onboarding__hint">You can change this any time in Settings → File metadata.</p>}
+      start={<p className="onboarding__hint">You can change this any time in Settings → Metadata.</p>}
       onBack={goBack}
       end={
         <Button onClick={goNext}>
@@ -52,7 +52,7 @@ export function MetadataStep({ goNext, goBack }: OnboardingStepProps) {
       <OnboardingHeading
         icon={<IconFileText size={30} />}
         title="Where should metadata changes be saved?"
-        subtitle="Photokin reads existing metadata to help organize your collection. Choose whether changes to tags, ratings, and other details stay in your library or are also written to your photo files."
+        subtitle="Each photo file stores details such as its date, place and camera, known as metadata. Choose whether your edits to them (tags, ratings, dates…) stay in Photokin or are also saved into the files."
       />
 
       <div className="onboarding__metadata-choices" role="radiogroup" aria-label="File metadata mode">

@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { AssetsService } from '../../db/api/services/assets.service';
 import { useLiveQuery } from '../../db/connection/useLiveQuery';
 import { useWriteBackStore } from '../../stores/writeBackStore';
+import { SettingsTab } from '../../stores/settingsStore';
 import { useMetadataModeInfo } from '../metadata-mode/useMetadataModeInfo';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { openSettingsWindow } from '../../utils/openSettingsWindow';
 import { FooterPopoverBody } from './FooterPopoverBody';
 
 interface MetadataModeChipProps {
@@ -71,6 +73,19 @@ export function MetadataModeChip({ sync, isSyncing }: MetadataModeChipProps) {
             tone={info.mode === 'on-sync' ? 'warning' : 'default'}
           >
             <p className="text-xs text-muted-foreground">{info.hint}</p>
+            {info.mode === 'library-only' && (
+              <Button
+                variant="link"
+                size="xs"
+                className="h-auto justify-start p-0 text-xs"
+                onClick={() => {
+                  setOpen(false);
+                  void openSettingsWindow(SettingsTab.Metadata);
+                }}
+              >
+                Change in Settings › Metadata
+              </Button>
+            )}
             {info.mode === 'on-sync' && (
               <Button size="sm" className="w-full" onClick={runSync} disabled={isSyncing || pending === 0}>
                 {isSyncing ? 'Writing…' : pending > 0 ? `Write ${_files(pending)} now` : 'Nothing to write'}

@@ -1,9 +1,9 @@
 import { FaceContextTooltip } from '@/components/face-thumbnail/FaceContextTooltip';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
 import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FaceIssue, RegionsService } from '@/db/api/services/regions.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
@@ -59,10 +59,10 @@ export function FaceIssues() {
         ))}
       </div>
     ) : issues.length === 0 ? (
-      <NoResultsIndicator
-        icon={<IconAlertTriangle size={56} strokeWidth={1.4} />}
+      <EmptyState
+        icon={IconAlertTriangle}
         title="No face issues"
-        description="Faces detected twice in the same photo show up here."
+        description="Everything looks right. If the same person is ever found twice in one photo, it shows up here to fix."
       />
     ) : (
       <div className="overview-body">

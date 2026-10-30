@@ -1,10 +1,16 @@
 import { CountryFlag } from '@/components/location/CountryFlag.tsx';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator.tsx';
+import {
+  ClearLibraryFiltersButton,
+  useHasActiveLibraryFilters,
+} from '@/components/app-shell/ClearLibraryFilters';
+import { ChipFiltersEmptyState } from '@/components/page-content/ChipFiltersEmptyState';
 import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
-import { ImportStatus, ImportStatusProvider, useImportStatus } from '@/components/page-content/ImportStatus';
+import { ImportStatus, ImportStatusProvider } from '@/components/page-content/ImportStatus';
 import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { Button } from '@/components/ui/button.tsx';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { isPointInBounds, type MapBounds } from '@/components/location/mapBounds';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,20 +20,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SeparatedListView } from '@/components/ui/separated-list-view';
 import { AssetsService } from '@/db/api/services/assets.service.ts';
 import { countryNameFromCode } from '@/media/metadata/location/countryCode.ts';
-import { IconArrowsSort, IconMapPin, IconMapPinFilled, IconWorld } from '@tabler/icons-react';
+import { IconArrowsSort, IconMap, IconMapPin, IconMapPinFilled, IconWorld } from '@tabler/icons-react';
 import clsx from 'clsx';
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { PhotoMap } from '@/components/location/PhotoMap';
+import { LightboxImageContext } from '@/context/LightboxContext';
 import { FilterCriteria } from '../../common/query/filters/FilterCriteria.ts';
 import type { SearchFilter } from '../../common/query/filters/FilterTypes.ts';
 import { mergeSearchQueries } from '../../common/searchQueryUtils.ts';
 import { SecondaryNavbar } from '../../components/secondary-navbar/SecondaryNavbar.tsx';
 import { formatSidebarFilterCount } from '../../components/secondary-navbar/sidebarFilterCount';
+import { SidebarNoMatches } from '../../components/secondary-navbar/SidebarNoMatches';
 import { SidebarSearchInput } from '../../components/secondary-navbar/SidebarSearchInput.tsx';
 import { TimelineGallery } from '../../components/timeline-gallery/TimelineGallery.tsx';
 import { useLiveQuery } from '../../db/connection/useLiveQuery.tsx';
 import { useAppStore } from '../../stores/appState.ts';
+import { useHiddenItemsStore } from '@/stores/hiddenItemsStore';
 import { PlacesGroupBy, PlacesSort, useSidebarStore } from '../../stores/sidebarStore.ts';
 import { SecondaryTitleAndScrollableContent } from '../search/SecondaryTitleAndScrollableContent.tsx';
 import './places.css';
@@ -74,6 +88,10 @@ type CountryGroup = {
   places: PlaceListItem[];
   count: number;
 };
+
+type PlaceSidebarRow =
+  | { kind: 'country'; key: string; country: CountryGroup }
+  | { kind: 'place'; key: string; place: PlaceListItem; group: CountryGroup | null };
 
 function groupByCountry(places: PlaceListItem[], sort: PlacesSort): CountryGroup[] {
   const groupsByCountry = new Map<string, CountryGroup>();
@@ -161,10 +179,7 @@ export function PlacesPage() {
 }
 
 function PlacesContent() {
-  const importStatus = useImportStatus();
-  const placesPending =
-    importStatus?.data &&
-    (importStatus.data.scanning || importStatus.data.metadata > 0 || importStatus.data.locations > 0);
+  const hasLibraryFilters = useHasActiveLibraryFilters();
   const searchQuery = useAppStore((state) => state.searchQuery);
   const sort = useSidebarStore((state) => state.sort.places);
   const setSort = useSidebarStore((state) => state.setSort);
@@ -173,6 +188,11 @@ function PlacesContent() {
   const [searchFilter, setSearchFilter] = useState('');
   /** Key of the selected place, or of the selected country in country mode. */
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [area, setArea] = useState<MapBounds | null>(null);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
+  const showHiddenItems = useHiddenItemsStore((state) => state.showHiddenItems);
+  const { openLightbox } = useContext(LightboxImageContext);
 
   const { data: locationSections } = useLiveQuery(
     () => AssetsService.getFileCountByPlace({ searchQuery }),
@@ -184,6 +204,7 @@ function PlacesContent() {
     () => (locationSections ?? []).map((section) => toPlaceItem(section)),
     [locationSections],
   );
+  const noPlaces = locationSections !== null && places.length === 0;
 
   const visiblePlaces = useMemo(() => {
     const normalizedFilter = searchFilter.trim().toLowerCase();
@@ -206,14 +227,29 @@ function PlacesContent() {
   }, [countries, searchFilter]);
 
   const visibleItems = groupBy === 'country' ? visibleCountries : visiblePlaces;
+  const sidebarRows = useMemo<PlaceSidebarRow[]>(
+    () =>
+      groupBy === 'country'
+        ? visibleCountries.map((country) => ({ kind: 'country', key: country.key, country }))
+        : countryGroups.flatMap((group) =>
+            group.places.map((place, index) => ({
+              kind: 'place' as const,
+              key: place.key,
+              place,
+              group: index === 0 ? group : null,
+            })),
+          ),
+    [groupBy, visibleCountries, countryGroups],
+  );
 
   // Keep the selection valid as the live data changes, defaulting to the
   // first item so the gallery isn't empty on first visit.
   useEffect(() => {
+    if (area) return;
     if (!visibleItems.some((item) => item.key === selectedKey)) {
       setSelectedKey(visibleItems.at(0)?.key ?? null);
     }
-  }, [visibleItems, selectedKey]);
+  }, [visibleItems, selectedKey, area]);
 
   const selectedPlace =
     groupBy === 'place' ? (places.find((place) => place.key === selectedKey) ?? null) : null;
@@ -252,17 +288,41 @@ function PlacesContent() {
     return searchQuery;
   }, [searchQuery, selectedCountry, selectedPlace]);
 
+  const { data: geoPoints, error: mapError } = useLiveQuery(
+    () => AssetsService.getGeoPoints({ searchQuery }),
+    ['assets', 'fileTags', 'tagRegionInfo'],
+    { extDependencies: [searchQuery, showHiddenItems] },
+  );
+  const { data: focusPoints, error: focusError } = useLiveQuery(
+    () => (selectedKey ? AssetsService.getGeoPoints({ searchQuery: galleryQuery }) : Promise.resolve(null)),
+    ['assets', 'fileTags', 'tagRegionInfo'],
+    { extDependencies: [galleryQuery, selectedKey, showHiddenItems] },
+  );
+  const areaIds = useMemo(
+    () =>
+      area
+        ? (geoPoints ?? []).filter((point) => isPointInBounds(point, area)).map((point) => point.id)
+        : undefined,
+    [geoPoints, area],
+  );
+  const scopeKey = area ? JSON.stringify(area) : (selectedKey ?? undefined);
+
   const {
     chips,
     activeChipIds,
     toggleChip,
+    clear: clearChips,
     conditions,
     isLoading: chipsLoading,
     isRefreshing: chipsRefreshing,
   } = useContentFilterChips({
     searchQuery: galleryQuery,
-    resetKey: selectedKey ?? undefined,
+    assetIds: areaIds,
+    resetKey: scopeKey,
   });
+
+  const chipsEmptyState =
+    activeChipIds.length > 0 ? <ChipFiltersEmptyState onClear={clearChips} /> : undefined;
 
   const chipsFilter =
     chips.length > 0 ? (
@@ -281,11 +341,20 @@ function PlacesContent() {
     [galleryQuery, conditions],
   );
 
+  const openFromMap = async (id: string, scopeIds: string[]) => {
+    openLightbox(await AssetsService.getByUUID(id), undefined, { assetIds: scopeIds, preserveOrder: true });
+  };
+
+  const selectRow = (key: string) => {
+    setArea(null);
+    setSelectedKey(key);
+  };
+
   const renderPlaceRow = (place: PlaceListItem) => (
     <button
       key={place.key}
       className={clsx('place-list-row', selectedKey === place.key && 'selected')}
-      onClick={() => setSelectedKey(place.key)}
+      onClick={() => selectRow(place.key)}
     >
       <span className="place-icon">
         <IconMapPinFilled size={16} />
@@ -302,7 +371,7 @@ function PlacesContent() {
     <button
       key={country.key}
       className={clsx('place-list-row', selectedKey === country.key && 'selected')}
-      onClick={() => setSelectedKey(country.key)}
+      onClick={() => selectRow(country.key)}
     >
       <span className={clsx('place-icon', country.countryCode && 'place-icon--flag')}>
         {country.countryCode ? (
@@ -322,51 +391,60 @@ function PlacesContent() {
   );
 
   const itemNoun = groupBy === 'country' ? 'countries' : 'places';
-
+  const selectedItem = selectedCountry ?? selectedPlace;
   usePageChrome('photos');
 
   return (
     <div className="places-page">
       <div>
         <SecondaryNavbar title="Places">
-          {/* Filter field + a trailing sort control (§1) — no sidebar title/action bar. */}
-          <div className="places-filter-row">
-            <SidebarSearchInput
-              placeholder={`Search ${itemNoun}`}
-              value={searchFilter}
-              onValueChange={setSearchFilter}
-              className="grow"
+          {noPlaces ? (
+            <EmptyState
+              size="sidebar"
+              icon={IconMapPin}
+              title="No places yet"
+              description="Photos with a location are grouped here by place."
             />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" title="Sort and group" aria-label="Sort and group">
-                  <IconArrowsSort size={16} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup
-                  value={sort}
-                  onValueChange={(value) => setSort('places', value as PlacesSort)}
-                >
-                  <DropdownMenuRadioItem value="name">Alphabetical</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="count">Number of items</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Group by</DropdownMenuLabel>
-                <DropdownMenuRadioGroup
-                  value={groupBy}
-                  onValueChange={(value) => changeGroupBy(value as PlacesGroupBy)}
-                >
-                  <DropdownMenuRadioItem value="place">Place</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="country">Country</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          ) : (
+            /* Filter field + a trailing sort control (§1) — no sidebar title/action bar. */
+            <div className="places-filter-row">
+              <SidebarSearchInput
+                placeholder={`Search ${itemNoun}`}
+                value={searchFilter}
+                onValueChange={setSearchFilter}
+                className="grow"
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" title="Sort and group" aria-label="Sort and group">
+                    <IconArrowsSort size={16} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuRadioGroup
+                    value={sort}
+                    onValueChange={(value) => setSort('places', value as PlacesSort)}
+                  >
+                    <DropdownMenuRadioItem value="name">Alphabetical</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="count">Number of items</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Group by</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={groupBy}
+                    onValueChange={(value) => changeGroupBy(value as PlacesGroupBy)}
+                  >
+                    <DropdownMenuRadioItem value="place">Place</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="country">Country</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
 
-          {locationSections !== null && (
+          {locationSections !== null && !noPlaces && (
             <p className="sidebar-section-label">
               <span
                 className={clsx(
@@ -388,70 +466,122 @@ function PlacesContent() {
             </p>
           )}
 
-          <section className="places-list-container">
-            {locationSections !== null && visibleItems.length === 0 ? (
-              <p className="places-empty-hint">
-                {placesPending
-                  ? importStatus?.running
-                    ? 'Places may appear as more photos are processed.'
-                    : 'Import is unfinished. This place list is not complete yet.'
-                  : places.length === 0
-                    ? 'No located photos or videos yet.'
-                    : `No ${itemNoun} match your search.`}
-              </p>
-            ) : groupBy === 'country' ? (
-              visibleCountries.map((country) => renderCountryRow(country))
-            ) : (
-              countryGroups.map((group) => (
-                <div key={group.key} className="place-country-group">
-                  <p className="places-group-label">
-                    <span className="places-group-name">
-                      <CountryFlag code={group.countryCode} className="places-group-flag" />
-                      {group.label}
-                    </span>
-                    <span className="places-group-count">{group.count.toLocaleString()}</span>
-                  </p>
-                  {group.places.map((place) => renderPlaceRow(place))}
+          {locationSections === null ? (
+            <section className="places-list-container">
+              {Array.from({ length: 6 }, (_, index) => (
+                <div key={index} className="place-list-row place-list-row--skeleton" aria-hidden>
+                  <Skeleton className="place-icon" />
+                  <Skeleton className="h-3.5 w-2/5" />
                 </div>
-              ))
-            )}
-          </section>
-        </SecondaryNavbar>
-
-        {selectedCountry ? (
-          <div className="page-content">
-            <SecondaryTitleAndScrollableContent
-              icon={<IconWorld />}
-              title={selectedCountry.label}
-              subtitle={`${selectedCountry.places.length.toLocaleString()} place${selectedCountry.places.length === 1 ? '' : 's'} · ${itemsLabel(selectedCountry.count)}`}
-              filters={chipsFilter}
-              galleryLayout
-              content={
-                <TimelineGallery
-                  key={selectedCountry.key}
-                  searchQuery={chippedGalleryQuery}
-                  pendingImport="places"
-                />
+              ))}
+            </section>
+          ) : (
+            <SeparatedListView
+              key={`${groupBy}:${sort}:${searchFilter}`}
+              className="places-list-container"
+              aria-label={groupBy === 'country' ? 'Countries' : 'Places'}
+              items={sidebarRows}
+              itemKey={(row) => row.key}
+              estimateSize={(row) => (row.kind === 'country' ? 44 : row.group ? 72 : 36)}
+              separatorBuilder={() => <div style={{ height: 2 }} />}
+              emptyState={
+                places.length > 0 ? (
+                  <SidebarNoMatches noun={itemNoun} onClear={() => setSearchFilter('')} />
+                ) : null
+              }
+              renderItem={(row, index) =>
+                row.kind === 'country' ? (
+                  renderCountryRow(row.country)
+                ) : (
+                  <>
+                    {row.group && (
+                      <p className={clsx('places-group-label', index > 0 && 'places-group-label--spaced')}>
+                        <span className="places-group-name">
+                          <CountryFlag code={row.group.countryCode} className="places-group-flag" />
+                          {row.group.label}
+                        </span>
+                        <span className="places-group-count">{row.group.count.toLocaleString()}</span>
+                      </p>
+                    )}
+                    {renderPlaceRow(row.place)}
+                  </>
+                )
               }
             />
-          </div>
-        ) : selectedPlace ? (
+          )}
+          <Accordion
+            type="single"
+            collapsible
+            className="places-map"
+            onValueChange={(value) => {
+              setMapOpen(Boolean(value));
+              if (value) setMapMounted(true);
+            }}
+          >
+            <AccordionItem value="map" className="border-b-0">
+              <AccordionTrigger className="py-2 hover:no-underline">
+                <span className="flex items-center gap-2">
+                  <IconMap size={16} /> Map
+                </span>
+              </AccordionTrigger>
+              <AccordionContent forceMount inert={!mapOpen} aria-hidden={!mapOpen}>
+                {mapError || focusError ? (
+                  <EmptyState
+                    size="sidebar"
+                    icon={IconMapPin}
+                    title="Could not load photo locations"
+                    description={(mapError ?? focusError)?.message}
+                  />
+                ) : geoPoints === null ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : mapMounted ? (
+                  <PhotoMap
+                    points={geoPoints}
+                    focus={focusPoints}
+                    onOpen={(id, ids) => void openFromMap(id, ids)}
+                    onSelectArea={(bounds) => {
+                      setArea(bounds);
+                      setSelectedKey(null);
+                    }}
+                  />
+                ) : null}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </SecondaryNavbar>
+
+        {selectedItem || area ? (
           <div className="page-content">
             <SecondaryTitleAndScrollableContent
-              icon={<IconMapPin />}
-              title={selectedPlace.primaryLabel}
+              icon={area ? <IconMap /> : selectedCountry ? <IconWorld /> : <IconMapPin />}
+              title={area ? 'Map area' : (selectedCountry?.label ?? selectedPlace?.primaryLabel)}
               subtitle={
-                selectedPlace.secondaryLabel
-                  ? `${selectedPlace.secondaryLabel} · ${itemsLabel(selectedPlace.count)}`
-                  : itemsLabel(selectedPlace.count)
+                area
+                  ? `${itemsLabel(areaIds?.length ?? 0)} · Photos with GPS coordinates`
+                  : selectedCountry
+                    ? `${selectedCountry.places.length.toLocaleString()} place${selectedCountry.places.length === 1 ? '' : 's'} · ${itemsLabel(selectedCountry.count)}`
+                    : selectedPlace?.secondaryLabel
+                      ? `${selectedPlace.secondaryLabel} · ${itemsLabel(selectedPlace.count)}`
+                      : itemsLabel(selectedItem?.count ?? 0)
               }
               filters={chipsFilter}
               galleryLayout
               content={
                 <TimelineGallery
-                  key={selectedPlace.key}
+                  key={scopeKey}
                   searchQuery={chippedGalleryQuery}
+                  assetIdsFilter={areaIds}
                   pendingImport="places"
+                  onNoResults={
+                    chipsEmptyState ??
+                    (area ? (
+                      <EmptyState
+                        icon={IconMapPin}
+                        title="No photos in this area"
+                        description="Choose another area on the map or select a place from the list."
+                      />
+                    ) : undefined)
+                  }
                 />
               }
             />
@@ -459,11 +589,35 @@ function PlacesContent() {
         ) : (
           <div className="page-content">
             <ImportStatus />
-            <NoResultsIndicator
-              title={groupBy === 'country' ? 'Select a country' : 'Select a place'}
-              icon={<IconMapPin size={64} strokeWidth={1} />}
-              description={`Pick a ${groupBy} from the left panel to browse the photos and videos captured there.`}
-            />
+            {locationSections === null ? null : places.length === 0 ? (
+              <EmptyState
+                icon={IconMapPin}
+                title={hasLibraryFilters ? 'No places match your filters' : 'No places yet'}
+                description={
+                  hasLibraryFilters ? (
+                    'Remove a library filter, or clear them all, to see more places.'
+                  ) : (
+                    <>
+                      Photos and videos with a location show up here, grouped by place. To add one, select
+                      photos and choose Edit location (
+                      <KbdGroup>
+                        <Kbd>Ctrl</Kbd>
+                        <Kbd>G</Kbd>
+                      </KbdGroup>
+                      ).
+                    </>
+                  )
+                }
+                action={hasLibraryFilters ? <ClearLibraryFiltersButton /> : undefined}
+                pendingImport="places"
+              />
+            ) : (
+              <EmptyState
+                icon={groupBy === 'country' ? IconWorld : IconMapPin}
+                title={groupBy === 'country' ? 'Select a country' : 'Select a place'}
+                description={`Pick a ${groupBy} on the left to see the photos and videos taken there.`}
+              />
+            )}
           </div>
         )}
       </div>

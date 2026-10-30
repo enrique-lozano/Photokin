@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import { InputWithIcon } from '@/components/ui/inputWithIcon';
 import { Tree } from '@/components/tree/Tree';
 import { TreeEntryEl } from '@/components/tree/TreeEntryEl.model';
@@ -214,7 +215,12 @@ function MoveToFolderContent({
           {!preparedTreeData ? (
             <p className="p-4 text-sm text-muted-foreground">Loading folders…</p>
           ) : preparedTreeData.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No album folders in your library yet.</p>
+            <EmptyState
+              size="panel"
+              icon={IconFolder}
+              title="No folders yet"
+              description="Add a folder from the Albums page first, then you can move photos into it."
+            />
           ) : (
             <Tree entries={preparedTreeData} filter={searchFilter} itemHeightPx={32} />
           )}

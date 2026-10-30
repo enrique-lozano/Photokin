@@ -51,7 +51,7 @@ export function TagsSegment({
       >
         <section className="info-surface tags-card">
           <div className="info-row">
-            <h5 className="text-xs font-semibold uppercase text-muted-foreground">Keywords</h5>
+            <h5 className="text-xs font-semibold uppercase text-muted-foreground">Tags</h5>
             <Badge variant="secondary">{tags.length}</Badge>
           </div>
           {tags.length ? (
@@ -85,7 +85,7 @@ export function TagsSegment({
               })}
             </div>
           ) : (
-            <p className="text-muted-foreground text-xs">No keywords yet</p>
+            <p className="text-muted-foreground text-xs">No tags yet</p>
           )}
           {error && (
             <p role="alert" className="text-destructive-text">

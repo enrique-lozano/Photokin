@@ -30,6 +30,7 @@
   }
 
   .calendar-toolbar__today {
+    display: inline-flex;
     flex-shrink: 0;
   }
 
@@ -42,12 +43,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  .calendar-empty-hint {
-    margin-top: 16px;
-    text-align: center;
-    @apply text-sm text-muted-foreground;
   }
 
   /* Year / month card */

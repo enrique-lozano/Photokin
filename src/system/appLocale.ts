@@ -13,8 +13,10 @@ const STORAGE_KEY = 'app-locale';
  * also persisted so the next launch has it synchronously before this resolves.
  */
 export async function initAppLocale(): Promise<void> {
+  // Dev builds can pin the locale (used by `pnpm screenshots`).
+  const pinned = import.meta.env.DEV ? import.meta.env.VITE_PHOTOKIN_LOCALE : undefined;
   try {
-    const loc = await osLocale();
+    const loc = pinned || (await osLocale());
     if (!loc) return;
     setAppLocale(loc);
     try {

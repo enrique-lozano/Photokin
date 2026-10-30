@@ -57,6 +57,29 @@ ad-hoc fetch effects.
 - Surface failures through existing feedback patterns; do not pretend a failed
   operation succeeded.
 
+### Large sidebar lists
+
+Use `SeparatedListView` from `src/components/ui/separated-list-view.tsx` rather
+than mapping every row into a scroll container. Like Flutter's
+`ListView.separated`, it builds visible rows plus a small buffer; separators
+are optional. TanStack Virtual handles viewport tracking and row measurement.
+
+Supply `items`, a stable `itemKey`, `renderItem`, an approximate `estimateSize`
+(pixels, including the separator), and an accessible `aria-label`. Place it
+inside a bounded-height flex column; the list owns scrolling and fills the
+remaining space. Rows can have different heights. Group headings should be
+rendered with their first row, not as separate non-interactive items.
+
+Use `separatorBuilder` for gaps or dividers and `emptyState` for no results.
+Give the component a new React `key` on filter/sort changes to reset scrolling;
+do not key it by selection. Each row should contain a focusable control:
+Tab/Shift+Tab, arrows, Home and End navigate unmounted rows too, and focused
+rows stay mounted during mouse scrolling. Keep interactive row state outside
+the row because offscreen rows unmount.
+
+The Components page includes a 10,000-row variable-height example. Duplicate
+sets and Places use this primitive; other lists can adopt it independently.
+
 ## Native work
 
 Decode, hash, thumbnail, and other heavy image work belongs in Rust or the

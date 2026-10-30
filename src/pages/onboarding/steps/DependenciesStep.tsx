@@ -5,12 +5,14 @@ import { installExiftool, locateExiftool, type ExiftoolInstallProgress } from '@
 import { useDependencyStatus } from '@/system/useDependencyStatus';
 import { PhotokinMark } from '@/components/brand/PhotokinMark';
 import { IconArrowRight } from '@tabler/icons-react';
+import { isTauri } from '@tauri-apps/api/core';
 import { platform } from '@tauri-apps/plugin-os';
 import { useState } from 'react';
 import { OnboardingHeading, OnboardingStep, OnboardingStepProps } from '../OnboardingStep';
 import { ExiftoolSetupCard, type ExiftoolSetupStatus } from './ExiftoolSetupCard';
 
-const CAN_AUTO_INSTALL = platform() === 'windows';
+// Guarded so the UI kit can import this outside Tauri.
+const CAN_AUTO_INSTALL = isTauri() && platform() === 'windows';
 
 export function DependenciesStep({ goNext }: OnboardingStepProps) {
   const { dependencies, isLoading, error, reload } = useDependencyStatus();

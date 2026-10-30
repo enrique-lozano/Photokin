@@ -1,4 +1,4 @@
-import { appLocalDataDir, join } from '@tauri-apps/api/path';
+import { join } from '@tauri-apps/api/path';
 import Database from '@tauri-apps/plugin-sql';
 import {
   DeleteQueryBuilder,
@@ -15,8 +15,9 @@ import { notifyTableUpdate } from '../api/tableObservables.ts';
 import { SqliteDbStructure } from '../models/SqliteDbStructure.ts';
 import { getAppDB } from './dbInstance.ts';
 import { kyselyDB } from './kysely.ts';
+import { getLibraryDataDir } from './libraryDataDir.ts';
 
-export const getDbDir = () => appLocalDataDir();
+export const getDbDir = getLibraryDataDir;
 export const dbName = 'photokin.db';
 
 export const getDbFullPath = async () => join(await getDbDir(), dbName);

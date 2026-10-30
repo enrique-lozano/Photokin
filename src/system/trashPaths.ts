@@ -1,4 +1,5 @@
-import { appLocalDataDir, join } from '@tauri-apps/api/path';
+import { getLibraryDataDir } from '@/db/connection/libraryDataDir';
+import { join } from '@tauri-apps/api/path';
 import { joinPathSync } from './diskManager';
 
 /**
@@ -14,7 +15,7 @@ let trashDirPromise: Promise<string> | null = null;
 
 /** Absolute path of the app-managed Trash directory. */
 export function getTrashDir(): Promise<string> {
-  trashDirPromise ??= appLocalDataDir().then((dir) => {
+  trashDirPromise ??= getLibraryDataDir().then((dir) => {
     cachedTrashDir = joinPathSync(dir, TRASH_DIR_NAME);
     return cachedTrashDir;
   });

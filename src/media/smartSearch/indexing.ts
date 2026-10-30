@@ -8,7 +8,7 @@ import { AssetInClient } from '@/db/models/AssetInClient';
 import { isImportWorkActive } from '@/media/import/importActivity';
 import { overallProgress } from '@/media/import/importProgress';
 import { getExistingThumbnailPath, resolveThumbnailPath } from '@/media/thumbnails/thumbnail';
-import { ProcessKind } from '@/stores/processStore';
+import { type AppProcess, ProcessKind } from '@/stores/processStore';
 import { useSmartSearchSettingsStore } from '@/stores/smartSearchSettingsStore';
 import { debugLog } from '@/system/devLogger';
 import { HARDWARE_CONCURRENCY } from '@/system/hardware';
@@ -40,6 +40,20 @@ const CLIP_DIRECT_IMAGE_FORMATS = new Set(
 );
 
 type IndexingPhase = 'preparing' | 'embedding';
+
+const INDEXING_PROCESS_TITLE = 'Indexing for search';
+
+/**
+ * Whether `process` is work that leaves the smart search index incomplete: the
+ * indexing run itself, or an import whose new photos get indexed right after.
+ */
+export function isSmartSearchIndexPending(process: AppProcess): boolean {
+  if (process.status !== 'running') return false;
+  return (
+    process.kind === ProcessKind.Import ||
+    (process.kind === ProcessKind.Generic && process.title === INDEXING_PROCESS_TITLE)
+  );
+}
 
 /** Live (non-trashed) asset ids that have no CLIP embedding yet. */
 async function _unindexedAssetIds(): Promise<string[]> {
@@ -170,7 +184,7 @@ export function startBackgroundIndexing(): void {
   void trackProcess(
     {
       kind: ProcessKind.Generic,
-      title: 'Indexing for search',
+      title: INDEXING_PROCESS_TITLE,
       canStop: true,
       successMessage: false,
       errorMessage: (error) => `Could not index for search: ${String(error)}`,

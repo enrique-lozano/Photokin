@@ -477,6 +477,27 @@ class _TagsService {
       };
     }
 
+    // A tag used only to group others ("Animals") borrows a cover from its
+    // sub-tags, so it doesn't render as an empty tile.
+    const tagRows = await selectFromDB(kyselyDB.selectFrom('tags').select(['id', 'parentId']));
+    const childrenById = new Map<string, string[]>();
+    for (const tag of tagRows) {
+      if (!tag.parentId) continue;
+      childrenById.set(tag.parentId, [...(childrenById.get(tag.parentId) ?? []), tag.id]);
+    }
+    const inherited = (id: string): TagCover | undefined => {
+      if (covers[id]) return covers[id];
+      for (const childId of childrenById.get(id) ?? []) {
+        const cover = inherited(childId);
+        if (cover) return cover;
+      }
+      return undefined;
+    };
+    for (const tag of tagRows) {
+      const cover = inherited(tag.id);
+      if (cover) covers[tag.id] = cover;
+    }
+
     return covers;
   }
 

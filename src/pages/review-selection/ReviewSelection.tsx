@@ -1,9 +1,9 @@
-import { NoResultsIndicator } from '@/components/NoResultsIndicator';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { TimelineGallery } from '@/components/timeline-gallery/TimelineGallery';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useAppStore } from '@/stores/appState';
-import { IconLayoutGrid, IconPhotoOff } from '@tabler/icons-react';
+import { IconLayoutGrid } from '@tabler/icons-react';
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SecondaryTitleAndScrollableContent } from '../search/SecondaryTitleAndScrollableContent';
@@ -45,10 +45,15 @@ export function ReviewSelection() {
         count > 0 ? (
           <TimelineGallery key={basketIds.join(',')} assetIdsFilter={basketIds} />
         ) : (
-          <NoResultsIndicator
-            icon={<IconPhotoOff size={56} strokeWidth={1.4} />}
-            title="Your selection is empty"
-            description="Pick photos from any gallery to gather them here."
+          <EmptyState
+            icon={IconLayoutGrid}
+            title="Nothing selected yet"
+            description="Select photos in any gallery by clicking the circle on a photo. They gather here so you can review them together."
+            action={
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                Go back
+              </Button>
+            }
           />
         )
       }

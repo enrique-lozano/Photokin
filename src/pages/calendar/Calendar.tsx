@@ -1,9 +1,16 @@
 import { IconCalendarMonth, IconCalendarSearch } from '@tabler/icons-react';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { useEffect, useMemo, useState } from 'react';
-import { NoResultsIndicator } from '@/components/NoResultsIndicator.tsx';
+import {
+  ClearLibraryFiltersButton,
+  useHasActiveLibraryFilters,
+} from '@/components/app-shell/ClearLibraryFilters';
 import { Segmented } from '@/components/segmented/Segmented';
 import { Button } from '@/components/ui/button.tsx';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AssetsService } from '@/db/api/services/assets.service.ts';
 import { SecondaryNavbar } from '../../components/secondary-navbar/SecondaryNavbar';
 import { TimelineGallery } from '../../components/timeline-gallery/TimelineGallery';
@@ -51,6 +58,7 @@ function selectionTitle(selection: CalendarSelection): string {
 
 export function CalendarPage() {
   const { searchQuery } = useAppStore();
+  const hasLibraryFilters = useHasActiveLibraryFilters();
   const [view, setView] = useState<CalendarView>('monthly');
   const [selection, setSelection] = useState<CalendarSelection | null>(null);
 
@@ -123,56 +131,98 @@ export function CalendarPage() {
                 { value: 'daily', label: 'Daily' },
               ]}
             />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="calendar-toolbar__today"
-              onClick={jumpToToday}
-              disabled={!canJumpToToday}
-              title="Jump to today"
-              aria-label="Jump to today"
-            >
-              <IconCalendarSearch size={16} />
-            </Button>
+            {/* Disabled buttons swallow hover, so the tooltip hangs off a wrapper. */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="calendar-toolbar__today" tabIndex={canJumpToToday ? undefined : 0}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={jumpToToday}
+                    disabled={!canJumpToToday}
+                    aria-label="Jump to today"
+                  >
+                    <IconCalendarSearch size={16} />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {canJumpToToday ? 'Jump to today' : 'No photos or videos from this month yet'}
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           <div className="calendar-scroll">
-            {daySections !== null && !hasData ? (
-              <p className="calendar-empty-hint">No dated photos or videos yet.</p>
-            ) : (
-              sortedYears.map((year) =>
-                view === 'monthly' ? (
-                  <CalendarMonthly
-                    key={year}
+            {daySections === null &&
+              Array.from({ length: 2 }, (_, index) => (
+                <Skeleton key={index} className="h-44 w-full shrink-0 rounded-[10px]" />
+              ))}
+            {daySections !== null && !hasData && (
+              <EmptyState
+                size="sidebar"
+                icon={IconCalendarMonth}
+                title="No dates yet"
+                description="Photos and videos show up here by the day they were taken."
+              />
+            )}
+            {sortedYears.map((year) =>
+              view === 'monthly' ? (
+                <CalendarMonthly
+                  key={year}
+                  year={year}
+                  months={calendarData[year]}
+                  selection={selection}
+                  onSelect={setSelection}
+                />
+              ) : (
+                getSortedMonths(calendarData[year]).map((month) => (
+                  <CalendarDaily
+                    key={`${year}-${month}`}
                     year={year}
-                    months={calendarData[year]}
+                    month={month}
+                    days={calendarData[year][month]}
                     selection={selection}
                     onSelect={setSelection}
                   />
-                ) : (
-                  getSortedMonths(calendarData[year]).map((month) => (
-                    <CalendarDaily
-                      key={`${year}-${month}`}
-                      year={year}
-                      month={month}
-                      days={calendarData[year][month]}
-                      selection={selection}
-                      onSelect={setSelection}
-                    />
-                  ))
-                ),
-              )
+                ))
+              ),
             )}
           </div>
         </SecondaryNavbar>
 
         {!selection ? (
           <div className="page-content">
-            <NoResultsIndicator
-              title="Select a date"
-              icon={<IconCalendarMonth size={64} strokeWidth={1} />}
-              description="Pick a year, month or day from the calendar to browse the photos and videos captured then."
-            />
+            {daySections === null ? null : !hasData ? (
+              <EmptyState
+                icon={IconCalendarMonth}
+                title={
+                  hasLibraryFilters ? 'No dated photos match your filters' : 'Nothing on the calendar yet'
+                }
+                description={
+                  hasLibraryFilters ? (
+                    'Remove a library filter, or clear them all, to see more dates.'
+                  ) : (
+                    <>
+                      Photos and videos appear here by the day they were taken. To add a missing date, select
+                      them and choose Edit date &amp; time (
+                      <KbdGroup>
+                        <Kbd>Ctrl</Kbd>
+                        <Kbd>D</Kbd>
+                      </KbdGroup>
+                      ).
+                    </>
+                  )
+                }
+                action={hasLibraryFilters ? <ClearLibraryFiltersButton /> : undefined}
+                pendingImport="metadata"
+              />
+            ) : (
+              <EmptyState
+                icon={IconCalendarMonth}
+                title="Select a date"
+                description="Pick a year, month or day on the left to see the photos and videos taken then."
+              />
+            )}
           </div>
         ) : (
           <div className="page-content">

@@ -1,10 +1,12 @@
-import { NoResultsIndicator } from '@/components/NoResultsIndicator.tsx';
+import { useHasActiveLibraryFilters } from '@/components/app-shell/ClearLibraryFilters';
+import { ChipFiltersEmptyState } from '@/components/page-content/ChipFiltersEmptyState';
 import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { HeroToggle } from '@/components/page-content/HeroToggle';
 import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { Button } from '@/components/ui/button.tsx';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +21,7 @@ import {
   IconEye,
   IconEyeOff,
   IconFolder,
+  IconFolderBolt,
   IconFolderFilled,
   IconHeart,
   IconHierarchy,
@@ -37,6 +40,7 @@ import { mergeSearchQueries } from '../../common/searchQueryUtils';
 import { TRASHED_ONLY_CONDITION } from '../../common/trashQuery';
 import { SecondaryNavbar } from '../../components/secondary-navbar/SecondaryNavbar';
 import { formatSidebarFilterCount } from '../../components/secondary-navbar/sidebarFilterCount';
+import { SidebarNoMatches } from '../../components/secondary-navbar/SidebarNoMatches';
 import { SidebarSearchInput } from '../../components/secondary-navbar/SidebarSearchInput';
 import { SidebarSortMenu, SidebarSortOption } from '../../components/secondary-navbar/SidebarSortMenu';
 import { TimelineGallery } from '../../components/timeline-gallery/TimelineGallery';
@@ -98,6 +102,7 @@ export function AlbumsPage() {
   const sort = useSidebarStore((state) => state.sort.albums);
   const setSort = useSidebarStore((state) => state.setSort);
   const ratingMode = useSettingsStore((state) => state.ratingMode);
+  const hasLibraryFilters = useHasActiveLibraryFilters();
   const showHiddenItems = useHiddenItemsStore((state) => state.showHiddenItems);
   const setShowHiddenItems = useHiddenItemsStore((state) => state.setShowHiddenItems);
   const [albumView, setAlbumView] = useState<AlbumView>('allPhotos');
@@ -355,6 +360,7 @@ export function AlbumsPage() {
     chips,
     activeChipIds,
     toggleChip,
+    clear: clearChips,
     conditions,
     isLoading: chipsLoading,
     isRefreshing: chipsRefreshing,
@@ -471,28 +477,40 @@ export function AlbumsPage() {
         {/* Filter opens the items zone; the title below carries the total count
             on the left and the sort on the right. While filtering, the count
             is the matches over that same total. */}
-        <SidebarSearchInput
-          placeholder="Filter albums"
-          value={searchFilter ?? ''}
-          onValueChange={setSearchFilter}
-        />
-        <p className="sidebar-section-label">
-          <span
-            className={clsx(
-              'sidebar-section-label__count',
-              albums && matchedAlbumCount !== null && 'sidebar-section-label__count--filtered',
-            )}
-          >
-            {formatSidebarFilterCount(albums?.length ?? 0, albums ? matchedAlbumCount : null)}
-          </span>
-          <span>Albums</span>
-          <SidebarSortMenu
-            value={sort}
-            options={ALBUMS_SORT_OPTIONS}
-            onChange={(value) => setSort('albums', value)}
-            ariaLabel="Sort albums"
+        {libraryIsEmpty ? (
+          <EmptyState
+            size="sidebar"
+            icon={IconFolder}
+            title="No albums yet"
+            description="Folders you add show up here."
           />
-        </p>
+        ) : (
+          <>
+            <SidebarSearchInput
+              placeholder="Filter albums"
+              value={searchFilter ?? ''}
+              onValueChange={setSearchFilter}
+            />
+            <p className="sidebar-section-label">
+              <span
+                className={clsx(
+                  'sidebar-section-label__count',
+                  albums && matchedAlbumCount !== null && 'sidebar-section-label__count--filtered',
+                )}
+              >
+                {formatSidebarFilterCount(albums?.length ?? 0, albums ? matchedAlbumCount : null)}
+              </span>
+              <span>Albums</span>
+              <SidebarSortMenu
+                value={sort}
+                options={ALBUMS_SORT_OPTIONS}
+                onChange={(value) => setSort('albums', value)}
+                ariaLabel="Sort albums"
+              />
+            </p>
+          </>
+        )}
+        {matchedAlbumCount === 0 && <SidebarNoMatches noun="albums" onClear={() => setSearchFilter('')} />}
         <section className="tree-container">
           {preparedTreeData && (
             <Tree
@@ -519,17 +537,15 @@ export function AlbumsPage() {
 
       {libraryIsEmpty ? (
         <div className="page-content">
-          <NoResultsIndicator
-            title="No albums added yet"
-            icon={<IconFolder size={64} strokeWidth={1} />}
-            description="Add your first folder to start browsing your photos and organizing albums."
-            extraContent={
-              <div className="mt-2">
-                <Button variant="outline-primary" onClick={() => setIsAddAlbumsModalOpen(true)}>
-                  <IconPlus />
-                  Add your first album folder
-                </Button>
-              </div>
+          <EmptyState
+            icon={IconFolderBolt}
+            title="Your library is empty"
+            description="Choose a folder on your computer that holds photos or videos. Photokin shows them here without moving or changing your files."
+            action={
+              <Button onClick={() => setIsAddAlbumsModalOpen(true)}>
+                <IconPlus size={16} />
+                Add Photos
+              </Button>
             }
           />
         </div>
@@ -634,12 +650,28 @@ export function AlbumsPage() {
                 searchQuery={galleryQuery}
                 dateField={activeAlbumView === 'recentlyAdded' ? 'dateAdded' : 'date'}
                 onNoResults={
-                  activeAlbumView === 'trash' ? (
-                    <NoResultsIndicator
+                  activeChipIds.length > 0 ? (
+                    <ChipFiltersEmptyState onClear={clearChips} />
+                  ) : activeAlbumView === 'trash' ? (
+                    <EmptyState
+                      icon={IconTrash}
                       title="Trash is empty"
-                      icon={<IconTrash size={64} strokeWidth={1} />}
-                      description="Photos you move to Trash appear here and are deleted automatically after 30 days."
+                      description="Photos and videos you delete wait here for 30 days, so you can restore them if you change your mind."
                     />
+                  ) : activeAlbumView === 'favorites' && !hasLibraryFilters ? (
+                    ratingMode === RatingMode.Favorites ? (
+                      <EmptyState
+                        icon={IconHeart}
+                        title="No favorites yet"
+                        description="Select photos and press F, or click the heart, to keep your best shots here."
+                      />
+                    ) : (
+                      <EmptyState
+                        icon={IconStar}
+                        title="No 5-star photos yet"
+                        description="Photos rated 5 stars show up here. Select photos and press F to rate them."
+                      />
+                    )
                   ) : undefined
                 }
               />

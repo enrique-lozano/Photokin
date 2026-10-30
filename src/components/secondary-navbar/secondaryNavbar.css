@@ -272,7 +272,7 @@
     border-radius: 0;
   }
 
-  .no-results__container {
+  .empty-state {
     flex: 1;
     height: auto;
   }
