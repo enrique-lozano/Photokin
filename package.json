@@ -21,9 +21,13 @@
     "screenshots": "node scripts/screenshots/screenshots.mjs",
     "website:dev": "vitepress dev website",
     "website:build": "vitepress build website",
-    "website:preview": "vitepress preview website"
+    "website:preview": "vitepress preview website",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@commitlint/types": "^21.2.3",
     "@eslint/js": "^9.21.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/lora": "^5.2.8",
@@ -31,6 +35,8 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react": "^7.37.4",
     "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
     "playwright-core": "^1.64.1",
     "prettier": "^3.5.2",
     "typescript": "~6.0.3",

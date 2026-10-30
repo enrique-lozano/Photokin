@@ -1,6 +1,7 @@
 import eslint from '@eslint/js';
 import react from 'eslint-plugin-react';
 import globals from 'globals';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
 
 // Project convention: private members are prefixed with `_`.
@@ -42,6 +43,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: fileURLToPath(new URL('.', import.meta.url)),
+      },
       globals: {
         ...globals.browser,
         ...globals.node,
