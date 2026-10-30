@@ -32,14 +32,14 @@ React UI -> domain services / system wrappers -> SQLite or Tauri commands
 
 | Area              | Location / pattern                                                    |
 | ----------------- | --------------------------------------------------------------------- |
-| Pages and routes  | `src/pages/`, `src/router.tsx`, `AppRoutes`                           |
-| Shared interface  | `src/components/`, primitives in `src/components/ui/`                 |
-| Local persistence | `src/db/models/`, Kysely services in `src/db/api/services/`           |
+| Pages and routes  | `src-vite/src/pages/`, `src-vite/src/router.tsx`, `AppRoutes`         |
+| Shared interface  | `src-vite/src/components/`, primitives in `src-vite/src/components/ui/` |
+| Local persistence | `src-vite/src/db/models/`, Kysely services in `src-vite/src/db/api/services/` |
 | Reactive reads    | `useLiveQuery` / existing live-asset hooks and RxJS table observables |
 | Writes            | `executeInDB(...)` so subscribed views are invalidated                |
-| UI/session state  | Existing Zustand stores under `src/stores/`                           |
-| Photo processing  | `src/media/`, native commands in `src-tauri/src/commands/`            |
-| OS integrations   | `src/system/`                                                         |
+| UI/session state  | Existing Zustand stores under `src-vite/src/stores/`                 |
+| Photo processing  | `src-vite/src/media/`, native commands in `src-tauri/src/commands/`   |
+| OS integrations   | `src-vite/src/system/`                                               |
 | Sidecars          | `scripts/` and `src-tauri/resources/`                                 |
 
 There is no REST backend or cloud library. Do not introduce one as part of a
@@ -59,7 +59,7 @@ ad-hoc fetch effects.
 
 ### Large sidebar lists
 
-Use `SeparatedListView` from `src/components/ui/separated-list-view.tsx` rather
+Use `SeparatedListView` from `src-vite/src/components/ui/separated-list-view.tsx` rather
 than mapping every row into a scroll container. Like Flutter's
 `ListView.separated`, it builds visible rows plus a small buffer; separators
 are optional. TanStack Virtual handles viewport tracking and row measurement.
@@ -96,11 +96,11 @@ Rust command tests follow the existing `src-tauri/src/tests/` layout.
 ## Database and metadata changes
 
 Do not change schema incidentally. An approved schema change must follow the
-[migration guide](../src/db/migrations/README.md) and update matching DTO/types
+[migration guide](../src-vite/src/db/migrations/README.md) and update matching DTO/types
 and tests. Never delete a user's library to make a migration pass.
 
 Before changing file writes, read [Photo safety](PHOTO_SAFETY.md) and the
-[ExifTool writing reference](../src/media/metadata/exiftool/write/writing-with-exiftool.md).
+[ExifTool writing reference](../src-vite/src/media/metadata/exiftool/write/writing-with-exiftool.md).
 Preserve the distinction between library edits, metadata write-back, explicit
 editor saves, and destructive filesystem operations.
 
@@ -108,7 +108,7 @@ editor saves, and destructive filesystem operations.
 
 - [Testing](TESTING.md)
 - [Sidecar setup](../scripts/README.md)
-- [Color system](../src/styles/color-system.md)
+- [Color system](../src-vite/src/styles/color-system.md)
 - [Privacy and network access](PRIVACY_POLICY.md)
 
 Agent-specific instructions remain in [AGENTS.md](../AGENTS.md); contributors do

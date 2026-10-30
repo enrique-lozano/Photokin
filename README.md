@@ -2,7 +2,7 @@
 <br />
 <div align="center">
   <a href="https://enrique-lozano.github.io/Photokin/">
-    <img src="public/photokin-app-icon.svg" alt="Photokin icon" width="110" height="110">
+    <img src="src-vite/public/photokin-app-icon.svg" alt="Photokin icon" width="110" height="110">
   </a>
 
   <h1 align="center">Photokin</h1>
@@ -149,7 +149,7 @@ and you don't need to be a developer. Start with the
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Users       | [User guide](https://enrique-lozano.github.io/Photokin/guide/) · [Privacy and network access](docs/PRIVACY_POLICY.md) · [Photo safety](docs/PHOTO_SAFETY.md)         |
 | Developers  | [Run locally](docs/RUN_THE_CODE_LOCALLY.md) · [Code and architecture](docs/CODE_CONTRIBUTING.md) · [Testing](docs/TESTING.md) · [Sidecar scripts](scripts/README.md) |
-| Maintainers | [Screenshots](screenshots/README.md) · [Website](website/)                                                                                                           |
+| Maintainers | [Screenshots](scripts/screenshots/README.md) · [Website](website/)                                                                                                           |
 
 ### Support the project 💖
 

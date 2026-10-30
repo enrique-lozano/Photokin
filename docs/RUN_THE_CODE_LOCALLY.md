@@ -37,6 +37,11 @@ pnpm install
 You can also download and extract the repository ZIP when it is accessible.
 Run the remaining commands from the extracted project root.
 
+The frontend is a pnpm workspace package in `src-vite/`; native code remains
+in `src-tauri/`. Root commands forward to the frontend, so no directory change
+is needed. The root `package.json` remains the source of the app version.
+Frontend build output stays in the root `dist/` folder for Tauri.
+
 ## Start the desktop app
 
 ```powershell
@@ -122,7 +127,7 @@ pnpm website:build     # what CI runs; fails on broken internal links
 
 When a change affects how users do something, update the matching page in
 `website/guide/`. README and website screenshots are generated from a demo
-library; see [Screenshots](../screenshots/README.md).
+library; see [Screenshots](../scripts/screenshots/README.md).
 
 ## Development tools
 

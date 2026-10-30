@@ -7,6 +7,45 @@ settings:
 importers:
 
   .:
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.21.0
+        version: 9.39.4
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@fontsource-variable/lora':
+        specifier: ^5.2.8
+        version: 5.2.8
+      '@tauri-apps/cli':
+        specifier: ^2
+        version: 2.11.2
+      eslint:
+        specifier: ^9.21.0
+        version: 9.39.4(jiti@2.7.0)
+      eslint-plugin-react:
+        specifier: ^7.37.4
+        version: 7.37.5(eslint@9.39.4(jiti@2.7.0))
+      globals:
+        specifier: ^16.0.0
+        version: 16.5.0
+      playwright-core:
+        specifier: ^1.64.1
+        version: 1.64.1
+      prettier:
+        specifier: ^3.5.2
+        version: 3.8.3
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
+      typescript-eslint:
+        specifier: ^8.70.0
+        version: 8.70.0(eslint@9.39.4(jiti@2.7.0))(typescript@6.0.3)
+      vitepress:
+        specifier: ^1.6.4
+        version: 1.6.4(@algolia/client-search@5.61.0)(@types/node@22.19.19)(@types/react@19.3.0)(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(search-insights@2.17.3)(typescript@6.0.3)
+
+  src-vite:
     dependencies:
       '@base-ui/react':
         specifier: ^1.8.0
@@ -177,9 +216,6 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.3.3
         version: 4.3.3
-      '@tauri-apps/cli':
-        specifier: ^2
-        version: 2.11.2
       '@types/justified-layout':
         specifier: ^4.1.4
         version: 4.1.4
@@ -210,15 +246,9 @@ importers:
       globals:
         specifier: ^16.0.0
         version: 16.5.0
-      playwright-core:
-        specifier: ^1.64.1
-        version: 1.64.1
       postcss:
         specifier: ^8.4.41
         version: 8.5.15
-      prettier:
-        specifier: ^3.5.2
-        version: 3.8.3
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -231,9 +261,6 @@ importers:
       vite:
         specifier: ^5.3.1
         version: 5.4.21(@types/node@22.19.19)(lightningcss@1.32.0)
-      vitepress:
-        specifier: ^1.6.4
-        version: 1.6.4(@algolia/client-search@5.61.0)(@types/node@22.19.19)(@types/react@19.3.0)(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(search-insights@2.17.3)(typescript@6.0.3)
       vitest:
         specifier: ^2.0.5
         version: 2.1.9(@types/node@22.19.19)(lightningcss@1.32.0)

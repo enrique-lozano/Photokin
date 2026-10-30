@@ -9,7 +9,7 @@ Run from the repository root:
 
 | Purpose                                  | Command                                           |
 | ---------------------------------------- | ------------------------------------------------- |
-| Focused frontend tests                   | `pnpm exec vitest run <test-file-or-directory>`   |
+| Focused frontend tests                   | `pnpm test --run <test-file-or-directory>`        |
 | All frontend tests, once                 | `pnpm test --run`                                 |
 | Interactive frontend tests               | `pnpm test`                                       |
 | Production frontend type-check and build | `pnpm run build`                                  |
@@ -22,6 +22,11 @@ The production build excludes test files; it is not a substitute for checking
 new test types. The build also runs sidecar setup through `prebuild`; see
 [local setup](RUN_THE_CODE_LOCALLY.md).
 
+Frontend test selectors are relative to `src-vite/`, because the root test
+command runs Vitest in that workspace package. For example, `src\media\edit`
+selects `src-vite\src\media\edit`. For direct frontend tools, use
+`pnpm --dir src-vite exec <tool> ...`.
+
 For a focused TypeScript change, lint/format the changed files rather than
 rewriting unrelated files. Documentation-only edits need link/anchor and rendered
 Markdown checks, not a native rebuild.
@@ -29,7 +34,7 @@ Markdown checks, not a native rebuild.
 ## Detail-page navigation
 
 ```powershell
-pnpm exec vitest run src\components\page-content\EntityDetailRoute.test.tsx src\pages\people\PersonDetail.test.tsx src\components\timeline-gallery\TimelineScrubber.test.tsx
+pnpm test --run src\components\page-content\EntityDetailRoute.test.tsx src\pages\people\PersonDetail.test.tsx src\components\timeline-gallery\TimelineScrubber.test.tsx
 ```
 
 People and Tags reset the entire detail subtree when the route's entity ID
@@ -51,7 +56,7 @@ right-hand timeline indicator whenever the gallery overflows the viewport.
 ## About and donation links
 
 ```powershell
-pnpm exec vitest run src\pages\settings\SettingsAbout.test.tsx src\components\support-project\SupportProject.test.tsx
+pnpm test --run src\pages\settings\SettingsAbout.test.tsx src\components\support-project\SupportProject.test.tsx
 ```
 
 Tests cover the header version, license and system lines, copying system info,
@@ -77,7 +82,7 @@ available regardless. Tests use fixed random draws on both sides of the exact
 ## In-app updates
 
 ```powershell
-pnpm exec vitest run src\system\appUpdater.test.ts src\pages\settings\SettingsUpdates.test.tsx
+pnpm test --run src\system\appUpdater.test.ts src\pages\settings\SettingsUpdates.test.tsx
 ```
 
 Tests cover the check on app start (skipped in dev builds and when turned off),
@@ -92,7 +97,7 @@ new version.
 ## Smart search model selection
 
 ```powershell
-pnpm exec vitest run src\media\smartSearch\models.test.ts src\media\smartSearch\modelDownload.test.ts src\components\settings\SettingsRadioCard.test.tsx src\components\dependencies\DependencyStatusCards.test.tsx
+pnpm test --run src\media\smartSearch\models.test.ts src\media\smartSearch\modelDownload.test.ts src\components\settings\SettingsRadioCard.test.tsx src\components\dependencies\DependencyStatusCards.test.tsx
 ```
 
 In onboarding, check both language choices and select cards with the keyboard.
@@ -122,7 +127,7 @@ real downloads, opening folders, and indexing must also be checked in Tauri.
 ## Photo editor regression tests
 
 ```powershell
-pnpm exec vitest run src\media\edit src\db\api\services\assets\assetImageEdit.test.ts
+pnpm test --run src\media\edit src\db\api\services\assets\assetImageEdit.test.ts
 cargo test --manifest-path src-tauri\Cargo.toml
 ```
 

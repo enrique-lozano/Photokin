@@ -32,6 +32,8 @@ Outputs live under `src-tauri/resources/`, with target-triple suffixes.
 
 ## Detailed guides
 
+- [Screenshots](screenshots/README.md): capture the demo library and render
+  README/website images with `pnpm screenshots`.
 - [Face recognition](face_recognition/README.md): OpenCV models, protocol, and
   direct Python development.
 - [CLIP semantic search](clip/README.md): model layout, protocol, and direct

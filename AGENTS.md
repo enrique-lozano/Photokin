@@ -21,9 +21,9 @@ Known conflicts:
 - **Heavy image work**: decode, hash, thumbnail, trash, and clipboard bitmap
   copy belong in **Rust Tauri commands**, not in the frontend. Keep IPC payloads
   small (paths, not pixel buffers).
-- **UI primitives**: use `src/components/ui/` (Radix + Tailwind) before adding
+- **UI primitives**: use `src-vite/src/components/ui/` (Radix + Tailwind) before adding
   new libraries or raw HTML controls.
-- **Routing**: `react-router-dom` + `AppRoutes` in `src/router.tsx`. Do not add
+- **Routing**: `react-router-dom` + `AppRoutes` in `src-vite/src/router.tsx`. Do not add
   another router.
 - **State**: Zustand (`stores/appState.ts`) for UI/session state; RxJS table
   observables for DB invalidation. Do not add Redux/React Query unless asked.
@@ -97,7 +97,7 @@ Rule of thumb: plain-language primary UI, with expert detail one hover/click awa
 ## Code Layout
 
 ```
-src/
+src-vite/src/
 ├── main.tsx              # React entry
 ├── router.tsx            # createBrowserRouter + AppRoutes
 ├── pages/                # Route pages (albums, people, tags, …)
@@ -116,7 +116,7 @@ src-tauri/
 └── src/commands/         # Tauri IPC (thin; heavy work in Rust)
 scripts/                  # Sidecar setup (ffmpeg, face recognition)
 website/                  # Public website + user guide (VitePress, GitHub Pages)
-screenshots/              # README/website screenshot capture + slide template
+scripts/screenshots/      # README/website screenshot capture + slide template
 ```
 
 ## Run Targets
@@ -133,6 +133,11 @@ screenshots/              # README/website screenshot capture + slide template
 
 Check [Tauri 2 docs](https://v2.tauri.app/) before inventing new native
 capabilities.
+
+Root commands forward to the `src-vite` pnpm workspace package. Frontend
+configuration lives there; build output stays in root `dist/`. The root
+`package.json` is the single source of the app version. Frontend paths below
+are relative to `src-vite/` unless they explicitly start with `src-tauri/`.
 
 ---
 

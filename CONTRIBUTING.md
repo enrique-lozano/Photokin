@@ -42,7 +42,7 @@ user guide lives in [`website/guide/`](website/guide/); every page has a
 "Suggest a change to this page" link.
 
 The README and website screenshots are generated from a demo library of
-public-domain photos; see [Screenshots](screenshots/README.md). For other
+public-domain photos; see [Screenshots](scripts/screenshots/README.md). For other
 documentation images, use a separate test library with licensed,
 non-sensitive images. Hide personal paths, GPS details, and face names. Capture
 the current UI, check both the image and its metadata, and include meaningful
