@@ -127,7 +127,7 @@ export default function TreeEntry({
 
       <div>
         {entry.open && (
-          <div style={{ paddingLeft: `18px` }}>
+          <div className="tree-entry-children">
             {entry.children?.map((entryChild) => (
               <TreeEntry
                 key={entryChild.id}

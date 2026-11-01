@@ -42,10 +42,18 @@ Photokin isn't notarized by Apple yet. See
 
 ### Photokin says ExifTool is missing
 
-ExifTool reads and writes the details inside your photos. On Windows, use
-**Install automatically** in **Settings → System**. On macOS, install it from
-[exiftool.org](https://exiftool.org/) or with `brew install exiftool`, then use
-**Locate manually** if needed. Restart Photokin afterwards.
+ExifTool reads and writes the details inside your photos. Use **Install** in
+**Settings → System** to download Photokin's tested version. On macOS/Linux,
+setup needs Perl 5.8 or newer; install Perl using your system package manager
+if prompted. To use an existing ExifTool installation, use **Choose file…**
+in Settings (or **Locate manually** during first launch). No restart is needed
+after selecting or installing a copy through Photokin.
+
+If Windows setup reports an unsupported installation folder, the ExifTool
+launcher cannot use that folder's characters and Windows has no usable
+short-path alias. Extract the official Windows distribution into an ASCII-only
+folder you can write to, keep `exiftool_files` beside `exiftool.exe`, and select
+that executable with **Choose file…**.
 
 ## Using Photokin
 

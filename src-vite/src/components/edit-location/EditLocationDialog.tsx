@@ -1,5 +1,4 @@
 import { AssetThumbnail } from '@/components/asset-thumbnail/AssetThumbnail';
-import { LocationSource } from '@/db/models/AssetLocation';
 import { BulkActionProgress } from '@/components/bulk-action/BulkActionProgress';
 import { BulkActionResultStep } from '@/components/bulk-action/BulkActionResultStep';
 import {
@@ -21,12 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { InfoHint } from '@/components/ui/infoHint';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/components/ui/toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { AssetInClient } from '@/db/models/AssetInClient';
+import { LocationSource } from '@/db/models/AssetLocation';
 import { useLiveAssetSnapshot } from '@/hooks/useLiveAssetSnapshot';
 import { cn } from '@/lib/utils';
 import {
@@ -62,7 +63,7 @@ import {
   IconWorldSearch,
 } from '@tabler/icons-react';
 import { readText, writeText } from '@tauri-apps/plugin-clipboard-manager';
-import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type JSX } from 'react';
 import { useEditLocationDialog } from './editLocationDialogStore';
 
 type Drafts = Record<string, EditableLocation>;
@@ -793,16 +794,22 @@ function PlaceField({
   onChange: (value: string | null) => void;
   description?: string;
 }) {
+  const inputId = useId();
   return (
-    <label className="flex min-w-0 flex-col gap-1.5 text-sm">
-      <span className="font-medium">{label}</span>
+    <div className="flex min-w-0 flex-col gap-1.5 text-sm">
+      <div className="flex items-center gap-1">
+        <label className="font-medium" htmlFor={inputId}>
+          {label}
+        </label>
+        {description && <InfoHint label={`About ${label}`}>{description}</InfoHint>}
+      </div>
       <Input
+        id={inputId}
         value={aggregate.mixed ? '' : (aggregate.value ?? '')}
         placeholder={aggregate.mixed ? 'Mixed' : emptyPlaceholder}
         onChange={(event) => onChange(normalizePlaceName(event.target.value))}
       />
-      {description && <span className="text-xs text-muted-foreground">{description}</span>}
-    </label>
+    </div>
   );
 }
 

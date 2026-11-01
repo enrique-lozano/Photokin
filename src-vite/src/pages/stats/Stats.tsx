@@ -1,7 +1,7 @@
 import { FilterCriteria, NumberRangeFilterCriteria } from '@/common/query/filters/FilterCriteria';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { SearchFilter } from '@/common/query/filters/FilterTypes';
-import { addConditionsToQuery } from '@/common/searchQueryUtils';
+import { toggleCondition } from '@/common/searchQueryUtils';
 import {
   APERTURE_RANGE_BOUNDS,
   FOCAL_LENGTH_RANGE_BOUNDS,
@@ -14,6 +14,7 @@ import {
 } from '@/components/app-shell/ClearLibraryFilters';
 import { Segmented } from '@/components/segmented/Segmented';
 import { EmptyState } from '@/components/ui/empty-state';
+import { countryNameFromCode } from '@/media/metadata/location/countryCode';
 import { SecondaryTitleAndScrollableContent } from '@/pages/search/SecondaryTitleAndScrollableContent';
 import { useAppStore } from '@/stores/appState';
 import { formatBytes } from '@/utils/numberFormatter';
@@ -26,7 +27,9 @@ import {
   completeApertureDistribution,
   completeFocalLengthDistribution,
   completeIsoDistribution,
+  completeMonthsOfYear,
   completeShutterSpeedDistribution,
+  completeWeekdays,
   fillMonthlyStats,
   formatApertureBucket,
   formatFocalLengthBucket,
@@ -39,8 +42,17 @@ import { useStatsQueries } from './useStatsQueries';
 interface BarDatum {
   label: string;
   count: number;
+  countryCode?: string;
   filters?: SearchFilter[];
 }
+
+const TOP_VALUES_LIMIT = 6;
+
+const DATE_PART_SUBTITLES = {
+  years: 'Items captured each year',
+  months: 'Items per month, across all years',
+  weekdays: 'Items per day of the week',
+};
 
 function OrderedBarPanel({
   title,
@@ -89,7 +101,7 @@ function OrderedBarPanel({
       {direction === 'vertical' ? (
         <DistributionBarChart data={verticalData} onSelect={onSelect} />
       ) : (
-        <RankingBarChart data={horizontalData} onSelect={onSelect} />
+        <RankingBarChart data={horizontalData.slice(0, TOP_VALUES_LIMIT)} onSelect={onSelect} />
       )}
     </ChartPanel>
   );
@@ -100,7 +112,9 @@ export function StatsPage() {
   const setSearchQuery = useAppStore((state) => state.setSearchQuery);
   const setBreadcrumb = useAppStore((state) => state.setBreadcrumb);
   const hasLibraryFilters = useHasActiveLibraryFilters();
-  const queries = useStatsQueries(searchQuery);
+  const [placeGroup, setPlaceGroup] = useState<'city' | 'country'>('city');
+  const [datePart, setDatePart] = useState<'years' | 'months' | 'weekdays'>('years');
+  const queries = useStatsQueries(searchQuery, placeGroup);
   const overview = queries.overview.data;
 
   useEffect(() => {
@@ -124,10 +138,43 @@ export function StatsPage() {
     ? `${overview.totalAssets.toLocaleString()} matching items · ${formatBytes(overview.totalSizeBytes)}`
     : 'Analyzing the current library filters';
   const activity = fillMonthlyStats(queries.activity.data ?? []);
+  const years: BarDatum[] = _chronologicalYears(queries.years.data ?? []).map(({ year, totalImages }) => ({
+    label: String(year),
+    count: totalImages,
+    filters: [{ filterCriteria: FilterCriteria.year, operator: 'equals', value: year }],
+  }));
+  const months: BarDatum[] = completeMonthsOfYear(queries.months.data ?? []).map(
+    ({ value, label, count }) => ({
+      label,
+      count,
+      filters: [{ filterCriteria: FilterCriteria.month, operator: 'equals', value }],
+    }),
+  );
+  const weekdays: BarDatum[] = completeWeekdays(queries.weekdays.data ?? []).map(
+    ({ value, label, count }) => ({
+      label,
+      count,
+      filters: [{ filterCriteria: FilterCriteria.weekday, operator: 'equals', value }],
+    }),
+  );
+  const datePartQuery = queries[datePart];
+  const datePartData = { years, months, weekdays }[datePart];
+  const places: BarDatum[] = (queries.places.data ?? []).map(
+    ({ city, country, countryCode, totalImages }) => ({
+      label:
+        placeGroup === 'city'
+          ? (city ?? 'Unknown city')
+          : (countryNameFromCode(countryCode) ?? country ?? 'Unknown country'),
+      count: totalImages,
+      ...(placeGroup === 'country' ? { countryCode: countryCode ?? undefined } : {}),
+    }),
+  );
   const gear = queries.gear.data;
   const exposure = queries.exposure.data;
   const addChartFilter = ({ filters }: BarDatum) => {
-    if (filters?.length) startTransition(() => setSearchQuery(addConditionsToQuery(searchQuery, filters)));
+    if (!filters?.length) return;
+    const currentQuery = useAppStore.getState().searchQuery;
+    startTransition(() => setSearchQuery(toggleCondition(currentQuery, filters)));
   };
   const rangeData = useMemo(
     () => ({
@@ -217,6 +264,50 @@ export function StatsPage() {
         </ChartPanel>
 
         <ChartPanel
+          title="When you shoot"
+          subtitle={DATE_PART_SUBTITLES[datePart]}
+          loading={datePartQuery.loading && !datePartQuery.data}
+          error={datePartQuery.error}
+          empty={!datePartData.some(({ count }) => count)}
+          actions={
+            <Segmented
+              ariaLabel="Shooting period"
+              className="stats-chart-direction"
+              value={datePart}
+              onChange={setDatePart}
+              options={[
+                { value: 'years', label: 'Years' },
+                { value: 'months', label: 'Months' },
+                { value: 'weekdays', label: 'Weekdays' },
+              ]}
+            />
+          }
+        >
+          <DistributionBarChart data={datePartData} onSelect={addChartFilter} />
+        </ChartPanel>
+        <ChartPanel
+          title="Top places"
+          subtitle={`Most located items by ${placeGroup}`}
+          loading={queries.places.loading && !queries.places.data}
+          error={queries.places.error}
+          empty={!places.length}
+          actions={
+            <Segmented
+              ariaLabel="Top places grouping"
+              className="stats-chart-direction"
+              value={placeGroup}
+              onChange={setPlaceGroup}
+              options={[
+                { value: 'city', label: 'Cities' },
+                { value: 'country', label: 'Countries' },
+              ]}
+            />
+          }
+        >
+          <RankingBarChart data={places} showCountryFlags={placeGroup === 'country'} />
+        </ChartPanel>
+
+        <ChartPanel
           title="Camera bodies"
           subtitle="Most-used camera models"
           loading={queries.gear.loading && !queries.gear.data}
@@ -263,16 +354,22 @@ export function StatsPage() {
           loading={queries.captureSettings.loading && !queries.captureSettings.data}
           error={queries.captureSettings.error}
           empty={
-            !queries.captureSettings.data?.whiteBalances.length &&
-            !queries.captureSettings.data?.flashValues.length
+            !queries.captureSettings.data ||
+            Object.values(queries.captureSettings.data).every((values) => !values.length)
           }
         >
-          <CaptureSettingsList
-            whiteBalances={queries.captureSettings.data?.whiteBalances ?? []}
-            flashValues={queries.captureSettings.data?.flashValues ?? []}
-            whiteBalanceCount={overview?.whiteBalanceCount ?? 0}
-            flashCount={overview?.flashCount ?? 0}
-          />
+          {queries.captureSettings.data && (
+            <CaptureSettingsList
+              data={queries.captureSettings.data}
+              counts={{
+                whiteBalance: overview?.whiteBalanceCount ?? 0,
+                flash: overview?.flashCount ?? 0,
+                exposureProgram: overview?.exposureProgramCount ?? 0,
+                meteringMode: overview?.meteringModeCount ?? 0,
+              }}
+              onFilter={(filter) => addChartFilter({ label: '', count: 0, filters: [filter] })}
+            />
+          )}
         </ChartPanel>
         <OrderedBarPanel
           title="Focal length"
@@ -365,6 +462,19 @@ function _rangeData(
   return complete(rows ?? []).map((datum, index) => ({
     ...datum,
     filters: _rangeFilters(criteria, index, bounds),
+  }));
+}
+
+/** Years oldest-first, with gap years filled as zero so the columns read as a timeline. */
+function _chronologicalYears(rows: { year: string | null; totalImages: number }[]) {
+  const counts = new Map(rows.filter((row) => row.year).map((row) => [Number(row.year), row.totalImages]));
+  if (!counts.size) return [];
+
+  const first = Math.min(...counts.keys());
+  const last = Math.max(...counts.keys());
+  return Array.from({ length: last - first + 1 }, (_, index) => ({
+    year: first + index,
+    totalImages: counts.get(first + index) ?? 0,
   }));
 }
 

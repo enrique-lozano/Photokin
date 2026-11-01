@@ -2,13 +2,29 @@ import { SearchQuery } from '@/common/fileSearchFilters';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 
-export function useStatsQueries(searchQuery: SearchQuery) {
+export function useStatsQueries(searchQuery: SearchQuery, placeGroup: 'city' | 'country') {
   const options = { extDependencies: [searchQuery] };
   const overview = useLiveQuery(() => AssetsService.getStatsOverview({ searchQuery }), ['assets'], options);
   const activity = useLiveQuery(
     () => AssetsService.getFileCountByMonth({ searchQuery }),
     ['assets'],
     options,
+  );
+  const years = useLiveQuery(() => AssetsService.getFileCountByYear({ searchQuery }), ['assets'], options);
+  const months = useLiveQuery(
+    () => AssetsService.getFileCountByDatePart({ searchQuery, part: 'month' }),
+    ['assets'],
+    options,
+  );
+  const weekdays = useLiveQuery(
+    () => AssetsService.getFileCountByDatePart({ searchQuery, part: 'weekday' }),
+    ['assets'],
+    options,
+  );
+  const places = useLiveQuery(
+    () => AssetsService.getTopPlacesInScope({ searchQuery, limit: 6, groupBy: placeGroup }),
+    ['assets'],
+    { extDependencies: [searchQuery, placeGroup] },
   );
   const gear = useLiveQuery(
     async () => {
@@ -23,11 +39,13 @@ export function useStatsQueries(searchQuery: SearchQuery) {
   );
   const captureSettings = useLiveQuery(
     async () => {
-      const [whiteBalances, flashValues] = await Promise.all([
+      const [whiteBalances, flashValues, exposurePrograms, meteringModes] = await Promise.all([
         AssetsService.getTopWhiteBalances({ searchQuery }),
         AssetsService.getTopFlashValues({ searchQuery }),
+        AssetsService.getTopExposurePrograms({ searchQuery }),
+        AssetsService.getTopMeteringModes({ searchQuery }),
       ]);
-      return { whiteBalances, flashValues };
+      return { whiteBalances, flashValues, exposurePrograms, meteringModes };
     },
     ['assets'],
     options,
@@ -73,5 +91,5 @@ export function useStatsQueries(searchQuery: SearchQuery) {
     options,
   );
 
-  return { overview, activity, gear, captureSettings, exposure, ratings };
+  return { overview, activity, years, months, weekdays, places, gear, captureSettings, exposure, ratings };
 }

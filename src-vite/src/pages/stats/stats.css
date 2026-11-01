@@ -127,7 +127,7 @@
 }
 
 .stats-distribution-chart {
-  height: 330px;
+  height: 260px;
   overflow: hidden;
 }
 
@@ -136,46 +136,81 @@
   height: 100%;
 }
 
-.stats-settings-grid {
-  min-height: 330px;
+.stats-settings {
+  display: grid;
+  gap: 16px;
+}
+
+.stats-settings__tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: 8px;
 }
 
-.stats-settings-group + .stats-settings-group {
-  padding-left: 24px;
-  border-left: 1px solid hsl(var(--border));
-}
-
-.stats-settings-group__header {
-  margin-bottom: 20px;
+.stats-settings__tab {
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  background: hsl(var(--muted) / 0.35);
+  @apply text-muted-foreground text-xs;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.stats-settings-group__icon {
-  width: 36px;
-  height: 36px;
+.stats-settings__tab:hover {
+  background: hsl(var(--muted) / 0.7);
+  @apply text-foreground;
+}
+
+.stats-settings__tab.active {
+  border-color: hsl(var(--primary) / 0.42);
+  background: hsl(var(--primary) / 0.1);
+  @apply text-foreground;
+}
+
+.stats-settings__tab svg {
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  background: hsl(var(--primary) / 0.11);
   @apply text-primary;
 }
 
-.stats-settings-group__header h4,
-.stats-settings-group__header p {
-  margin: 0;
+.stats-settings__tab span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.stats-settings-group__header h4 {
-  @apply text-sm font-semibold;
+.stats-settings__tab strong {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  @apply text-muted-foreground;
 }
 
-.stats-settings-group__header p,
+.stats-settings__tab:focus-visible,
+.stats-settings-list__button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+.stats-settings__values {
+  min-height: 132px;
+  padding: 0 2px;
+}
+
+.stats-ranking-chart__country-flag {
+  width: 20px;
+  height: 14px;
+}
+
 .stats-settings-group__empty {
   @apply text-muted-foreground text-xs;
 }
@@ -184,13 +219,61 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 15px;
+  gap: 8px;
   list-style: none;
+}
+
+.stats-settings-list__button {
+  width: 100%;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.stats-settings-list__button:hover {
+  border-color: hsl(var(--primary) / 0.28);
+  background: hsl(var(--primary) / 0.1);
+}
+
+.stats-settings-list__button.active {
+  border-color: hsl(var(--primary) / 0.55);
+  background: hsl(var(--primary) / 0.16);
+}
+
+.stats-settings-list__button.active .stats-settings-list__track span,
+.stats-settings-list__button:hover .stats-settings-list__track span {
+  background: hsl(var(--primary));
+}
+
+.stats-settings-list__icon {
+  width: 16px;
+  flex: 0 0 auto;
+  display: flex;
+  @apply text-muted-foreground;
+}
+
+.stats-settings-list__button:hover .stats-settings-list__icon,
+.stats-settings-list__button.active .stats-settings-list__icon {
+  @apply text-primary;
+}
+
+.stats-settings-list__body {
+  min-width: 0;
+  flex: 1;
 }
 
 .stats-settings-list__value {
   min-width: 0;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -209,6 +292,7 @@
 }
 
 .stats-settings-list__track {
+  display: block;
   height: 3px;
   overflow: hidden;
   border-radius: 2px;
@@ -223,7 +307,7 @@
 }
 
 .stats-settings-group__empty {
-  margin: 42px 0 0;
+  margin: 20px 0 0;
   text-align: center;
 }
 
@@ -237,6 +321,21 @@
 .stats-chart--interactive .recharts-bar-rectangle,
 .stats-chart--interactive .recharts-active-dot {
   cursor: pointer;
+}
+
+/* Recharts' internal layers use tabIndex=-1, so clicking a bar focuses them and draws a stray outline. */
+.stats-page .recharts-wrapper g:focus {
+  outline: none;
+}
+
+.stats-page .recharts-surface:focus {
+  outline: none;
+}
+
+.stats-page .recharts-surface:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .stats-chart-skeleton,
@@ -345,15 +444,22 @@
     flex-wrap: wrap;
   }
 
-  .stats-settings-grid {
-    grid-template-columns: 1fr;
+  .stats-settings__tabs {
+    gap: 5px;
   }
 
-  .stats-settings-group + .stats-settings-group {
-    padding-top: 20px;
-    padding-left: 0;
-    border-top: 1px solid hsl(var(--border));
-    border-left: 0;
+  .stats-settings__tab {
+    justify-content: center;
+    gap: 5px;
+    padding-inline: 5px;
+  }
+
+  .stats-settings__tab span {
+    max-width: 80px;
+  }
+
+  .stats-settings__values {
+    min-height: 132px;
   }
 }
 

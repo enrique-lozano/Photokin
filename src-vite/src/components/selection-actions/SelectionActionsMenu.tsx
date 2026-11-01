@@ -3,8 +3,8 @@ import { externalAppName } from '@/system/externalApp';
 import { openEditorWindow } from '@/utils/openEditorWindow';
 import {
   IconCalendarEvent,
-  IconCopy,
   IconColumns2,
+  IconCopy,
   IconDeviceFloppy,
   IconExternalLink,
   IconFaceId,
@@ -40,6 +40,7 @@ import { AssetInClient } from '../../db/models/AssetInClient';
 import { useOptimisticValue } from '../../hooks/useOptimisticValue';
 import { useAppStore } from '../../stores/appState';
 import { useSettingsStore } from '../../stores/settingsStore';
+import { canComparePhotos } from '../compare/comparisonViewport';
 import { StarRating } from '../lightbox/info/StarRating';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '../ui/context-menu';
 import { Kbd, KbdGroup } from '../ui/kbd';
@@ -54,7 +55,6 @@ import {
   useSelectionActions,
   useSelectionSharedRating,
 } from './useSelectionActions';
-import { canComparePhotos } from '../compare/comparisonViewport';
 
 function Icon({ glyph: Glyph }: { glyph: TablerIcon }) {
   return <Glyph className="selection-menu__icon" size={16} />;
@@ -318,17 +318,16 @@ export function SelectionMenuBody({
     <>
       {isLoading && <span hidden data-selection-menu-loading />}
 
-      <Item
-        className="selection-menu__item"
-        onSelect={api.comparePhotos}
-        disabled={!canComparePhotos(selectedImages)}
-        title={
-          canComparePhotos(selectedImages) ? undefined : 'Select exactly two different photos to compare'
-        }
-      >
-        <Icon glyph={IconColumns2} />
-        Compare photos
-      </Item>
+      {canComparePhotos(selectedImages) && (
+        <Item
+          className="selection-menu__item"
+          onSelect={api.comparePhotos}
+          title={'Select exactly two different photos to compare'}
+        >
+          <Icon glyph={IconColumns2} />
+          Compare photos
+        </Item>
+      )}
       <Item className="selection-menu__item" onSelect={api.moveToFolder}>
         <Icon glyph={IconFolder} />
         Move to folder…

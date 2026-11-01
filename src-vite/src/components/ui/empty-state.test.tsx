@@ -39,6 +39,23 @@ describe('EmptyState', () => {
     expect(panel).toContain('text-xs');
   });
 
+  it('allows a full-width action area without changing the default layout', () => {
+    const markup = renderToStaticMarkup(
+      <EmptyState
+        icon={IconTag}
+        title="Scan your library"
+        actionClassName="w-full max-w-md"
+        action={<button type="button">Scan</button>}
+      />,
+    );
+
+    expect(markup).toContain('mt-5 w-full max-w-md');
+    const defaultMarkup = renderToStaticMarkup(
+      <EmptyState icon={IconTag} title="No tags" action={<button>New tag</button>} />,
+    );
+    expect(defaultMarkup).not.toContain('max-w-md');
+  });
+
   it('leaves out the description and action rows when not given', () => {
     const markup = renderToStaticMarkup(<EmptyState icon={IconTag} title="Nothing here" />);
 

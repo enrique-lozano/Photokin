@@ -29,6 +29,10 @@ vi.mock('react', async (original) => ({
   },
 }));
 vi.mock('@tauri-apps/plugin-os', () => ({ platform: () => 'windows' }));
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  isTauri: () => true,
+}));
 vi.mock('@/system/useDependencyStatus', () => ({
   useDependencyStatus: () => ({
     dependencies: mocks.dependencies,
@@ -77,6 +81,11 @@ beforeEach(() => {
 });
 
 describe('welcome setup flow', () => {
+  it('offers the managed installation in the existing desktop setup card', () => {
+    expect(markup()).toContain('Install automatically');
+    expect(mocks.card!.canAutoInstall).toBe(true);
+  });
+
   it('introduces photo organization before explaining ExifTool in its setup card', () => {
     const html = markup();
     const introduction = html.indexOf('Browse your photo collection, organize it with albums and tags');

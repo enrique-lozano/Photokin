@@ -75,7 +75,17 @@ export function ScanOptionsForm({ onScan, scanning, layout, scanLabel }: Props) 
           value={[requiredSimilarityPercent]}
           onValueChange={([value]) => setSimilarityThreshold(requiredPercentToThreshold(value))}
           aria-label="Required similarity percentage"
+          aria-valuetext={`${requiredSimilarityPercent}%`}
         />
+        {layout === 'inline' && (
+          <div className="space-y-2 text-xs text-muted-foreground">
+            <div className="flex justify-between gap-4">
+              <span>More matches</span>
+              <span>Closer matches</span>
+            </div>
+            <p>Higher similarity finds closer matches. Exact copies are always included.</p>
+          </div>
+        )}
       </div>
 
       <Button
@@ -87,6 +97,9 @@ export function ScanOptionsForm({ onScan, scanning, layout, scanLabel }: Props) 
         <IconScan size={16} />
         {scanning ? 'Scanning…' : (scanLabel ?? 'Scan for duplicates')}
       </Button>
+      {layout === 'inline' && (
+        <p className="text-center text-xs text-muted-foreground">Nothing is removed until you review it.</p>
+      )}
     </div>
   );
 }

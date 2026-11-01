@@ -1,4 +1,5 @@
 import type { SearchFilter } from '@/common/query/filters/FilterTypes';
+import { CountryFlag } from '@/components/location/CountryFlag';
 import type { ReactNode } from 'react';
 import {
   Area,
@@ -69,26 +70,65 @@ export function ChartPanel({
 export interface RankingDatum {
   label: string;
   count: number;
+  countryCode?: string;
   filters?: SearchFilter[];
 }
 
 export function RankingBarChart({
   data,
   onSelect,
+  showCountryFlags = false,
 }: {
   data: RankingDatum[];
   onSelect?: (datum: RankingDatum) => void;
+  showCountryFlags?: boolean;
 }) {
+  const yAxisWidth = Math.min(
+    116,
+    Math.max(52, ...data.map(({ label }) => label.length * 8 + (showCountryFlags ? 42 : 16))),
+  );
+
   return (
     <div
       className={`stats-ranking-chart${onSelect ? ' stats-chart--interactive' : ''}`}
-      style={{ height: Math.max(190, data.length * 32 + 24) }}
+      style={{ height: Math.max(260, data.length * 32 + 24) }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" margin={{ top: 4, right: 14, bottom: 4, left: 8 }}>
           <CartesianGrid horizontal={false} stroke="hsl(var(--border))" />
           <XAxis type="number" hide allowDecimals={false} />
-          <YAxis type="category" dataKey="label" width={116} tickLine={false} axisLine={false} />
+          <YAxis
+            type="category"
+            dataKey="label"
+            width={yAxisWidth}
+            tickLine={false}
+            axisLine={false}
+            tick={
+              showCountryFlags
+                ? ({ x, y, payload }) => {
+                    const label = String(payload.value ?? '');
+                    const countryCode = data.find((datum) => datum.label === label)?.countryCode;
+                    return (
+                      <g transform={`translate(${x},${y})`}>
+                        {countryCode && (
+                          <CountryFlag
+                            code={countryCode}
+                            className="stats-ranking-chart__country-flag"
+                            width={20}
+                            height={14}
+                            x={-25}
+                            y={-7}
+                          />
+                        )}
+                        <text x={-31} y={4} textAnchor="end">
+                          {label}
+                        </text>
+                      </g>
+                    );
+                  }
+                : undefined
+            }
+          />
           <Tooltip
             {...TOOLTIP_PROPS}
             cursor={{ fill: 'hsl(var(--muted) / 0.55)' }}
@@ -98,6 +138,7 @@ export function RankingBarChart({
             dataKey="count"
             fill="hsl(var(--primary))"
             radius={[0, 4, 4, 0]}
+            maxBarSize={28}
             animationDuration={650}
             onClick={onSelect ? (entry) => onSelect(entry.payload as RankingDatum) : undefined}
           />
@@ -118,13 +159,14 @@ export function DistributionBarChart({
     <div className={`stats-distribution-chart${onSelect ? ' stats-chart--interactive' : ''}`}>
       <div className="stats-distribution-chart__canvas">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 64, left: 0 }}>
+          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
             <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
             <XAxis
               dataKey="label"
               interval={0}
               angle={-40}
               textAnchor="end"
+              height={44}
               tickLine={false}
               axisLine={false}
             />

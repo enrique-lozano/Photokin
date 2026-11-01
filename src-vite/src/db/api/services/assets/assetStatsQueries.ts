@@ -32,12 +32,17 @@ const EMPTY_OVERVIEW: StatsOverview = {
   shutterSpeedCount: 0,
   whiteBalanceCount: 0,
   flashCount: 0,
+  exposureProgramCount: 0,
+  meteringModeCount: 0,
   locationCount: 0,
 };
 
 function _hasText(column: string) {
   return sql<SqlBool>`TRIM(COALESCE(${sql.ref(column)}, '')) != ''`;
 }
+
+/** Metering modes worth reporting: excludes `Unknown` (0) and `Other` (255). */
+const _KNOWN_METERING_MODE = sql<SqlBool>`filesQueryRes.meteringMode BETWEEN 1 AND 6`;
 
 export async function getStatsOverview(params: ScopeParams): Promise<StatsOverview> {
   const ids = uniqueAssetIds(params.assetIds);
@@ -78,6 +83,12 @@ export async function getStatsOverview(params: ScopeParams): Promise<StatsOvervi
         ),
         sql<number>`COALESCE(SUM(CASE WHEN ${_hasText('filesQueryRes.flash')} THEN 1 ELSE 0 END), 0)`.as(
           'flashCount',
+        ),
+        sql<number>`COALESCE(SUM(CASE WHEN ${_hasText('filesQueryRes.exposureProgram')} THEN 1 ELSE 0 END), 0)`.as(
+          'exposureProgramCount',
+        ),
+        sql<number>`COALESCE(SUM(CASE WHEN ${_KNOWN_METERING_MODE} THEN 1 ELSE 0 END), 0)`.as(
+          'meteringModeCount',
         ),
         sql<number>`COALESCE(SUM(CASE WHEN filesQueryRes.latitude IS NOT NULL OR filesQueryRes.longitude IS NOT NULL OR ${_hasText('filesQueryRes.locationCity')} OR ${_hasText('filesQueryRes.locationCountry')} THEN 1 ELSE 0 END), 0)`.as(
           'locationCount',
@@ -129,7 +140,7 @@ export async function getTopLenses(params: ScopeParams & { limit?: number }): Pr
 
 async function _getTopTextValues(
   params: ScopeParams & { limit?: number },
-  column: 'whiteBalance' | 'flash',
+  column: 'whiteBalance' | 'flash' | 'exposureProgram',
 ): Promise<StatsCountBucket[]> {
   const ids = uniqueAssetIds(params.assetIds);
   if (ids?.length === 0) return [];
@@ -153,6 +164,27 @@ export function getTopWhiteBalances(params: ScopeParams & { limit?: number }) {
 
 export function getTopFlashValues(params: ScopeParams & { limit?: number }) {
   return _getTopTextValues(params, 'flash');
+}
+
+export function getTopExposurePrograms(params: ScopeParams & { limit?: number }) {
+  return _getTopTextValues(params, 'exposureProgram');
+}
+
+export async function getTopMeteringModes(
+  params: ScopeParams & { limit?: number },
+): Promise<StatsNumericBucket[]> {
+  const ids = uniqueAssetIds(params.assetIds);
+  if (ids?.length === 0) return [];
+
+  return selectFromDB(
+    kyselyDB
+      .selectFrom(scopedAssetsSubquery(params.searchQuery, ids))
+      .select([sql<number>`filesQueryRes.meteringMode`.as('value'), sql<number>`COUNT(*)`.as('count')])
+      .where(_KNOWN_METERING_MODE)
+      .groupBy('value')
+      .orderBy('count', 'desc')
+      .limit(params.limit ?? 5),
+  );
 }
 
 async function _getNumericBuckets(

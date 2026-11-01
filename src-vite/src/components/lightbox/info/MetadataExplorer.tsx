@@ -18,6 +18,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { useEffect, useState } from 'react';
 import { MetadataRows } from './MetadataRows';
+import { useInfoPanelState } from './infoPanelState';
 
 export function MetadataExplorer({
   asset,
@@ -30,7 +31,8 @@ export function MetadataExplorer({
   const [snapshot, setSnapshot] = useState<MetadataSnapshot | null>(null);
   const [error, setError] = useState('');
   const [request, setRequest] = useState(0);
-  const [query, setQuery] = useState('');
+  const query = useInfoPanelState((state) => state.metadataQuery);
+  const setQuery = useInfoPanelState((state) => state.setMetadataQuery);
   useEffect(() => {
     let cancelled = false;
     setSnapshot(null);

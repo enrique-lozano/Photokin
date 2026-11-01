@@ -60,6 +60,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   padding: 8px 16px;
   /* Opaque base: the shell behind is the (often dark) navbar color. */
   background:
@@ -91,6 +92,7 @@
 .global-filters-strip__pill {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 6px;
   padding: 3px 4px 3px 10px;
   border-radius: 999px;

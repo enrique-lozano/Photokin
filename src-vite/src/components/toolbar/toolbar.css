@@ -55,12 +55,11 @@
   cursor: default;
 }
 
-/* Library filters: the search field's right segment, split off by a divider.
-   It bleeds over the field's padding so its hover fills the segment edge to edge. */
+/* Library filters occupy the search field's trailing segment. */
 .toolbar-filter-button-wrap {
   display: flex;
   align-self: stretch;
-  margin-right: -10px;
+  flex-shrink: 0;
 }
 
 .toolbar-filter-button {
@@ -70,7 +69,7 @@
   display: grid;
   place-items: center;
   width: 34px;
-  margin-right: -10px;
+  height: 100%;
   border: none;
   border-left: 1px solid hsl(var(--main-navbar-foreground) / 0.16);
   /* The field's 9px radius, less its 1px border. */
@@ -78,10 +77,6 @@
   background: transparent;
   @apply text-main-navbar-foreground;
   transition: background-color 0.15s ease;
-}
-
-.toolbar-filter-button-wrap .toolbar-filter-button {
-  margin-right: 0;
 }
 
 .toolbar-filter-button:hover,
@@ -143,8 +138,4 @@
 
 .window-control-button-close:hover {
   background-color: hsl(0 72% 51%);
-}
-
-#global-search-input::placeholder {
-  @apply text-main-navbar-foreground;
 }

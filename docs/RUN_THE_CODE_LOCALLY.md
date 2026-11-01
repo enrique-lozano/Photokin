@@ -62,16 +62,32 @@ binaries. See the [script index](../scripts/README.md) for manual rebuilds.
 
 ExifTool reads and writes the details embedded in photo files.
 
-- On Windows, onboarding offers **Install automatically** or **Locate manually**.
-  Automatic installation downloads ExifTool and saves its location for future
-  launches.
+- On Windows, macOS and Linux, onboarding offers **Install automatically** or
+  **Locate manually**. Automatic installation downloads Photokin's tested
+  ExifTool **13.60**, verifies its SHA-256 checksum and a metadata read/write
+  check, and saves a private, versioned copy for future launches. macOS/Linux
+  require Perl 5.8 or newer; if missing, install Perl with your package manager.
+- Setup does not change a system ExifTool installation. Failed downloads or
+  checks keep the previous working copy and selection. Settings > System offers
+  **Install tested version** when the active version differs; installation only
+  happens when requested. **Choose file...** selects an existing copy instead.
 - You can also install [ExifTool](https://exiftool.org/) yourself and make it
   available on `PATH`; check with `exiftool -ver` in a new terminal.
 - Browsing can continue without it, but metadata-dependent features need it.
   The System tab in Settings reports availability.
+- The official Windows launcher cannot use some non-ASCII installation paths.
+  Photokin uses the folder's Windows short-path alias when available. On drives
+  without a usable alias, setup explains how to select an ExifTool installation
+  in an ASCII-only folder; the previous selection remains unchanged.
 
 The editor integration tests use the development dependency's bundled ExifTool,
 independently of the app's ExifTool configuration.
+
+To update the managed version, update the archive names, `MANAGED_VERSION` and
+the SHA-256 values in `src-tauri/src/commands/exiftool_setup.rs` together using
+ExifTool's official checksum file. Run the managed-install integration check
+and metadata read/write/editor regression tests before shipping. Do not switch
+the installer back to a moving "latest" download.
 
 ## Build
 

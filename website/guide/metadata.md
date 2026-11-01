@@ -72,6 +72,14 @@ what they're for:
 
 ## For experts
 
+### Comparing metadata
+
+Open **Info → All metadata** in the photo viewer to search the fields and
+values read by ExifTool. Your search stays in place when you switch photos,
+info tabs, or pages, so you can compare the same details across photos.
+Clear or replace the search to see other fields; it resets when you restart
+Photokin.
+
 ### Standards and fields
 
 Photokin reads and writes metadata through

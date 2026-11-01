@@ -3,7 +3,9 @@ import {
   completeApertureDistribution,
   completeFocalLengthDistribution,
   completeIsoDistribution,
+  completeMonthsOfYear,
   completeShutterSpeedDistribution,
+  completeWeekdays,
   fillMonthlyStats,
   formatApertureBucket,
   formatFocalLengthBucket,
@@ -29,6 +31,19 @@ describe('statsFormatters', () => {
 
   it('returns no timeline points for an empty scope', () => {
     expect(fillMonthlyStats([])).toEqual([]);
+  });
+
+  it('fills all months in calendar order', () => {
+    const result = completeMonthsOfYear([{ value: 3, totalImages: 5 }]);
+    expect(result.map(({ value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(result[2].count).toBe(5);
+    expect(result[0].count).toBe(0);
+  });
+
+  it('fills all weekdays Monday-first, mapping SQLite Sunday (0) last', () => {
+    const result = completeWeekdays([{ value: 0, totalImages: 2 }]);
+    expect(result.map(({ value }) => value)).toEqual([1, 2, 3, 4, 5, 6, 0]);
+    expect(result[6].count).toBe(2);
   });
 
   it('completes the ordered ISO ranges with zero-count buckets', () => {

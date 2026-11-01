@@ -33,6 +33,11 @@ export enum FilterCriteria {
   locationState = 'locationState',
   locationCountry = 'locationCountry',
   locationCountryCode = 'locationCountryCode',
+  whiteBalance = 'whiteBalance',
+  flashValue = 'flashValue',
+  exposureProgram = 'exposureProgram',
+  /** EXIF metering mode code (see `AssetMeteringMode`). */
+  meteringMode = 'meteringMode',
   /** Matches on whether an asset is in the app-managed Trash. */
   trashed = 'trashed',
   /** Matches on whether the EXIF flash tag says the flash fired. */
@@ -52,6 +57,9 @@ export const TextFilterCriteria = [
   FilterCriteria.locationState,
   FilterCriteria.locationCountry,
   FilterCriteria.locationCountryCode,
+  FilterCriteria.whiteBalance,
+  FilterCriteria.flashValue,
+  FilterCriteria.exposureProgram,
 ] as const;
 
 /**
@@ -70,6 +78,7 @@ export const NumberRangeFilterCriteria = [
   FilterCriteria.focalLength,
   FilterCriteria.aperture,
   FilterCriteria.shutterSpeed,
+  FilterCriteria.meteringMode,
 ] as const;
 
 /**
@@ -126,6 +135,12 @@ export function filterCriteriaWhereIndex(criteria: FilterCriteria): keyof AssetD
       return 'locationCountry';
     case FilterCriteria.locationCountryCode:
       return 'locationCountryCode';
+    case FilterCriteria.whiteBalance:
+      return 'whiteBalance';
+    case FilterCriteria.flashValue:
+      return 'flash';
+    case FilterCriteria.exposureProgram:
+      return 'exposureProgram';
     default:
       throw new Error('Unknown filter criteria');
   }

@@ -101,6 +101,22 @@
   }
 }
 
+.tree-entry-children {
+  position: relative;
+  padding-left: 18px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--tree-item-height) / 4);
+    width: 1px;
+    background-color: hsl(var(--muted-foreground) / 0.4);
+    pointer-events: none;
+  }
+}
+
 .tree-entry-item.is-hidden-item {
   opacity: 0.58;
   font-style: italic;
@@ -110,6 +126,10 @@
   .caret-icon-container {
     opacity: 0;
   }
+}
+
+.tree-root.is-flat .caret-icon-container {
+  display: none;
 }
 
 .tree-entry-popover {

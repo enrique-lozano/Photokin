@@ -1,4 +1,5 @@
 import { FilterCriteria } from '@/common/query/filters/FilterCriteria';
+import { parseSearchBarInput } from '@/common/query/searchInput';
 import type { SearchQuery } from '@/common/fileSearchFilters';
 import { readdirSync, readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -10,6 +11,8 @@ const { DatabaseSync: Database } = createRequire(import.meta.url)(
   'node:sqlite',
 ) as typeof import('node:sqlite');
 const db = vi.hoisted(() => ({ current: null as DatabaseSync | null }));
+const settings = vi.hoisted(() => ({ countUnverifiedFaces: false }));
+vi.mock('@/stores/settingsStore', () => ({ useSettingsStore: { getState: () => settings } }));
 
 vi.mock('@/db/connection/db.service', () => ({
   selectFromDB: async (query: { compile(): { sql: string; parameters: readonly unknown[] } }) => {
@@ -25,6 +28,7 @@ vi.mock('./assetRows', () => ({
 
 describe('filmstrip membership after importing an edited copy', () => {
   beforeEach(() => {
+    settings.countUnverifiedFaces = false;
     db.current = new Database(':memory:');
     const directory = 'src\\db\\migrations';
     const migrations = readdirSync(directory)
@@ -95,5 +99,48 @@ describe('filmstrip membership after importing an edited copy', () => {
   it('does not add a copy to an explicit fixed list', async () => {
     importCopy();
     expect(await getScopedAssetIds({ assetIds: ['original'], preserveOrder: true })).toEqual(['original']);
+  });
+
+  it('presence uses assigned tags rather than confirmed face-tag associations', async () => {
+    importCopy();
+    db.current!.exec(`
+      INSERT INTO tagRegionInfo (id, tagId, assetId, x, y, w, h, confirmed, faceStatus)
+        VALUES ('copy-face', 'trip', 'copy', 0.5, 0.5, 0.2, 0.2, 1, 'confirmed');
+    `);
+    expect(
+      await getScopedAssetIds({ searchQuery: { filters: parseSearchBarInput('has:tag').filters } }),
+    ).toEqual(['original']);
+    expect(
+      await getScopedAssetIds({ searchQuery: { filters: parseSearchBarInput('no:tag').filters } }),
+    ).toEqual(['copy']);
+    expect(
+      await getScopedAssetIds({
+        searchQuery: {
+          filters: [
+            {
+              filterCriteria: FilterCriteria.tag,
+              operator: 'contains',
+              value: [{ id: 'trip', name: 'Trip', parentId: null, color: null }],
+            },
+          ],
+        },
+      }),
+    ).toEqual(['original', 'copy']);
+  });
+
+  it('detected-face presence includes unnamed faces and follows the pending-face setting', async () => {
+    importCopy();
+    const scope = (query: string) => ({ searchQuery: { filters: parseSearchBarInput(query).filters } });
+    db.current!.exec(`
+      INSERT INTO tagRegionInfo (id, assetId, x, y, w, h, confirmed, faceStatus)
+        VALUES ('copy-face', 'copy', 0.5, 0.5, 0.2, 0.2, 0, 'unknown');
+    `);
+    expect(await getScopedAssetIds(scope('has:person'))).toEqual(['original', 'copy']);
+    db.current!.exec(`UPDATE tagRegionInfo SET faceStatus = 'pending' WHERE id = 'copy-face'`);
+    expect(await getScopedAssetIds(scope('has:person'))).toEqual(['original']);
+    expect(await getScopedAssetIds(scope('no:person'))).toEqual(['copy']);
+    settings.countUnverifiedFaces = true;
+    expect(await getScopedAssetIds(scope('has:person'))).toEqual(['original', 'copy']);
+    expect(await getScopedAssetIds(scope('no:person'))).toEqual([]);
   });
 });

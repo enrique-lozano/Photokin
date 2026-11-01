@@ -3574,12 +3574,14 @@ name = "photokin"
 version = "0.0.0"
 dependencies = [
  "fix-path-env",
+ "flate2",
  "fs4",
  "image",
  "mp4",
  "serde",
  "serde_json",
  "sha2",
+ "tar",
  "tauri",
  "tauri-build",
  "tauri-plugin-clipboard-manager",
@@ -3595,6 +3597,7 @@ dependencies = [
  "tauri-plugin-updater",
  "ureq",
  "webp",
+ "windows-sys 0.61.2",
  "zip 2.4.2",
 ]
 

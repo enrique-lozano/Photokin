@@ -15,51 +15,34 @@
   border: 1px solid hsl(var(--main-navbar-foreground) / 0.16);
   background: hsl(var(--main-navbar-foreground) / 0.12);
   border-radius: 9px;
-  padding: 0 10px;
+  padding: 0 0 0 10px;
 }
 
 .toolbar-searchbar__input-shell.is-focused {
   border-color: hsl(var(--main-navbar-foreground) / 0.5);
 }
 
-.toolbar-searchbar__search-icon {
+.toolbar-searchbar__search-icon,
+.toolbar-searchbar__action {
   flex-shrink: 0;
   @apply text-main-navbar-foreground;
 }
 
-.toolbar-searchbar__chips {
-  min-width: 0;
-  flex: 1;
+.toolbar-searchbar__action {
+  width: 24px;
+  height: 24px;
+  @apply hover:bg-main-navbar-foreground/15 hover:text-main-navbar-foreground;
+}
+
+.toolbar-searchbar__controls {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  overflow: hidden;
+  align-self: stretch;
+  flex-shrink: 0;
 }
 
-.toolbar-searchbar__chip {
-  border: 1px solid hsl(var(--main-navbar-foreground) / 0.3);
-  border-radius: 999px;
-  padding: 2px 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  @apply text-xs;
-  background: hsl(var(--main-navbar-foreground) / 0.2);
-}
-
-.toolbar-searchbar__chip span {
-  display: inline-flex;
-  align-items: center;
-}
-
-.toolbar-searchbar__chip button {
-  border: none;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  color: inherit;
-  padding: 0;
+.toolbar-searchbar__controls > .toolbar-searchbar__action {
+  margin: 0 4px;
 }
 
 .toolbar-searchbar__input {
@@ -67,109 +50,335 @@
   width: 100%;
   min-width: 0;
   border: none;
+  padding: 0;
   background: transparent;
   @apply text-main-navbar-foreground;
   outline: none;
   text-overflow: ellipsis;
 }
 
-.toolbar-searchbar__input::placeholder {
-  @apply text-main-navbar-foreground;
-}
-
-/* ── Highlighted input overlay ──────────────────────────────────────── */
-
-.toolbar-searchbar__hl-wrap {
+.toolbar-searchbar__field {
   position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
 }
 
-.toolbar-searchbar__hl-overlay {
+.toolbar-searchbar__input.has-highlight {
+  position: relative;
+  z-index: 1;
+  color: transparent;
+  caret-color: hsl(var(--main-navbar-foreground));
+}
+
+.toolbar-searchbar__input.has-highlight::selection {
+  color: HighlightText;
+  background: Highlight;
+}
+
+.toolbar-searchbar__highlight {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  user-select: none;
-  white-space: pre;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  font: inherit;
-  font-size: inherit;
-  line-height: inherit;
-  letter-spacing: inherit;
-}
-
-/* Actual input: transparent text so the overlay shows through */
-.toolbar-searchbar__hl-input {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  border: none;
-  background: transparent;
-  @apply text-transparent;
-  caret-color: hsl(var(--main-navbar-foreground));
-  outline: none;
-  font: inherit;
-}
-
-.toolbar-searchbar__hl-input::placeholder {
+  white-space: pre;
   @apply text-main-navbar-foreground;
 }
 
-/* Token colours */
-.toolbar-searchbar__hl-text {
-  @apply text-main-navbar-foreground;
-}
-.toolbar-searchbar__hl-filter {
-  @apply text-main-navbar-foreground font-medium;
-}
-.toolbar-searchbar__hl-operator {
-  @apply text-main-navbar-foreground font-semibold;
-}
-.toolbar-searchbar__hl-paren {
-  @apply text-main-navbar-foreground font-semibold;
+.toolbar-searchbar__filter-value {
+  color: color-mix(in srgb, hsl(var(--primary)) 35%, hsl(var(--main-navbar-foreground)));
 }
 
-.toolbar-searchbar__suggestions {
+@media (forced-colors: active) {
+  .toolbar-searchbar__input.has-highlight {
+    color: CanvasText;
+    caret-color: CanvasText;
+  }
+  .toolbar-searchbar__highlight {
+    display: none;
+  }
+}
+
+.toolbar-searchbar__example {
   position: absolute;
-  z-index: 90;
-  left: 0;
-  right: 0;
-  top: calc(100% + 6px);
-  border-radius: 10px;
-  border: 1px solid hsl(var(--border));
-  background: hsl(var(--background));
-  box-shadow: 0 8px 30px hsl(0 0% 0% / 0.28);
-  max-height: 250px;
-  overflow: auto;
-  padding: 4px;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.toolbar-searchbar__suggestions button {
-  width: 100%;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  text-align: left;
+.toolbar-searchbar__example-line {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.toolbar-searchbar__example-line.is-incoming {
+  animation: search-example-roll-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toolbar-searchbar__example-line.is-outgoing {
+  animation: search-example-roll-out 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes search-example-roll-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes search-example-roll-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-searchbar__example-line.is-incoming,
+  .toolbar-searchbar__example-line.is-outgoing {
+    animation: none;
+  }
+  .toolbar-searchbar__example-line.is-outgoing {
+    display: none;
+  }
+}
+
+.toolbar-searchbar__discovery {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 4px;
+  @apply border-b border-border text-xs text-muted-foreground;
+}
+
+.toolbar-searchbar__discovery svg {
+  flex-shrink: 0;
+  @apply text-primary;
+}
+.toolbar-searchbar__discovery strong {
+  @apply font-medium text-foreground;
+}
+.toolbar-searchbar__discovery p {
+  margin-top: 4px;
+}
+
+.toolbar-searchbar__input::placeholder,
+.toolbar-searchbar__example {
+  color: hsl(var(--main-navbar-foreground) / 0.65);
+  opacity: 1;
+}
+
+.toolbar-searchbar__popup[data-state] {
+  width: 320px;
+  max-width: var(--radix-popover-content-available-width);
+  max-height: var(--radix-popover-content-available-height);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px hsl(0 0% 0% / 0.2);
+}
+
+.toolbar-searchbar__popup-heading,
+.toolbar-searchbar__popup-status,
+.toolbar-searchbar__popup-footer {
   padding: 8px 10px;
+  @apply text-xs text-muted-foreground;
 }
 
-.toolbar-searchbar__suggestions button.is-active,
-.toolbar-searchbar__suggestions button:hover {
-  background: hsl(var(--accent));
+.toolbar-searchbar__popup-heading {
+  flex-shrink: 0;
+  @apply font-medium text-foreground;
 }
 
-.toolbar-searchbar__suggestions button small {
+.toolbar-searchbar__popup-heading span {
+  display: block;
+  margin-top: 2px;
+  @apply font-normal text-muted-foreground;
+}
+
+.toolbar-searchbar__options {
+  min-height: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  padding: 2px;
+}
+
+.toolbar-searchbar__option {
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 32px;
+  padding: 7px 10px;
+  cursor: default;
+  @apply text-sm;
+}
+
+.toolbar-searchbar__option.is-active {
+  @apply bg-accent text-accent-foreground;
+}
+
+.toolbar-searchbar__option.is-active::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: -2px;
+  width: 3px;
+  border-radius: 2px;
+  @apply bg-primary;
+}
+
+.toolbar-searchbar__option-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
   @apply text-muted-foreground;
 }
 
-.toolbar-searchbar__suggestion-operator {
-  @apply text-primary font-semibold;
-  letter-spacing: 0.04em;
+.toolbar-searchbar__option-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-searchbar__option-label {
+  display: block;
+  line-height: 18px;
+  @apply font-medium;
+}
+
+.toolbar-searchbar__recent-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  flex-shrink: 0;
+  @apply text-xs text-muted-foreground;
+}
+
+.toolbar-searchbar__section-label {
+  padding: 8px 10px 4px;
+  @apply text-xs text-muted-foreground;
+}
+
+.toolbar-searchbar__recent-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toolbar-searchbar__recent-row .toolbar-searchbar__option {
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-searchbar__recent-row .toolbar-searchbar__option-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  @apply font-normal;
+}
+
+.toolbar-searchbar__remove-recent {
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.toolbar-searchbar__recent-row:hover .toolbar-searchbar__remove-recent,
+.toolbar-searchbar__recent-row:focus-within .toolbar-searchbar__remove-recent {
+  opacity: 1;
+}
+
+.toolbar-searchbar__option-detail {
+  display: block;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+  line-height: 18px;
+  @apply text-xs text-muted-foreground;
+}
+
+.toolbar-searchbar__option-symbol {
+  margin-left: auto;
+  @apply font-mono text-xs text-muted-foreground;
+}
+
+.toolbar-searchbar__popup-status:empty {
+  display: none;
+}
+
+.toolbar-searchbar__popup-status {
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.toolbar-searchbar__operators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px 8px 8px;
+  flex-shrink: 0;
+}
+
+.toolbar-searchbar__operators button {
+  height: 26px;
+  padding: 0 6px;
+  @apply text-xs;
+}
+
+.toolbar-searchbar__operators button[aria-pressed='true'] {
+  @apply bg-primary/10 text-primary ring-1 ring-primary/30;
+}
+
+.toolbar-searchbar__popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  margin: 4px 4px 0;
+  padding: 8px 6px 4px;
+  @apply border-t border-border;
+}
+
+.toolbar-searchbar__popup-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.toolbar-searchbar__popup-footer kbd {
+  min-width: 15px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 3px;
+  text-align: center;
+  @apply border border-border font-sans text-xs;
+}
+
+.toolbar-searchbar__notice {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 50;
+  border-radius: 6px;
+  padding: 4px 8px;
+  @apply bg-popover text-xs text-popover-foreground shadow-md;
+}
+
+.toolbar-searchbar__notice {
+  top: calc(100% + 30px);
+  max-width: 100%;
 }

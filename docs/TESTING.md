@@ -31,6 +31,46 @@ For a focused TypeScript change, lint/format the changed files rather than
 rewriting unrelated files. Documentation-only edits need link/anchor and rendered
 Markdown checks, not a native rebuild.
 
+## Photo-library query editor
+
+```powershell
+pnpm test --run src\common\query src\components\toolbar\search-bar src\stores\recentSearchesStore.test.ts src\pages\search src\media\smartSearch\searchResults.test.ts src\db\api\services\assets\getScopedAssetIds.test.ts
+```
+
+The query bar is draft-only until Enter. Verify cursor-local replacement
+in the middle of a mixed query, quoted values and comma-separated names,
+keyboard-highlighted Enter/Tab completion, Escape/Down reopening, native undo/redo
+after completion and clear, IME composition, and Back/Forward restoring the
+submitted query. Check loading, catalog errors with Retry, no matching values,
+and the 50-value truncation message. Test both themes and a narrow window.
+
+Focus an empty field: show at most three recent queries above filters. Typing
+filters the full retained history by case-insensitive substring before limiting
+to three, newest first. Check ordinary text, filter values, quoted drafts and no
+matches; history must work even without a syntax-completion context. Mouse or highlighted
+Enter/Tab restores a draft without navigating; Enter then submits it. Only
+submitted, non-empty queries are saved; repeating one moves it to the top, with
+20 retained locally across reloads. Check remove-one, Clear history, and Tab from
+the empty input into history actions. Clearing history must not affect results
+or library filters. With no text there is no clear or submit button; hover the
+clear and library-filter controls and verify they stay inside the field, including
+paused filters and narrow windows.
+
+Query and library filters must never be relaxed automatically. Test missing
+people, contradictory filters and zero candidate IDs; Show weaker matches must
+retain the same scope. Bare words stay text, and invalid known filters stay text
+with an explanation. Search failures must offer Retry rather than claim no results.
+Clear query filters must retain library filters and quoted ordinary text.
+
+Presence uses existing counts: assigned file tags, and detected faces including
+unnamed faces according to Count unverified faces. The focused SQLite tests
+verify those actual query semantics.
+
+Browser checks with local service mocks validate editor behavior, not native IPC
+or semantic sidecar execution. Also verify the results flow in Tauri on an
+isolated demo profile when the development executable is available. Do not close
+another running Photokin instance without its owner's permission.
+
 ## Detail-page navigation
 
 ```powershell
@@ -123,6 +163,31 @@ rebuilds the local search index. Check narrow windows and both themes.
 
 Browser checks with native IPC mocked validate presentation and navigation only;
 real downloads, opening folders, and indexing must also be checked in Tauri.
+
+## Managed ExifTool setup checks
+
+```powershell
+pnpm test --run src\system\exiftoolSetup.test.ts src\components\dependencies\DependencyStatusCards.test.tsx src\pages\onboarding\steps\DependenciesStep.test.tsx src\pages\onboarding\steps\ExiftoolSetupCard.test.tsx
+cargo test --manifest-path src-tauri\Cargo.toml exiftool_setup
+cargo test --manifest-path src-tauri\Cargo.toml exiftool_setup -- --ignored
+```
+
+The final command downloads the pinned official platform archive and the Perl
+distribution into temporary directories, verifies their checksums, and runs
+real metadata write/read checks with the platform executable.
+It requires internet access and Perl on macOS/Linux. It does not change
+Photokin's configured installation or the system ExifTool. Run it on each
+supported platform before changing the managed version. Unit tests also cover
+Perl archive extraction, invalid checksums and preservation of the previous
+copy/selection after failure. Manually check the existing setup progress and
+retry flow, **Install tested version** in Settings, and selecting an
+extensionless ExifTool file on macOS/Linux.
+
+To exercise the frontend metadata regression tests against the managed version
+rather than the default vendored test dependency, set
+`$env:PHOTOKIN_TEST_EXIFTOOL_PATH` to the full path of that version's executable
+before running the metadata tests below. Remove the environment variable
+afterwards; this override only affects tests, not Photokin's configuration.
 
 ## Photo editor regression tests
 

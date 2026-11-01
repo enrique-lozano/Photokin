@@ -18,6 +18,7 @@ import { Link, Path, useLocation } from 'react-router-dom';
 import { PhotokinMark } from '../brand/PhotokinMark';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { AppRoutes } from '../../router';
+import { SettingsTab } from '../../stores/settingsStore';
 import { openSettingsWindow } from '../../utils/openSettingsWindow';
 import './navbar.css';
 
@@ -124,7 +125,7 @@ export function Navbar() {
               type="button"
               className="navbar-link"
               aria-label="Open settings"
-              onClick={() => void openSettingsWindow()}
+              onClick={() => void openSettingsWindow(SettingsTab.About)}
             >
               <span className="navbar-link__icon">
                 <IconSettings size={MENU_ICON_SIZE} />

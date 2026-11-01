@@ -22,6 +22,8 @@ export interface StatsOverview {
   shutterSpeedCount: number;
   whiteBalanceCount: number;
   flashCount: number;
+  exposureProgramCount: number;
+  meteringModeCount: number;
   locationCount: number;
 }
 

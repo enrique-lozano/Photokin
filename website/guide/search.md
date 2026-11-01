@@ -9,6 +9,55 @@ can mix them freely:
 
 `person:Ana beach rating>=4` finds Ana's best beach photos.
 
+## Editing a search
+
+Click the search bar to choose a filter, or just describe a photo. Suggestions
+follow where you're editing: choose **Person** to insert `person:`, then choose
+a name. Clicking inside an existing filter lets you replace its value without
+changing the rest of your search. Values with spaces or special characters are
+quoted automatically.
+
+- **Enter** applies your search. Typing, choosing a
+  suggestion and clearing the field only edit the draft; results do not change
+  until you submit.
+- **Up/Down** highlights a suggestion. **Enter** or **Tab** accepts a highlighted
+  suggestion instead of submitting. Press Enter again to search.
+- **Escape** closes suggestions without changing the draft. Down reopens them.
+- **More filters** shows dates, cameras, locations and the other available fields.
+- Filter suggestions use icons and compact labels; hover for syntax and field
+  details. Person and tag values show their full paths below the name.
+- Recognized filter values have a subtle accent color in the search
+  field. Free text and invalid or unfinished filters keep the normal text style.
+  This is highlighting, not chips: you can still edit and copy the whole query.
+- Operator buttons appear above values and mark the current choice. After choosing
+  a field, type an operator to replace the automatic `:` without moving back:
+  choose Rating, type `>` then `=`, and enter `4` for `rating>=4`.
+- With smart search available, focusing an empty field shows gently rotating
+  description examples that roll upward and an explanation that AI search runs on your device.
+  Examples are hints, not inserted text. They stop when you type or leave the
+  field; reduced-motion preferences disable rotation. Without a downloaded
+  model, the dropdown offers **Enable smart search** instead.
+- Back/forward restores the submitted search. Drafts do not survive navigation.
+
+### Recent searches
+
+Focus an empty field to see your three most recent searches above filter
+suggestions. As you type, up to three recent queries containing your draft text
+are shown, ignoring capitalization and ordered newest first. Select one to
+restore it as a draft, then press **Enter** to run it.
+The dropdown never runs a search just because you selected a suggestion.
+
+Photokin keeps up to 20 submitted, non-empty queries on this device, including
+across restarts. Repeating a query moves it to the top without duplicating it.
+Typing alone does not save history. Use the **×** beside a recent query to remove
+it, or **Clear history** to remove all saved queries.
+
+History saves query text only. Running a recent query uses your current library
+filters, not the library filters from the original search.
+
+Nothing is selected automatically. You can always type a value yourself,
+including a name that isn't in the suggestions.
+
 ![Photokin searching for photos](/screenshots/03-search.webp){.screenshot}
 
 ## Smart search
@@ -30,12 +79,12 @@ Without a model, the search bar still finds photos by name and tag.
   airport"_ works better than _"reunion"_.
 - **Add details** to narrow it down: _"black dog"_, _"dog swimming"_.
 - **Combine with filters** for the best of both: `mountains year=2023`.
-- When your filters match nothing, Photokin shows the most similar photos
-  instead and says so: _"No photos matched your filters. Showing similar photos
-  instead."_
+- Filters are strict. If nothing matches, Photokin shows no results, not similar
+  photos outside those filters. Choose **Edit search** or **Clear query filters**
+  to broaden it yourself. Clearing query filters keeps library filters.
 - Photokin only shows photos it's confident about. If what you want isn't
   there, choose **Show weaker matches** below the results to see every photo
-  ranked by similarity.
+  ranked by similarity, within the same filters and the existing result limit.
 - The first search after starting Photokin takes a few seconds while the model
   loads; the next ones are almost instant.
 
@@ -65,6 +114,11 @@ search only in English, an English model is smaller and just as good.
 Type `key:value` (or `key=value`). Put values with spaces in quotes:
 `person:"Ana López"`.
 
+Separate filters combine with **AND**. Unknown keywords are ordinary search
+text. Invalid known filters (such as `rating:abc`, an empty `person:`, an invalid
+date or a reversed range) also remain search text, with a notice explaining
+that they were not applied as filters.
+
 ### People, tags and text
 
 For text filters, `:` (or `=`) matches the whole value exactly, while `~` finds
@@ -85,6 +139,32 @@ it anywhere inside: `camera:"Canon EOS R6"` matches only that camera,
 For `person` and `tag`, a comma means _any of these_: `person:Ana,Luis` finds
 photos with Ana **or** Luis. Write two filters to require both:
 `person:Ana person:Luis`.
+
+If several people or tags have the same name, typing the name matches any of
+them. Suggestions insert the full path to distinguish them. An exact full path
+takes precedence over matching leaf names.
+
+Quote individual list members containing commas, e.g.
+`tag:"Trips/Ana, Luis",Beach`. Inside quotes, use `\"` for a quote and `\\` for
+a backslash. Commas inside quotes are literal, not list separators.
+
+### Has / No
+
+| Filter       | Meaning                                |
+| ------------ | -------------------------------------- |
+| `has:tag`    | Has assigned file tags (`tag_count>0`) |
+| `no:tag`     | No assigned file tags (`tag_count=0`)  |
+| `has:person` | Has detected faces (`person_count>0`)  |
+| `no:person`  | No detected faces (`person_count=0`)   |
+
+Detected faces include unnamed faces and follow the **Count unverified faces**
+setting. `no:person` does not mean nobody is visually in the photo; it means
+Photokin has no counted face detections. Assigned tags count file-tag
+associations, not face associations. A confirmed face can match `tag:Name`
+without contributing an assigned file tag.
+
+These shortcuts also appear above the names in the Person and Tag suggestions.
+No other `has:` / `no:` fields are supported.
 
 ### Dates
 
@@ -115,15 +195,20 @@ These accept `=`, `!=`, `>`, `>=`, `<` and `<=`, and ranges with `..`:
 | `aperture`     | `aperture<=2`                       | Wide-aperture shots (f-number)               |
 | `shutter`      | `shutter>=1`                        | Long exposures (seconds)                     |
 
-### Shortcuts in plain words
+### Shortcuts
 
-A few everyday words act as filters: **videos** (or _movies_), **photos** (or
-_pictures_, _images_) and **favorites** (or _loved_). Photokin shows how it read
-your search in **Interpreted as**, so nothing is applied silently. To search for
-the word itself, put it in quotes: `"videos"`.
+Everyday words such as **videos**, **photos** and **favorites** are ordinary
+search text, not guessed filters. Choose **Media type** for `type:video` or
+`type:photo`, or **Favorites** for `rating>=5`. The results page shows
+**Applied filters**, separately from notices about text interpretation.
+
+This replaces the earlier automatic word-to-filter interpretation and automatic
+similar-photo fallback. Existing valid typed filters and query URLs still work.
 
 ## The filter drawer
 
 Prefer clicking to typing? **Library filters** in the toolbar offers the same
 filters with menus and date pickers, plus filtering by album. Filters from the
 drawer and from the search bar combine.
+The results page reminds you when library filters also apply. Clearing the
+search field or query filters never clears library filters.

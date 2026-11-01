@@ -335,6 +335,10 @@ function _filterExpression(
       f.value,
     );
   }
+  if (filter.filterCriteria === FilterCriteria.meteringMode) {
+    const f = filter as NumberRangeFilter;
+    return eb('meteringMode', numberOperatorToDBOperator(f.operator), f.value);
+  }
   if (filter.filterCriteria === FilterCriteria.mediaType) {
     const f = filter as MediaTypeFilter;
     const isVideoExpression = videoAssetExpression('assets.');

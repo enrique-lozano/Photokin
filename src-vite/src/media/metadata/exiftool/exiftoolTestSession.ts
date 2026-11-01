@@ -21,6 +21,9 @@ export function useExiftoolTestSession() {
     maxProcs: 1,
     taskRetries: 0,
     taskTimeoutMillis: 10_000,
+    ...(process.env.PHOTOKIN_TEST_EXIFTOOL_PATH
+      ? { exiftoolPath: process.env.PHOTOKIN_TEST_EXIFTOOL_PATH }
+      : {}),
   });
 
   // Cold process startup belongs to setup, not each round-trip's test budget.

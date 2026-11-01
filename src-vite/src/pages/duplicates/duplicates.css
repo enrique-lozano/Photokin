@@ -554,9 +554,14 @@
 .dup-empty {
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
+  flex-direction: column;
+  min-height: 0;
+  container: duplicate-start / size;
+  overflow-y: auto;
+}
+
+.dup-empty > .empty-state {
+  flex-shrink: 0;
 }
 
 /* Scan options (shared by empty state + re-scan popover) */
@@ -568,12 +573,48 @@
 }
 
 .dup-scan-options--inline {
-  margin-top: 12px;
-  padding: 18px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 14px;
-  background: hsl(var(--card));
+  @apply gap-6 rounded-xl border border-border bg-card p-6;
   text-align: left;
+}
+
+.dup-scan-options--inline .dup-scan-option__label {
+  @apply text-sm font-medium;
+}
+
+.dup-scan-options--inline .dup-scan-option__value {
+  @apply text-sm;
+}
+
+.dup-scan-options--inline .scan-scope-subalbums {
+  justify-content: space-between;
+}
+
+/* Keep the scan controls visible above the 620px window minimum, including chrome. */
+@container duplicate-start (max-height: 36rem) {
+  .dup-empty > .empty-state {
+    min-height: 0;
+    padding-block: 16px;
+  }
+
+  .dup-empty > .empty-state > :first-child {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 12px;
+  }
+
+  .dup-empty > .empty-state > :last-child {
+    margin-top: 12px;
+  }
+
+  .dup-scan-options--inline {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .dup-scan-options--inline [data-slot='combobox-chips'] {
+    max-height: 96px;
+    overflow-y: auto;
+  }
 }
 
 .dup-scan-option {

@@ -8,6 +8,7 @@ export type ExternalDependencyStatus = {
   location: string | null;
   available: boolean;
   error: string | null;
+  recommendedVersion?: string | null;
 };
 
 /** Probe every external dependency the runtime resolves (version + PATH location). */

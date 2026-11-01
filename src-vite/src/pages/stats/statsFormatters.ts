@@ -86,6 +86,33 @@ export function formatMonth(month: string): string {
   );
 }
 
+interface DatePartCount {
+  value: number;
+  totalImages: number;
+}
+
+/** All 12 months in calendar order (1–12), zero-filled. */
+export function completeMonthsOfYear(rows: DatePartCount[]) {
+  const format = new Intl.DateTimeFormat(undefined, { month: 'short', timeZone: 'UTC' });
+  return _completeDateParts(rows, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], (month) =>
+    format.format(new Date(Date.UTC(2024, month - 1, 1))),
+  );
+}
+
+/** All 7 weekdays Monday-first (SQLite `%w`, 0 = Sunday), zero-filled. */
+export function completeWeekdays(rows: DatePartCount[]) {
+  const format = new Intl.DateTimeFormat(undefined, { weekday: 'short', timeZone: 'UTC' });
+  // 2024-01-07 was a Sunday.
+  return _completeDateParts(rows, [1, 2, 3, 4, 5, 6, 0], (weekday) =>
+    format.format(new Date(Date.UTC(2024, 0, 7 + weekday))),
+  );
+}
+
+function _completeDateParts(rows: DatePartCount[], values: number[], label: (value: number) => string) {
+  const counts = new Map(rows.map((row) => [row.value, row.totalImages]));
+  return values.map((value) => ({ value, label: label(value), count: counts.get(value) ?? 0 }));
+}
+
 export const formatIso = (value: number): string => `ISO ${value}`;
 export const formatFocalLengthBucket = (value: number): string => `${value} mm`;
 export const formatApertureBucket = (value: number): string => formatAperture(value) ?? String(value);

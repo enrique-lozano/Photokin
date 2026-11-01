@@ -216,6 +216,25 @@ export async function getFileCountByYear(params: ScopeParams) {
 }
 
 /**
+ * Counts assets by month of year (1–12) or weekday (0 = Sunday), matching the
+ * `month:` / `weekday:` filters. Assets without a date are skipped.
+ */
+export async function getFileCountByDatePart(params: { searchQuery?: SearchQuery; part: 'month' | 'weekday' }) {
+  const format = params.part === 'month' ? '%m' : '%w';
+
+  return selectFromDB(
+    kyselyDB
+      .selectFrom(scopedAssetsSubquery(params.searchQuery))
+      .select([
+        sql<number>`CAST(strftime(${format}, filesQueryRes.date) AS INTEGER)`.as('value'),
+        sql<number>`COUNT(*)`.as('totalImages'),
+      ])
+      .where(sql<boolean>`filesQueryRes.date IS NOT NULL`)
+      .groupBy('value'),
+  );
+}
+
+/**
  * Counts assets grouped by calendar day (UTC `YYYY-MM-DD`). Used by the calendar
  * page to render a date heatmap. Dates are bucketed in UTC to stay consistent
  * with {@link getFileCountByMonth} and the timeline gallery.
@@ -409,7 +428,9 @@ export async function getTopPeopleInScope(
  * side without overlapping). Powers the place filter chips, so each bucket
  * carries the values needed to filter back to it.
  */
-export async function getTopPlacesInScope(params: ScopeParams & { limit?: number }): Promise<ScopePlace[]> {
+export async function getTopPlacesInScope(
+  params: ScopeParams & { limit?: number; groupBy?: 'place' | 'city' | 'country' },
+): Promise<ScopePlace[]> {
   const ids = uniqueAssetIds(params.assetIds);
 
   if (ids?.length === 0) {
@@ -419,14 +440,17 @@ export async function getTopPlacesInScope(params: ScopeParams & { limit?: number
   const city = sql<string | null>`NULLIF(TRIM(COALESCE(filesQueryRes.locationCity, '')), '')`;
   const country = sql<string | null>`NULLIF(TRIM(COALESCE(filesQueryRes.locationCountry, '')), '')`;
   const countryCode = sql<string | null>`NULLIF(TRIM(COALESCE(filesQueryRes.locationCountryCode, '')), '')`;
-  // Assets with a city group by it; the rest fall back to their country (by
-  // canonical code when present, so "Italy"/"Italia" stay one bucket).
-  const bucket = sql`COALESCE(${city}, ${countryCode}, ${country})`;
+  const bucket =
+    params.groupBy === 'country'
+      ? sql`COALESCE(${countryCode}, ${country})`
+      : params.groupBy === 'city'
+        ? city
+        : sql`COALESCE(${city}, ${countryCode}, ${country})`;
 
   const query = kyselyDB
     .selectFrom(scopedAssetsSubquery(params.searchQuery, ids))
     .select([
-      city.as('city'),
+      (params.groupBy === 'country' ? sql<string | null>`NULL` : city).as('city'),
       sql<string | null>`MAX(${country})`.as('country'),
       sql<string | null>`MAX(${countryCode})`.as('countryCode'),
       sql<number>`COUNT(*)`.as('totalImages'),

@@ -7,7 +7,6 @@ import type { ExternalDependencyStatus } from '@/system/dependencyStatus';
 vi.mock('@/system/diskManager', () => ({ openContainingFolder: vi.fn() }));
 vi.mock('@/components/ui/toast', () => ({ toast: { error: vi.fn() } }));
 vi.mock('@/system/exiftoolSetup', () => ({ installExiftool: vi.fn(), locateExiftool: vi.fn() }));
-vi.mock('@tauri-apps/plugin-os', () => ({ platform: () => 'windows' }));
 
 const exiftool: ExternalDependencyStatus = {
   id: 'exiftool',
@@ -53,6 +52,28 @@ describe('photo tool settings', () => {
     expect(html).toContain('Install');
     expect(html).toContain('Choose file…');
     expect(html).not.toContain('Open ExifTool folder');
+  });
+
+  it('offers an explicit tested-version install without hiding the current working version', () => {
+    const html = render({
+      dependencies: [{ ...exiftool, recommendedVersion: '13.60' }],
+      isLoading: false,
+      error: null,
+    });
+    expect(html).toContain('Version 13.59');
+    expect(html).toContain('Install tested version');
+    expect(html).toContain('Your system copy is not changed.');
+    expect(html).toContain('Choose file…');
+  });
+
+  it('does not offer an unnecessary version update but keeps manual selection available', () => {
+    const html = render({
+      dependencies: [{ ...exiftool, version: '13.60', recommendedVersion: '13.60' }],
+      isLoading: false,
+      error: null,
+    });
+    expect(html).not.toContain('Install tested version');
+    expect(html).toContain('Choose file…');
   });
 
   it('announces loading and probe failures without showing stale tool rows', () => {

@@ -46,14 +46,22 @@ A short setup runs the first time you open Photokin.
 Photokin uses the free tool [ExifTool](https://exiftool.org/) to read and edit
 the details stored inside your photos: tags, ratings, locations and more.
 
-- **Windows:** click **Install automatically**.
-- **macOS:** install ExifTool from [exiftool.org](https://exiftool.org/) (or with
-  Homebrew: `brew install exiftool`), then click **Locate manually** if Photokin
-  doesn't find it.
+Click **Install automatically** to download the version tested with Photokin
+(currently **13.60**). Photokin checks the download and installs its own copy
+without changing an ExifTool installation you already have.
+
+On **macOS/Linux**, Perl 5.8 or newer must be available. If setup reports that
+Perl is missing, install it using your system package manager and try again.
+You can also install [ExifTool](https://exiftool.org/) yourself (on macOS,
+`brew install exiftool`) and use **Locate manually** to select it.
 
 You can browse photos without ExifTool, but dates, tags, places and other
 details won't be read or written. You can install it later from
 **Settings → System**.
+
+Updates to Photokin's tested ExifTool version are installed only when you choose
+**Install tested version** in Settings. **Choose file…** lets you switch to an
+existing installation instead.
 
 ### 2. Where should metadata changes be saved?
 

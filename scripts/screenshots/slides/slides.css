@@ -122,40 +122,57 @@ body {
 }
 
 /* Text on the left, window bleeding off the right edge. */
-.layout-side .copy {
+.layout-side .copy,
+.layout-side-zoom .copy {
   left: var(--margin);
   top: 50%;
   width: 640px;
   translate: 0 -50%;
 }
 
-.layout-side h1 {
+.layout-side h1,
+.layout-side-zoom h1 {
   font-size: 80px;
 }
 
-.layout-side .window {
+.layout-side .window,
+.layout-side-zoom .window {
   left: 820px;
   top: 150px;
   width: 1440px;
 }
 
+.layout-side-zoom .window {
+  left: 780px;
+  top: 120px;
+  width: 1580px;
+}
+
 /* Headline on top, window rising from the bottom edge. */
-.layout-top .copy {
+.layout-top .copy,
+.layout-top-compact .copy {
   top: 96px;
   inset-inline: var(--margin);
   align-items: center;
   text-align: center;
 }
 
-.layout-top .copy p {
+.layout-top .copy p,
+.layout-top-compact .copy p {
   max-width: 1100px;
 }
 
-.layout-top .window {
+.layout-top .window,
+.layout-top-compact .window {
   left: 50%;
   top: 410px;
   width: 1380px;
   translate: -50% 0;
+}
+
+.layout-top-compact .window {
+  top: 310px;
+  width: 1540px;
 }
 
 /* Text on the left, a tilted, staggered grid of windows on the right. */

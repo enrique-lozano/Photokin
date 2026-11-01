@@ -12,6 +12,7 @@ import {
   TextFilterCriteria,
 } from './FilterCriteria';
 import { SearchFilter } from './FilterTypes';
+import { decodeQueryValue, lexQuery, quoteQueryValue, splitQuerySpans } from '../queryLexer';
 
 export function filterToString(filter: SearchFilter): string {
   const { filterCriteria, value } = filter;
@@ -20,7 +21,7 @@ export function filterToString(filter: SearchFilter): string {
   let operatorStr = '';
 
   if (isIn(TextFilterCriteria, filterCriteria)) {
-    valueStr = value as string;
+    valueStr = quoteQueryValue(value as string);
     keywordStr = FilterCriteria[filterCriteria];
 
     operatorStr = operatorToString({
@@ -81,20 +82,33 @@ export function filterToString(filter: SearchFilter): string {
 }
 
 export function strToFilter(filterStr: string): SearchFilter[] | undefined {
-  const filterKeyValueArray = filterStr.split(/([>~<]=?|[~=:])/);
-
-  // No operator means this is free text (`beach`), not a `key:value` filter.
-  // The search bar relies on `undefined` here so the token can become CLIP input.
-  if (filterKeyValueArray.length <= 1) {
+  const tokens = lexQuery(filterStr);
+  const token = tokens[0];
+  if (!token?.key || !token.operator || !token.value || token.quoted) {
     return undefined;
   }
-
-  if (filterKeyValueArray.length > 3) {
-    throw Error('Multiple operators found within the same filter');
+  if (tokens.length !== 1 || !token.complete) {
+    throw Error('Use closed quotes around values with spaces.');
   }
-
-  const [key, operator, value] = filterKeyValueArray;
+  const key = token.key.text;
+  const operator = token.operator.text;
+  const rawValue = token.value.text;
+  const value = decodeQueryValue(rawValue);
+  if (!value.trim()) throw Error('Enter a value after the operator.');
   const normalizedKey = key.toLowerCase();
+  if (normalizedKey === 'has' || normalizedKey === 'no') {
+    if (![':', '='].includes(operator) || !['tag', 'person'].includes(value.toLowerCase())) {
+      throw Error('Use has:tag, no:tag, has:person or no:person.');
+    }
+    return [
+      {
+        filterCriteria:
+          value.toLowerCase() === 'tag' ? FilterCriteria.tag_count : FilterCriteria.person_count,
+        operator: normalizedKey === 'has' ? 'greaterThan' : 'equals',
+        value: 0,
+      },
+    ];
+  }
   const filterCriteria = getFilterCriteria(normalizedKey);
 
   if (filterCriteria === undefined) {
@@ -111,7 +125,7 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
       {
         filterCriteria,
         operator: parsedOperator,
-        value: _unquoteFilterValue(value),
+        value,
       },
     ];
   }
@@ -127,7 +141,17 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
         throw Error(`Operator ${operator} can not be used with the range syntax`);
       }
 
-      const [min, max] = value.split('..').map(Number);
+      const parts = value.split('..');
+      const [min, max] = parts.map(Number);
+      if (
+        parts.length !== 2 ||
+        parts.some((part) => !part.trim()) ||
+        !Number.isFinite(min) ||
+        !Number.isFinite(max) ||
+        min > max
+      ) {
+        throw Error('Enter a valid range, with the smaller number first.');
+      }
 
       return [
         {
@@ -142,6 +166,7 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
         },
       ];
     } else {
+      if (!Number.isFinite(Number(value))) throw Error('Enter a finite number.');
       return [
         {
           filterCriteria,
@@ -153,15 +178,21 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
   }
 
   if (isIn(DateRangeFilterCriteria, filterCriteria)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw Error('Use YYYY-MM-DD.');
     const splittedDateStr = value.split('-');
-
-    if (splittedDateStr.length !== 3) {
-      throw Error('Error parsing date string');
-    }
 
     const [year, month, day] = splittedDateStr;
 
-    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    const date = new Date(0);
+    date.setHours(0, 0, 0, 0);
+    date.setFullYear(Number(year), Number(month) - 1, Number(day));
+    if (
+      date.getFullYear() !== Number(year) ||
+      date.getMonth() !== Number(month) - 1 ||
+      date.getDate() !== Number(day)
+    )
+      throw Error('Enter a valid calendar date.');
+    resolveOperatorOrThrow({ symbol: operator, operatorMap: numberOperators });
 
     const getDateOperator: () => NumberOperator = () => {
       if (normalizedKey == 'before') {
@@ -216,12 +247,14 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
     if (filterCriteria === FilterCriteria.path) {
       throw new Error('Path filters can only be created from album selections');
     }
-    const unquoted = _unquoteFilterValue(value);
+    if (![':', '='].includes(operator)) throw Error('Use : or = for people and tags.');
+    const members = splitQuerySpans(rawValue, /,/).map((span) => decodeQueryValue(span.text));
+    if (members.some((member) => !member.trim())) throw Error('Enter a name for each list member.');
     return [
       {
         filterCriteria,
         operator: 'contains',
-        value: unquoted.split(','),
+        value: members,
       },
     ];
   }
@@ -229,14 +262,8 @@ export function strToFilter(filterStr: string): SearchFilter[] | undefined {
   throw new Error(`Unhandled filter criteria: ${FilterCriteria[filterCriteria]}`);
 }
 
-/** Strip wrapping quotes so `filename:"foo bar"` and `person:"Ana Lopez"` keep inner spaces. */
-function _unquoteFilterValue(value: string): string {
-  return value.startsWith('"') && value.endsWith('"') && value.length >= 2 ? value.slice(1, -1) : value;
-}
-
 function _serializeListFilterValue(values: unknown[]): string {
-  const joined = values.map(_listFilterItemToString).filter(Boolean).join(',');
-  return /[\s:]/.test(joined) ? `"${joined}"` : joined;
+  return values.map(_listFilterItemToString).filter(Boolean).map(quoteQueryValue).join(',');
 }
 
 function _listFilterItemToString(entry: unknown): string {

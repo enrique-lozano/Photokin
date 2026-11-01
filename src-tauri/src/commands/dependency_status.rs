@@ -10,6 +10,7 @@ pub struct ExternalDependencyStatus {
     location: Option<String>,
     available: bool,
     error: Option<String>,
+    recommended_version: Option<String>,
 }
 
 fn first_non_empty_line(content: &[u8]) -> Option<String> {
@@ -28,10 +29,20 @@ fn command_output(program: &str, args: &[&str]) -> Result<std::process::Output, 
 }
 
 fn resolve_command_location(binary: &str) -> Option<String> {
-    let lookup_command = if cfg!(target_os = "windows") { "where" } else { "which" };
+    let lookup_command = if cfg!(target_os = "windows") {
+        "where"
+    } else {
+        "which"
+    };
     command_output(lookup_command, &[binary])
         .ok()
-        .and_then(|output| output.status.success().then(|| first_non_empty_line(&output.stdout)).flatten())
+        .and_then(|output| {
+            output
+                .status
+                .success()
+                .then(|| first_non_empty_line(&output.stdout))
+                .flatten()
+        })
 }
 
 fn inspect_external_dependency(
@@ -46,10 +57,12 @@ fn inspect_external_dependency(
         Ok(output) if output.status.success() => ExternalDependencyStatus {
             id: id.to_string(),
             display_name: display_name.to_string(),
-            version: first_non_empty_line(&output.stdout).or_else(|| first_non_empty_line(&output.stderr)),
+            version: first_non_empty_line(&output.stdout)
+                .or_else(|| first_non_empty_line(&output.stderr)),
             location,
             available: true,
             error: None,
+            recommended_version: None,
         },
         Ok(output) => {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -69,6 +82,7 @@ fn inspect_external_dependency(
                 location,
                 available: false,
                 error: Some(error),
+                recommended_version: None,
             }
         }
         Err(error) => ExternalDependencyStatus {
@@ -78,13 +92,16 @@ fn inspect_external_dependency(
             location,
             available: false,
             error: Some(error),
+            recommended_version: None,
         },
     }
 }
 
 #[tauri::command]
 pub fn get_external_dependency_status() -> Vec<ExternalDependencyStatus> {
-    vec![inspect_external_dependency("exiftool", "ExifTool", "exiftool", &["-ver"])]
+    let mut status = inspect_external_dependency("exiftool", "ExifTool", "exiftool", &["-ver"]);
+    status.recommended_version = Some(super::exiftool_setup::MANAGED_VERSION.to_string());
+    vec![status]
 }
 
 #[cfg(test)]

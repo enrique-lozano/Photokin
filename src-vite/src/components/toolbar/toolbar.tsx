@@ -2,8 +2,8 @@ import { IconArrowLeft, IconArrowRight } from '@tabler/icons-react';
 
 import { AppRoutes } from '@/router';
 import { useWindowControls } from '@/system/useWindowControls';
-import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useRecentSearchesStore } from '@/stores/recentSearchesStore';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { GlobalFilterButton } from '../app-shell/GlobalFilterButton';
 import { WindowControls } from '../app-shell/WindowControls';
 import { Button } from '../ui/button';
@@ -14,21 +14,16 @@ const canGoBack = () => window.history.state.idx !== 0;
 const canGoForward = () => window.history.state.idx < window.history.length - 1;
 
 export function Toolbar() {
-  const [searchInputValue, setSearchInputValue] = useState('');
-
   const navigate = useNavigate();
+  const location = useLocation();
   const [urlSearchParams] = useSearchParams();
   const { startDragging, handleDragRegionDoubleClick } = useWindowControls();
 
-  // Keep the input in sync with the URL so the active query is visible when
-  // landing on / navigating within the search page.
   const urlQuery = urlSearchParams.get('q') ?? '';
-  useEffect(() => {
-    setSearchInputValue(urlQuery);
-  }, [urlQuery]);
 
-  function handleQuerySubmit(submittedQuery?: string) {
-    const nextQuery = submittedQuery ?? searchInputValue;
+  function handleQuerySubmit(nextQuery: string) {
+    useRecentSearchesStore.getState().record(nextQuery);
+    if (location.pathname === AppRoutes.search && nextQuery === urlQuery) return;
     const params = new URLSearchParams({
       q: nextQuery,
     });
@@ -77,7 +72,8 @@ export function Toolbar() {
 
             <div className="toolbar-search-slot">
               <SearchBar
-                queryFromUrl={searchInputValue}
+                key={location.key}
+                queryFromUrl={urlQuery}
                 onSubmit={handleQuerySubmit}
                 trailing={<GlobalFilterButton />}
               />

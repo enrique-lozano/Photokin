@@ -35,6 +35,7 @@ export function StatsSummary({ overview }: { overview: StatsOverview }) {
     ['Focal length', overview.focalLengthCount],
     ['Aperture', overview.apertureCount],
     ['Shutter speed', overview.shutterSpeedCount],
+    ['Exposure program', overview.exposureProgramCount],
     ['Location', overview.locationCount],
   ] as const;
 

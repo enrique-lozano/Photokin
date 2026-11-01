@@ -97,7 +97,7 @@ export async function resolveSearchResults(
   } = {},
 ): Promise<string[]> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  if (!trimmed || options.candidateIds?.length === 0) return [];
   const limit = options.limit ?? DEFAULT_LIMIT;
 
   const containsIds = await _getContainsMatchIds(trimmed, options.candidateIds);

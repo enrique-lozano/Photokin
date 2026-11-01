@@ -25,7 +25,7 @@ device, user account, and backups, especially when storing GPS or face data.
 | Satellite map                              | Esri / ArcGIS tile service                           | Requested tile coordinates and normal connection information.                                                                            |
 | Elevation lookup                           | Open-Meteo elevation API                             | The latitude and longitude of the requested points, plus normal connection information.                                                  |
 | Semantic-search model download             | Hugging Face, including its download infrastructure  | Requested model/files and normal connection information; the download does not send photo pixels or search text.                         |
-| Automatic ExifTool installation on Windows | exiftool.org and SourceForge download infrastructure | Version and archive requests and normal connection information.                                                                          |
+| Automatic ExifTool installation            | SourceForge download infrastructure                  | A request for Photokin's tested ExifTool archive and normal connection information. No photo data is sent.                                |
 | Update check and download                  | GitHub Releases                                      | A request for the latest release file and, when you choose to install, the installer download, plus normal connection information. Photokin checks for updates when it starts; turn this off in **Settings > About**. |
 
 Map and elevation requests do not send photo pixels, but location requests can

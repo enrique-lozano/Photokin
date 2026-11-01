@@ -97,4 +97,24 @@ describe('describeFilter', () => {
       'No flash',
     );
   });
+
+  it('describes capture-setting filters by their exact metadata values', () => {
+    expect(
+      describeFilter({
+        filterCriteria: FilterCriteria.whiteBalance,
+        operator: 'equals',
+        value: 'Daylight',
+      }),
+    ).toBe('White balance: Daylight');
+    expect(
+      describeFilter({
+        filterCriteria: FilterCriteria.flashValue,
+        operator: 'equals',
+        value: 'Off, Did not fire',
+      }),
+    ).toBe('Flash details: Off, Did not fire');
+    expect(
+      describeFilter({ filterCriteria: FilterCriteria.meteringMode, operator: 'equals', value: 3 }),
+    ).toBe('Metering: Spot');
+  });
 });

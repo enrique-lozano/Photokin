@@ -52,6 +52,18 @@ describe('Filter to string test', function () {
       }),
     ).toBe('path:album-1,album-2');
   });
+
+  it.each([
+    ['whitebalance:Auto', FilterCriteria.whiteBalance, 'Auto'],
+    ['flashvalue:"Off, Did not fire"', FilterCriteria.flashValue, 'Off, Did not fire'],
+    ['exposureprogram:Manual', FilterCriteria.exposureProgram, 'Manual'],
+  ] as const)('round-trips capture-setting filter %s', (query, filterCriteria, value) => {
+    const filter = { filterCriteria, operator: 'equals' as const, value };
+    const serialized = filterToString(filter);
+
+    expect(strToFilter(query)).toEqual([filter]);
+    expect(strToFilter(serialized)).toEqual([filter]);
+  });
 });
 
 describe('String to filter test', function () {

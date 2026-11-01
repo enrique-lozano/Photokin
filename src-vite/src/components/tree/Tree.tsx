@@ -24,6 +24,7 @@ export function Tree({ entries, filter, itemHeightPx, dragDrop }: TreeEntryProps
   const draggedIdRef = useRef<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null | undefined>(undefined);
   const filteredEntries = !filter ? entries : filterTreeItemsByName(entries, filter);
+  const isFlat = filteredEntries.every((entry) => entry.children.length === 0);
 
   // Only pin an explicit row height when a caller asks for one; otherwise the
   // tree inherits the shared `--sidebar-row-height` token from `.page-sidebar`.
@@ -63,6 +64,7 @@ export function Tree({ entries, filter, itemHeightPx, dragDrop }: TreeEntryProps
     <div
       className={
         'tree-root' +
+        (isFlat ? ' is-flat' : '') +
         (draggedId ? ' is-dragging' : '') +
         (dropTargetId === null ? ' is-root-drop-target' : '')
       }

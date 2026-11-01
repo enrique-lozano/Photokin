@@ -1,3 +1,4 @@
+import { AssetMeteringMode, getMeteringModeLabel } from '../../../media/metadata/fields/meteringMode';
 import { isIn } from '../../../utils/array.utils';
 import { formatDate } from '../../../utils/dateFormatter';
 import { NumberOperator } from '../operators/Operators';
@@ -44,6 +45,10 @@ const CRITERIA_LABEL: Partial<Record<FilterCriteria, string>> = {
   [FilterCriteria.locationState]: 'State',
   [FilterCriteria.locationCountry]: 'Country',
   [FilterCriteria.locationCountryCode]: 'Country code',
+  [FilterCriteria.whiteBalance]: 'White balance',
+  [FilterCriteria.flashValue]: 'Flash details',
+  [FilterCriteria.exposureProgram]: 'Exposure program',
+  [FilterCriteria.meteringMode]: 'Metering',
 };
 
 const LIST_CRITERIA_NOUN: Record<(typeof ListFilterCriteria)[number], { one: string; many: string }> = {
@@ -123,6 +128,10 @@ export function describeFilter(filter: SearchFilter): string {
     const named = filter.operator === 'equals' ? _datePartName(filterCriteria, numeric) : undefined;
 
     return _compare(_label(filterCriteria), filter.operator, named ?? String(numeric));
+  }
+
+  if (filterCriteria === FilterCriteria.meteringMode && filter.operator === 'equals') {
+    return `${_label(filterCriteria)}: ${getMeteringModeLabel(value as AssetMeteringMode) ?? String(value)}`;
   }
 
   if (isIn(NumberRangeFilterCriteria, filterCriteria)) {

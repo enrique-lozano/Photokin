@@ -45,8 +45,13 @@ fs4 = "1.1.0"
 # in Rust (no per-chunk IPC hop through the webview), so a download keeps running
 # even if the user navigates away or closes the window.
 ureq = "2"
-# Unpacks the ExifTool Windows build downloaded during onboarding.
+# Unpacks the pinned ExifTool Windows and Perl distributions.
 zip = { version = "2", default-features = false, features = ["deflate"] }
+flate2 = "1"
+tar = "0.4"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Storage_FileSystem"] }
 
 [dependencies.tauri-plugin-sql]
 features = ["sqlite"] 

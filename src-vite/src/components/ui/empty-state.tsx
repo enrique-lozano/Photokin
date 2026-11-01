@@ -12,6 +12,8 @@ export interface EmptyStateProps {
   description?: ReactNode;
   /** One or more buttons offering the obvious next step. */
   action?: ReactNode;
+  /** Sizes or lays out the action area without changing other empty states. */
+  actionClassName?: string;
   /**
    * Swaps the copy for a provisional message while an import still has this
    * kind of work pending, so an unfinished library never reads as final.
@@ -35,6 +37,7 @@ export function EmptyState({
   title,
   description,
   action,
+  actionClassName,
   pendingImport,
   size = 'page',
   className,
@@ -70,7 +73,11 @@ export function EmptyState({
         {shownDescription && (
           <p className="mt-1 pl-6 text-xs text-pretty text-muted-foreground">{shownDescription}</p>
         )}
-        {action && <div className="mt-2 flex flex-wrap items-center gap-2 pl-6 empty:hidden">{action}</div>}
+        {action && (
+          <div className={cn('mt-2 flex flex-wrap items-center gap-2 pl-6 empty:hidden', actionClassName)}>
+            {action}
+          </div>
+        )}
       </div>
     );
   }
@@ -114,6 +121,7 @@ export function EmptyState({
           className={cn(
             'flex flex-wrap items-center justify-center gap-2 empty:hidden',
             isPage ? 'mt-5' : 'mt-3',
+            actionClassName,
           )}
         >
           {action}

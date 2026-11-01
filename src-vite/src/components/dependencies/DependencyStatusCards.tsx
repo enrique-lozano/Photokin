@@ -4,7 +4,6 @@ import { toast } from '@/components/ui/toast';
 import { ExternalDependencyStatus } from '@/system/dependencyStatus';
 import { installExiftool, locateExiftool, type ExiftoolInstallProgress } from '@/system/exiftoolSetup';
 import { IconAlertTriangle, IconDownload, IconLoader2, IconRefresh, IconTool } from '@tabler/icons-react';
-import { platform } from '@tauri-apps/plugin-os';
 import { useState } from 'react';
 
 const ICON_SIZE = 18;
@@ -96,6 +95,12 @@ export function DependencyStatusCards({
           ? [dependency.version && `Version ${dependency.version}`, DEPENDENCY_PURPOSE[dependency.id]]
           : [];
         const missingExiftool = dependency.id === 'exiftool' && !dependency.available;
+        const isExiftool = dependency.id === 'exiftool';
+        const offerInstall =
+          missingExiftool ||
+          (isExiftool &&
+            dependency.recommendedVersion &&
+            dependency.version !== dependency.recommendedVersion);
         const installStage =
           progress?.stage === 'unpacking'
             ? 'Unpacking'
@@ -124,13 +129,13 @@ export function DependencyStatusCards({
                       : (dependency.error ?? 'Not installed or couldn’t be found.')}
                   </span>
                 )}
-                {missingExiftool && operation === 'installing' && (
+                {isExiftool && operation === 'installing' && (
                   <span className="block" role="status">
                     {installStage} ExifTool
                     {progress?.percent != null ? ` · ${Math.round(progress.percent)}%` : '…'}
                   </span>
                 )}
-                {missingExiftool && operationError && (
+                {isExiftool && operationError && (
                   <span className="block text-destructive-text" role="alert">
                     {operationError}
                   </span>
@@ -138,16 +143,25 @@ export function DependencyStatusCards({
               </>
             }
           >
-            {missingExiftool ? (
+            {isExiftool ? (
               <>
-                {platform() === 'windows' && (
-                  <Button size="sm" disabled={operation !== null} onClick={() => void install()}>
+                {offerInstall && (
+                  <Button
+                    size="sm"
+                    disabled={operation !== null}
+                    title={`Install Photokin’s tested ExifTool${dependency.recommendedVersion ? ` ${dependency.recommendedVersion}` : ''}. Your system copy is not changed.`}
+                    onClick={() => void install()}
+                  >
                     {operation === 'installing' ? (
                       <IconLoader2 size={16} className="motion-safe:animate-spin" />
                     ) : (
                       <IconDownload size={16} />
                     )}
-                    {operation === 'installing' ? 'Installing…' : 'Install'}
+                    {operation === 'installing'
+                      ? 'Installing…'
+                      : missingExiftool
+                        ? 'Install'
+                        : 'Install tested version'}
                   </Button>
                 )}
                 <Button
@@ -158,6 +172,7 @@ export function DependencyStatusCards({
                 >
                   {operation === 'locating' ? 'Choosing…' : 'Choose file…'}
                 </Button>
+                {dependency.available && onRecheck && <RecheckButton onRecheck={onRecheck} />}
               </>
             ) : (
               onRecheck && <RecheckButton onRecheck={onRecheck} />

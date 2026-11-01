@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { FAVORITE_RATING } from '@/media/metadata/fields/favorite';
 import { FilterCriteria } from './filters/FilterCriteria';
-import { parsedSearchFilters, parseSearchBarInput } from './searchInput';
+import { parseSearchBarInput } from './searchInput';
+import { quoteQueryValue } from './queryLexer';
 
 describe('parseSearchBarInput', () => {
   it('keeps plain words as free text for the semantic pass', () => {
     const parsed = parseSearchBarInput('dog on a beach');
 
     expect(parsed.filters).toEqual([]);
-    expect(parsed.intents).toEqual([]);
     expect(parsed.freeText).toBe('dog on a beach');
   });
 
@@ -32,47 +31,18 @@ describe('parseSearchBarInput', () => {
     const parsed = parseSearchBarInput('size>5000 rating<2');
 
     expect(parsed.freeText).toBe('');
-    expect(parsed.fallbackText).toBe('');
     expect(parsed.filters).toHaveLength(2);
   });
 
-  it('maps bare intent words to filters and keeps them for the fallback', () => {
-    const parsed = parseSearchBarInput('videos');
-
-    expect(parsed.freeText).toBe('');
-    expect(parsed.fallbackText).toBe('videos');
-    expect(parsed.intents.map((intent) => intent.id)).toEqual(['videos']);
-    expect(parsedSearchFilters(parsed)).toEqual([
-      { filterCriteria: FilterCriteria.mediaType, operator: 'equals', value: 'video' },
-    ]);
-  });
-
-  it('treats favorites as a 5-star rating', () => {
-    const parsed = parseSearchBarInput('favorites');
-
-    expect(parsedSearchFilters(parsed)).toEqual([
-      { filterCriteria: FilterCriteria.rating, operator: 'greaterThanOrEquals', value: FAVORITE_RATING },
-    ]);
-  });
-
-  it('combines an intent with free text', () => {
-    const parsed = parseSearchBarInput('beach videos');
-
-    expect(parsed.freeText).toBe('beach');
-    expect(parsed.fallbackText).toBe('beach videos');
-    expect(parsed.intents).toHaveLength(1);
-  });
-
-  it('dedupes repeated intents', () => {
-    const parsed = parseSearchBarInput('videos movies');
-
-    expect(parsed.intents).toHaveLength(1);
+  it('never guesses filters from ordinary words', () => {
+    const parsed = parseSearchBarInput('beach videos photos favorites movies');
+    expect(parsed.freeText).toBe('beach videos photos favorites movies');
+    expect(parsed.filters).toEqual([]);
   });
 
   it('lets quotes escape an intent word', () => {
     const parsed = parseSearchBarInput('"videos"');
 
-    expect(parsed.intents).toEqual([]);
     expect(parsed.freeText).toBe('videos');
   });
 
@@ -112,5 +82,68 @@ describe('parseSearchBarInput', () => {
 
     expect(parsed.filters).toEqual([]);
     expect(parsed.freeText).toBe('');
+  });
+
+  it.each([
+    ['has:tag', FilterCriteria.tag_count, 'greaterThan'],
+    ['no:tag', FilterCriteria.tag_count, 'equals'],
+    ['has:person', FilterCriteria.person_count, 'greaterThan'],
+    ['no:person', FilterCriteria.person_count, 'equals'],
+  ])('expands %s into an existing count filter', (query, filterCriteria, operator) => {
+    expect(parseSearchBarInput(query).filters).toEqual([{ filterCriteria, operator, value: 0 }]);
+  });
+
+  it.each([
+    'rating:abc',
+    'rating:',
+    'rating:NaN',
+    'rating:Infinity',
+    'rating=5..3',
+    'year=2020..',
+    'date:2024-02-30',
+    'date:2024-13-01',
+    'person:',
+    'tag~Ana',
+    'type:audio',
+    'has:camera',
+    'no>person',
+    'person:"Ana',
+  ])('preserves invalid known filter %s as literal text with a notice', (query) => {
+    const parsed = parseSearchBarInput(query);
+    expect(parsed.filters).toEqual([]);
+    expect(parsed.freeText).toBe(query);
+    expect(parsed.notices).toHaveLength(1);
+    expect(parsed.textQuery).toBe(query);
+  });
+
+  it('does not diagnose unknown keywords or quoted ordinary phrases', () => {
+    const parsed = parseSearchBarInput('"rating:abc" foo:bar');
+    expect(parsed.notices).toEqual([]);
+    expect(parsed.freeText).toBe('rating:abc foo:bar');
+    expect(parsed.textQuery).toBe('"rating:abc" foo:bar');
+  });
+
+  it('supports != and preserves list OR versus separate-token AND', () => {
+    const parsed = parseSearchBarInput('rating!=3 person:Ana,Luis person:Jo');
+    expect(parsed.filters).toEqual([
+      { filterCriteria: FilterCriteria.rating, operator: 'notEquals', value: 3 },
+      { filterCriteria: FilterCriteria.person, operator: 'contains', value: ['Ana', 'Luis'] },
+      { filterCriteria: FilterCriteria.person, operator: 'contains', value: ['Jo'] },
+    ]);
+  });
+
+  it('round-trips special characters and quoted commas in individual list members', () => {
+    const names = ['Trips/Ana, Luis', 'People/A "quote": >= \\ name'];
+    const parsed = parseSearchBarInput(`tag:${names.map(quoteQueryValue).join(',')} beach`);
+    expect(parsed.filters[0].value).toEqual(names);
+    expect(parsed.freeText).toBe('beach');
+    expect(parsed.textQuery).toBe('beach');
+  });
+
+  it('validates leap days and retains backslashes outside quotes', () => {
+    expect(parseSearchBarInput('date:2024-02-29').filters).toHaveLength(1);
+    expect(parseSearchBarInput('date:0000-02-29').filters).toHaveLength(1);
+    expect(parseSearchBarInput('date:2023-02-29').notices).toHaveLength(1);
+    expect(parseSearchBarInput('folder\\name').freeText).toBe('folder\\name');
   });
 });
