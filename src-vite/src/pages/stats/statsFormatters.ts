@@ -13,7 +13,7 @@ export interface MonthlyStat {
 }
 
 interface MonthlyCountRow {
-  sectionId: string;
+  sectionId: string | null;
   totalImages: number;
 }
 
@@ -55,9 +55,10 @@ export const completeShutterSpeedDistribution = (rows: { value: number; count: n
   );
 
 export function fillMonthlyStats(rows: MonthlyCountRow[]): MonthlyStat[] {
-  if (rows.length === 0) return [];
-
-  const counts = new Map(rows.map((row) => [row.sectionId, row.totalImages]));
+  const counts = new Map(
+    rows.flatMap((row) => (row.sectionId ? [[row.sectionId, row.totalImages] as const] : [])),
+  );
+  if (counts.size === 0) return [];
   const months = [...counts.keys()].sort();
   const [startYear, startMonth] = months[0].split('-').map(Number);
   const [endYear, endMonth] = months.at(-1)!.split('-').map(Number);
@@ -79,11 +80,37 @@ export function fillMonthlyStats(rows: MonthlyCountRow[]): MonthlyStat[] {
   return result;
 }
 
+export function summarizeMonthlyStats(rows: MonthlyCountRow[]) {
+  const years = new Map<number, number>();
+  const months = new Map<number, number>();
+  for (const { sectionId, totalImages } of rows) {
+    if (!sectionId) continue;
+    const [year, month] = sectionId.split('-').map(Number);
+    years.set(year, (years.get(year) ?? 0) + totalImages);
+    months.set(month, (months.get(month) ?? 0) + totalImages);
+  }
+  const first = Math.min(...years.keys());
+  const last = Math.max(...years.keys());
+  return {
+    years: years.size
+      ? Array.from({ length: last - first + 1 }, (_, index) => ({
+          year: first + index,
+          totalImages: years.get(first + index) ?? 0,
+        }))
+      : [],
+    months: [...months].map(([value, totalImages]) => ({ value, totalImages })),
+  };
+}
+
+const monthFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 export function formatMonth(month: string): string {
   const [year, monthNumber] = month.split('-').map(Number);
-  return new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(
-    new Date(Date.UTC(year, monthNumber - 1, 1)),
-  );
+  return monthFormatter.format(new Date(Date.UTC(year, monthNumber - 1, 1)));
 }
 
 interface DatePartCount {

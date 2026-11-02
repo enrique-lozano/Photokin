@@ -12,6 +12,7 @@ import {
   formatIso,
   formatShutterBucket,
   percentage,
+  summarizeMonthlyStats,
 } from './statsFormatters';
 
 describe('statsFormatters', () => {
@@ -31,6 +32,43 @@ describe('statsFormatters', () => {
 
   it('returns no timeline points for an empty scope', () => {
     expect(fillMonthlyStats([])).toEqual([]);
+  });
+
+  it('excludes undated items from capture timelines', () => {
+    expect(fillMonthlyStats([{ sectionId: null, totalImages: 9 }])).toEqual([]);
+    expect(
+      fillMonthlyStats([
+        { sectionId: null, totalImages: 9 },
+        { sectionId: '2024-01', totalImages: 2 },
+      ]),
+    ).toEqual([{ month: '2024-01', count: 2 }]);
+  });
+
+  it('reuses monthly counts for chronological years and calendar months', () => {
+    const result = summarizeMonthlyStats([
+      { sectionId: '2024-02', totalImages: 4 },
+      { sectionId: '2024-01', totalImages: 3 },
+      { sectionId: '2022-02', totalImages: 2 },
+      { sectionId: null, totalImages: 9 },
+    ]);
+
+    expect(result.years).toEqual([
+      { year: 2022, totalImages: 2 },
+      { year: 2023, totalImages: 0 },
+      { year: 2024, totalImages: 7 },
+    ]);
+    expect(completeMonthsOfYear(result.months).map(({ count }) => count)).toEqual([
+      3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]);
+    expect(result.years.reduce((sum, row) => sum + row.totalImages, 0)).toBe(9);
+  });
+
+  it('returns empty capture groups for empty or undated scopes', () => {
+    expect(summarizeMonthlyStats([])).toEqual({ years: [], months: [] });
+    expect(summarizeMonthlyStats([{ sectionId: null, totalImages: 5 }])).toEqual({
+      years: [],
+      months: [],
+    });
   });
 
   it('fills all months in calendar order', () => {

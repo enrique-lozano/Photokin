@@ -4,8 +4,8 @@ import { platform } from '@tauri-apps/plugin-os';
 import { useSettingsStore } from '../stores/settingsStore';
 import { normalizeScale } from './theme';
 
-export const SETTINGS_BASE_WIDTH = 560;
-export const SETTINGS_BASE_HEIGHT = 480;
+export const SETTINGS_BASE_WIDTH = 800;
+export const SETTINGS_BASE_HEIGHT = 600;
 
 export async function openSettingsWindow(tabIndex?: number): Promise<void> {
   try {

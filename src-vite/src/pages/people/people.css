@@ -265,6 +265,9 @@
 
 /* ── Scan scope: album picker ────────────────────────────────────────── */
 .scan-scope-summary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 4px 10px 0;
   @apply text-xs text-muted-foreground;
   font-variant-numeric: tabular-nums;
@@ -836,11 +839,6 @@
 
 .face-scan-scope .scan-options-slider-label {
   @apply text-muted-foreground font-normal;
-}
-
-.face-scan-video-note {
-  margin: 2px 10px 0;
-  @apply text-muted-foreground text-xs;
 }
 
 .face-scan-advanced {

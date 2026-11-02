@@ -45,7 +45,7 @@ fn overall_fraction(
     } else {
         (file_index as f64 + file_fraction) / file_count.max(1) as f64
     };
-    fraction.clamp(0.0, 1.0)
+    fraction.clamp(0.0, 0.999)
 }
 
 const PROGRESS_EVENT: &str = "smart-search://model-download";

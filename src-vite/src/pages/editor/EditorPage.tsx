@@ -530,76 +530,78 @@ export function EditorPage() {
                 </Tooltip>
               ))}
             </fieldset>
-            {cropped && (
+            <div className="editor-preview-actions">
+              {cropped && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className={showCropPreview ? 'bg-accent text-accent-foreground' : undefined}
+                      aria-label="Preview crop"
+                      aria-pressed={showCropPreview}
+                      disabled={saving || busy || comparing || !sourceLoaded}
+                      onClick={() => {
+                        stopCropAnimation();
+                        setPreviewingCrop((value) => !value);
+                      }}
+                    >
+                      <IconCrop size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {showCropPreview ? 'Return to adjusting the crop' : 'Preview crop'}
+                  </TooltipContent>
+                </Tooltip>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className={showCropPreview ? 'bg-accent text-accent-foreground' : undefined}
-                    aria-label="Preview crop"
-                    aria-pressed={showCropPreview}
-                    disabled={saving || busy || comparing || !sourceLoaded}
-                    onClick={() => {
-                      stopCropAnimation();
-                      setPreviewingCrop((value) => !value);
+                    className="editor-compare-button"
+                    variant="outline"
+                    size="sm"
+                    disabled={saving || busy || !sourceLoaded || !changed}
+                    aria-pressed={comparing}
+                    aria-label="Compare with original"
+                    onPointerDown={(event) => {
+                      if (event.button !== 0) return;
+                      event.currentTarget.setPointerCapture(event.pointerId);
+                      comparePointer.current = true;
+                      setComparing(true);
+                    }}
+                    onPointerUp={() => {
+                      comparePointer.current = false;
+                      setComparing(compareKeys.current.size > 0);
+                    }}
+                    onPointerCancel={endComparison}
+                    onLostPointerCapture={() => {
+                      comparePointer.current = false;
+                      setComparing(compareKeys.current.size > 0);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== ' ' && event.key !== 'Enter') return;
+                      event.preventDefault();
+                      compareKey(event.key, true);
+                    }}
+                    onKeyUp={(event) => {
+                      if (event.key !== ' ' && event.key !== 'Enter') return;
+                      event.preventDefault();
+                      compareKey(event.key, false);
+                    }}
+                    onBlur={() => {
+                      compareKey(' ', false);
+                      compareKey('Enter', false);
                     }}
                   >
-                    <IconCrop size={16} />
+                    <IconEye size={16} />
+                    Compare
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {showCropPreview ? 'Return to adjusting the crop' : 'Preview crop'}
+                  Hold to see the original. Release to return to your edit. Shortcut: M.
                 </TooltipContent>
               </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  className="editor-compare-button"
-                  variant="outline"
-                  size="sm"
-                  disabled={saving || busy || !sourceLoaded || !changed}
-                  aria-pressed={comparing}
-                  aria-label="Compare with original"
-                  onPointerDown={(event) => {
-                    if (event.button !== 0) return;
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    comparePointer.current = true;
-                    setComparing(true);
-                  }}
-                  onPointerUp={() => {
-                    comparePointer.current = false;
-                    setComparing(compareKeys.current.size > 0);
-                  }}
-                  onPointerCancel={endComparison}
-                  onLostPointerCapture={() => {
-                    comparePointer.current = false;
-                    setComparing(compareKeys.current.size > 0);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== ' ' && event.key !== 'Enter') return;
-                    event.preventDefault();
-                    compareKey(event.key, true);
-                  }}
-                  onKeyUp={(event) => {
-                    if (event.key !== ' ' && event.key !== 'Enter') return;
-                    event.preventDefault();
-                    compareKey(event.key, false);
-                  }}
-                  onBlur={() => {
-                    compareKey(' ', false);
-                    compareKey('Enter', false);
-                  }}
-                >
-                  <IconEye size={16} />
-                  Compare
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Hold to see the original. Release to return to your edit. Shortcut: M.
-              </TooltipContent>
-            </Tooltip>
+            </div>
           </div>
           <div className={`editor-stage${comparing ? ' editor-stage-before' : ''}`} ref={stage}>
             <ReactCrop

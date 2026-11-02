@@ -50,6 +50,19 @@ beforeEach(() => {
 });
 
 describe('DuplicatesSidebar lazy set list', () => {
+  it.each([
+    ['all', 'photos'],
+    [DuplicateRelationship.Exact, 'exact copies'],
+    [DuplicateRelationship.Similar, 'similar photos'],
+    [DuplicateRelationship.Burst, 'burst frames'],
+  ] as const)('separates the footer title from the %s summary', (typeFilter, noun) => {
+    useDuplicatesStore.setState({ typeFilter });
+    const markup = renderToStaticMarkup(<DuplicatesSidebar />);
+    expect(markup).toContain('sidebar-footer-section__title">Review &amp; remove</span>');
+    expect(markup).toContain(`dup-bulk__summary">0 ${noun} · 0 B to free</span>`);
+    expect(markup).not.toContain('text-destructive-text');
+  });
+
   it('only mounts a small window of 1,758 sets and preserves row selection', () => {
     const markup = renderToStaticMarkup(<DuplicatesSidebar />);
     const rows = vi.mocked(SetListRow).mock.calls;

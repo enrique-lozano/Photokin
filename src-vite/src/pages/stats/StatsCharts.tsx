@@ -1,6 +1,6 @@
 import type { SearchFilter } from '@/common/query/filters/FilterTypes';
 import { CountryFlag } from '@/components/location/CountryFlag';
-import type { ReactNode } from 'react';
+import { memo, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import {
   Area,
   AreaChart,
@@ -14,6 +14,10 @@ import {
 } from 'recharts';
 import { formatMonth, MonthlyStat } from './statsFormatters';
 
+/** Approximate width of one 12px axis-label character, for labels Recharts can't size itself. */
+const CHAR_WIDTH = 7;
+const LABEL_ANGLE = (Math.PI * 40) / 180;
+
 const TOOLTIP_PROPS = {
   wrapperClassName: 'stats-tooltip',
   contentStyle: {
@@ -23,6 +27,30 @@ const TOOLTIP_PROPS = {
     boxShadow: '0 8px 24px hsl(var(--foreground) / 0.16)',
   },
 };
+
+/**
+ * Becomes (and stays) true once the element is within a screen of the visible
+ * area, so off-screen charts don't all lay out and render on page entry.
+ */
+function useNearViewport(ref: RefObject<HTMLElement | null>) {
+  const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined');
+
+  useEffect(() => {
+    const element = ref.current;
+    if (near || !element) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true);
+      },
+      // The page scrolls inside its own container, which clips before the viewport margin applies.
+      { root: element.closest('.page-scroll'), rootMargin: '100% 0px' },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [near, ref]);
+
+  return near;
+}
 
 interface ChartPanelProps {
   title: string;
@@ -45,8 +73,11 @@ export function ChartPanel({
   className = '',
   actions,
 }: ChartPanelProps) {
+  const ref = useRef<HTMLElement>(null);
+  const visible = useNearViewport(ref);
+
   return (
-    <section className={`stats-panel ${className}`}>
+    <section ref={ref} className={`stats-panel ${className}`}>
       <header className="stats-panel__header">
         <div>
           <h3>{title}</h3>
@@ -54,7 +85,7 @@ export function ChartPanel({
         </div>
         {actions}
       </header>
-      {loading ? (
+      {loading || !visible ? (
         <div className="stats-chart-skeleton" aria-label={`Loading ${title}`} />
       ) : error ? (
         <p className="stats-panel__empty">Could not load this statistic.</p>
@@ -74,7 +105,7 @@ export interface RankingDatum {
   filters?: SearchFilter[];
 }
 
-export function RankingBarChart({
+export const RankingBarChart = memo(function RankingBarChart({
   data,
   onSelect,
   showCountryFlags = false,
@@ -83,11 +114,6 @@ export function RankingBarChart({
   onSelect?: (datum: RankingDatum) => void;
   showCountryFlags?: boolean;
 }) {
-  const yAxisWidth = Math.min(
-    116,
-    Math.max(52, ...data.map(({ label }) => label.length * 8 + (showCountryFlags ? 42 : 16))),
-  );
-
   return (
     <div
       className={`stats-ranking-chart${onSelect ? ' stats-chart--interactive' : ''}`}
@@ -100,7 +126,12 @@ export function RankingBarChart({
           <YAxis
             type="category"
             dataKey="label"
-            width={yAxisWidth}
+            // Recharts can't measure custom ticks, so size the flag + name column ourselves.
+            width={
+              showCountryFlags
+                ? Math.max(0, ...data.map(({ label }) => label.length * CHAR_WIDTH)) + 36
+                : 'auto'
+            }
             tickLine={false}
             axisLine={false}
             tick={
@@ -139,58 +170,71 @@ export function RankingBarChart({
             fill="hsl(var(--primary))"
             radius={[0, 4, 4, 0]}
             maxBarSize={28}
-            animationDuration={650}
+            isAnimationActive={false}
             onClick={onSelect ? (entry) => onSelect(entry.payload as RankingDatum) : undefined}
           />
         </BarChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});
 
-export function DistributionBarChart({
+export const DistributionBarChart = memo(function DistributionBarChart({
   data,
   onSelect,
+  timeline = false,
 }: {
   data: RankingDatum[];
   onSelect?: (datum: RankingDatum) => void;
+  timeline?: boolean;
 }) {
+  // Rotated labels hang below and to the left of their bar: reserve room for the
+  // longest one underneath and for the first one's overhang past the y-axis.
+  const labelWidth = (label = '') => label.length * CHAR_WIDTH;
+  const longestLabel = Math.max(0, ...data.map(({ label }) => labelWidth(label)));
+  const axisHeight = timeline ? 32 : Math.ceil(longestLabel * Math.sin(LABEL_ANGLE)) + 16;
+  const leftMargin = timeline
+    ? 0
+    : Math.max(0, Math.ceil(labelWidth(data[0]?.label) * Math.cos(LABEL_ANGLE)) - 36);
+
   return (
-    <div className={`stats-distribution-chart${onSelect ? ' stats-chart--interactive' : ''}`}>
-      <div className="stats-distribution-chart__canvas">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 0 }}>
-            <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="label"
-              interval={0}
-              angle={-40}
-              textAnchor="end"
-              height={44}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis width={42} allowDecimals={false} tickLine={false} axisLine={false} />
-            <Tooltip
-              {...TOOLTIP_PROPS}
-              cursor={{ fill: 'hsl(var(--muted) / 0.55)' }}
-              formatter={(value) => [Number(value).toLocaleString(), 'Items']}
-            />
-            <Bar
-              dataKey="count"
-              fill="hsl(var(--primary))"
-              radius={[4, 4, 0, 0]}
-              animationDuration={650}
-              onClick={onSelect ? (entry) => onSelect(entry.payload as RankingDatum) : undefined}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    <div
+      className={`stats-distribution-chart${onSelect ? ' stats-chart--interactive' : ''}`}
+      style={{ height: 220 + axisHeight }}
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: leftMargin }}>
+          <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="label"
+            interval="preserveStartEnd"
+            minTickGap={timeline ? 24 : 2}
+            angle={timeline ? 0 : -40}
+            textAnchor={timeline ? 'middle' : 'end'}
+            height={axisHeight}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis width="auto" allowDecimals={false} tickLine={false} axisLine={false} />
+          <Tooltip
+            {...TOOLTIP_PROPS}
+            cursor={{ fill: 'hsl(var(--muted) / 0.55)' }}
+            formatter={(value) => [Number(value).toLocaleString(), 'Items']}
+          />
+          <Bar
+            dataKey="count"
+            fill="hsl(var(--primary))"
+            radius={[4, 4, 0, 0]}
+            isAnimationActive={false}
+            onClick={onSelect ? (entry) => onSelect(entry.payload as RankingDatum) : undefined}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
-}
+});
 
-export function ActivityChart({
+export const ActivityChart = memo(function ActivityChart({
   data,
   onSelect,
 }: {
@@ -219,7 +263,7 @@ export function ActivityChart({
             tickLine={false}
             axisLine={false}
           />
-          <YAxis width={42} allowDecimals={false} tickLine={false} axisLine={false} />
+          <YAxis width="auto" allowDecimals={false} tickLine={false} axisLine={false} />
           <Tooltip
             {...TOOLTIP_PROPS}
             labelFormatter={(label) => formatMonth(String(label))}
@@ -231,10 +275,10 @@ export function ActivityChart({
             stroke="hsl(var(--primary))"
             strokeWidth={2}
             fill="url(#activity-fill)"
-            animationDuration={650}
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
     </div>
   );
-}
+});

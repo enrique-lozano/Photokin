@@ -1,4 +1,5 @@
 import { SearchCombobox } from '@/components/ui/search-combobox';
+import { InfoHint } from '@/components/ui/infoHint';
 import { Switch } from '@/components/ui/switch';
 import { AlbumsService } from '@/db/api/services/albums.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
@@ -60,7 +61,10 @@ export function AlbumScopePicker({
         emptyText="No albums found."
       />
       {photoCount !== undefined && (
-        <p className="scan-scope-summary">{photoCount.toLocaleString()} photos to scan</p>
+        <p className="scan-scope-summary">
+          {photoCount.toLocaleString()} photos to scan
+          <InfoHint>Videos are excluded. Face detection currently scans photos only.</InfoHint>
+        </p>
       )}
 
       <label className="scan-scope-subalbums" data-disabled={selectedIds.length === 0 || undefined}>

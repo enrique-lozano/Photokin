@@ -553,9 +553,6 @@ export function FaceActionsBar() {
                     onChangeIncludeSubAlbums={setScanIncludeSubAlbums}
                   />
                 </div>
-                <p className="face-scan-video-note">
-                  Videos are excluded. Face detection currently scans photos only.
-                </p>
               </section>
             )}
 

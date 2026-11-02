@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { AppShell } from '../components/app-shell/AppShell';
 import { AppDataKey, AppDataService } from '../db/api/services/appData.service';
-import { startBackgroundIndexing } from '../media/smartSearch/indexing';
-import { startStartupFolderCheck } from '../media/startupFolderCheck';
 import { recoverIncompleteImports } from '../media/import/importRecovery';
 import { shutdownExiftoolSession } from '../media/metadata/exiftool/exiftoolSession';
+import { startBackgroundIndexing } from '../media/smartSearch/indexing';
+import { startStartupFolderCheck } from '../media/startupFolderCheck';
 import { AppRoutes } from '../router';
 import { listenForAppUpdateInstallRequests, startAutoUpdateCheck } from '../system/appUpdater';
 
@@ -39,7 +39,7 @@ function Dashboard() {
         // The process center already reported the failure; checkpoints remain.
       })
       .then(() => {
-        if (!startStartupFolderCheck()) startBackgroundIndexing();
+        if (!startStartupFolderCheck()) startBackgroundIndexing({ startup: true });
       });
     startAutoUpdateCheck();
   }, [onboardingCompleted]);

@@ -171,6 +171,68 @@
   background: hsl(var(--secondary-navbar-foreground) / 0.1);
 }
 
+.sidebar-footer-section {
+  flex-shrink: 0;
+  margin: 0 -8px -8px;
+  border-top: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
+}
+
+.sidebar-footer-section .sidebar-footer-section__trigger {
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 12px 18px;
+  gap: 12px;
+  border-radius: 0;
+  background: transparent;
+  @apply text-secondary-navbar-foreground text-xs font-medium;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-footer-section .sidebar-footer-section__trigger:hover:not(:disabled) {
+  background: hsl(var(--secondary-navbar-foreground) / 0.05);
+}
+
+.sidebar-footer-section .sidebar-footer-section__trigger:focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.75);
+  outline-offset: -2px;
+}
+
+.sidebar-footer-section__heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-footer-section__heading > svg {
+  flex-shrink: 0;
+  @apply text-muted-foreground;
+}
+
+.sidebar-footer-section__title {
+  @apply text-xs font-semibold;
+}
+
+.sidebar-footer-section__trigger > .accordion-chevron {
+  width: 14px;
+  height: 14px;
+  @apply text-muted-foreground;
+}
+
+.sidebar-footer-section .sidebar-footer-section__content {
+  padding: 0 18px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-footer-section .sidebar-footer-section__trigger,
+  .sidebar-footer-section__trigger > .accordion-chevron {
+    transition: none;
+  }
+}
+
 /* Compact filter field that sits directly on top of the item list. It reads as a
    recessed well rather than a bordered control: it is a tool, not a destination,
    so the rows below stay the loudest thing in the sidebar.

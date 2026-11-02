@@ -75,8 +75,13 @@
   min-height: 56px;
   flex-wrap: wrap;
 }
-.editor-compare-button {
+.editor-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
+}
+.editor-compare-button {
   touch-action: none;
 }
 .editor-compare-button[aria-pressed='true'] {

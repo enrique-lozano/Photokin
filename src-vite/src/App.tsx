@@ -1,11 +1,11 @@
 import { useContext } from 'react';
 import { RouterProvider } from 'react-router-dom';
+import { ComparePhotos } from './components/compare/ComparePhotos';
 import { Lightbox } from './components/lightbox/Lightbox';
 import { LightboxImageContext } from './context/LightboxContext';
 import { useSettingsSync } from './hooks/useSettingsSync';
 import { useTrashRetention } from './hooks/useTrashRetention';
 import { router } from './router';
-import { ComparePhotos } from './components/compare/ComparePhotos';
 import { useAppStore } from './stores/appState';
 
 export function AppEntryPoint({ isAuxiliaryWindow }: { isAuxiliaryWindow: boolean }) {

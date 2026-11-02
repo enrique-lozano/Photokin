@@ -71,6 +71,15 @@ To use it, download a search model (during setup, or later in
 background; you'll see **Indexing for search** in the bottom-right corner.
 New photos are indexed automatically.
 
+In **Settings → System → Smart search**, turn off **Index missing photos at
+startup** to leave unfinished indexing paused when Photokin opens. New imports
+and model changes still trigger indexing.
+
+Use **Rebuild search index** in the same section to reprocess all photos with
+the selected model. This can take a very long time in large libraries; smart
+search results will be incomplete while it runs. Original photos are not
+changed. Progress and the **Stop** action appear in the main window.
+
 Without a model, the search bar still finds photos by name and tag.
 
 ### Tips for better results

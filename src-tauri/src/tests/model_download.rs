@@ -12,8 +12,9 @@ fn progress_falls_back_to_file_count_without_sizes() {
 }
 
 #[test]
-fn progress_never_exceeds_one() {
-    assert_eq!(overall_fraction(900, 800, 4, 5, 1.0), 1.0);
+fn progress_reserves_completion_for_finalized_files() {
+    assert_eq!(overall_fraction(900, 800, 4, 5, 1.0), 0.999);
+    assert_eq!(overall_fraction(0, 0, 4, 5, 1.0), 0.999);
 }
 
 #[test]

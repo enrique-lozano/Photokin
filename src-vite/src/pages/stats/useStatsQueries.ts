@@ -10,12 +10,6 @@ export function useStatsQueries(searchQuery: SearchQuery, placeGroup: 'city' | '
     ['assets'],
     options,
   );
-  const years = useLiveQuery(() => AssetsService.getFileCountByYear({ searchQuery }), ['assets'], options);
-  const months = useLiveQuery(
-    () => AssetsService.getFileCountByDatePart({ searchQuery, part: 'month' }),
-    ['assets'],
-    options,
-  );
   const weekdays = useLiveQuery(
     () => AssetsService.getFileCountByDatePart({ searchQuery, part: 'weekday' }),
     ['assets'],
@@ -91,5 +85,5 @@ export function useStatsQueries(searchQuery: SearchQuery, placeGroup: 'city' | '
     options,
   );
 
-  return { overview, activity, years, months, weekdays, places, gear, captureSettings, exposure, ratings };
+  return { overview, activity, weekdays, places, gear, captureSettings, exposure, ratings };
 }

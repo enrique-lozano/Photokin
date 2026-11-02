@@ -161,11 +161,6 @@
   }
 }
 
-.places-map {
-  flex-shrink: 0;
-  border-top: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
-}
-
 .places-map .accordion-content[data-state='closed'] {
   /* Keep the map mounted without cutting off the height animation. */
   height: 0;

@@ -37,6 +37,7 @@ Use the slider in the footer to make thumbnails bigger or smaller.
 - **Stats** summarizes your library: shooting activity per month, the cameras
   and lenses you use most, typical ISO, aperture, shutter speed and focal length,
   ratings, and how much of your library has each kind of metadata.
+  Year labels space out automatically; hover over a bar for its exact year and count.
 
 ![Photokin's Places page](/screenshots/04-places.webp){.screenshot}
 

@@ -205,18 +205,11 @@
   white-space: nowrap;
 }
 
-/* Pinned bulk action (collapsible) */
-.dup-bulk {
-  flex-shrink: 0;
-  padding-top: 5px;
-  border-top: 1px solid hsl(var(--secondary-navbar-foreground) / 0.1);
-}
-
-/* The summary line doubles as the collapse/expand toggle. */
-.dup-bulk__trigger {
-  padding-left: 2px;
-  padding-right: 2px;
-  @apply text-secondary-navbar-foreground;
+.dup-bulk__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
 }
 
 .dup-bulk__content {
@@ -226,9 +219,9 @@
 }
 
 .dup-bulk__summary {
-  margin: 0;
-  @apply text-xs text-muted-foreground;
-  text-align: left;
+  @apply text-xs font-normal text-muted-foreground;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 .dup-bulk__cta {

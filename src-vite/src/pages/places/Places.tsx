@@ -512,19 +512,25 @@ function PlacesContent() {
           <Accordion
             type="single"
             collapsible
-            className="places-map"
+            className="places-map sidebar-footer-section"
             onValueChange={(value) => {
               setMapOpen(Boolean(value));
               if (value) setMapMounted(true);
             }}
           >
             <AccordionItem value="map" className="border-b-0">
-              <AccordionTrigger className="py-2 hover:no-underline">
-                <span className="flex items-center gap-2">
-                  <IconMap size={16} /> Map
+              <AccordionTrigger className="sidebar-footer-section__trigger">
+                <span className="sidebar-footer-section__heading">
+                  <IconMap size={16} aria-hidden="true" />
+                  <span className="sidebar-footer-section__title">Map</span>
                 </span>
               </AccordionTrigger>
-              <AccordionContent forceMount inert={!mapOpen} aria-hidden={!mapOpen}>
+              <AccordionContent
+                className="sidebar-footer-section__content"
+                forceMount
+                inert={!mapOpen}
+                aria-hidden={!mapOpen}
+              >
                 {mapError || focusError ? (
                   <EmptyState
                     size="sidebar"

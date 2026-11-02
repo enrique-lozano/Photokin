@@ -1,9 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
-import { clearAssetEmbeddings } from '@/media/smartSearch/embeddingStore';
-import { startBackgroundIndexing } from '@/media/smartSearch/indexing';
 import {
   cancelModelDownload,
   downloadModel,
@@ -16,8 +14,8 @@ import {
   formatMegabytes,
   formatModelSize,
   getModelDir,
-  isModelDownloaded,
   groupModels,
+  isModelDownloaded,
   MODEL_LANGUAGES,
 } from '@/media/smartSearch/models';
 import { useSmartSearchSettingsStore } from '@/stores/smartSearchSettingsStore';
@@ -25,8 +23,8 @@ import { IconDownload, IconFolder, IconLanguage, IconSparkles, IconX } from '@ta
 import { openPath } from '@tauri-apps/plugin-opener';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import './smartSearchModels.css';
 import { ModelRatings } from './ModelRatings';
+import './smartSearchModels.css';
 
 /**
  * Lists the available CLIP models, letting the user download them (with a
@@ -53,7 +51,6 @@ export function SmartSearchModelsCard({
   const downloadRevision = useModelDownloads((state) => state.revision);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activatingModelId, setActivatingModelId] = useState<string | null>(null);
 
   const isBusy = (modelId: string) => progress[modelId] !== undefined && progress[modelId] < 1;
 
@@ -90,7 +87,6 @@ export function SmartSearchModelsCard({
       }
       setDownloaded((current) => ({ ...current, [model.id]: true }));
       toast.success(`Model "${model.label}" downloaded`);
-      if (model.id === activeModel) startBackgroundIndexing();
     } catch (error) {
       toast.error(`Could not download the model: ${String(error)}`);
     }
@@ -104,18 +100,9 @@ export function SmartSearchModelsCard({
     }
   };
 
-  const handleActivate = async (model: ClipModel) => {
+  const handleActivate = (model: ClipModel) => {
     if (model.id === activeModel) return;
-    setActivatingModelId(model.id);
-    try {
-      await clearAssetEmbeddings();
-      setActiveModel(model.id);
-      if (downloaded[model.id]) startBackgroundIndexing();
-    } catch (error) {
-      toast.error(`Could not switch search models: ${String(error)}`);
-    } finally {
-      setActivatingModelId(null);
-    }
+    setActiveModel(model.id);
   };
 
   const handleOpenFolder = async (model: ClipModel) => {
@@ -156,7 +143,6 @@ export function SmartSearchModelsCard({
     const isActive = model.id === activeModel;
     const isDownloaded = downloaded[model.id];
     const isDownloading = isBusy(model.id);
-    const isSwitching = activatingModelId === model.id;
     const display = modelDisplay(model);
 
     return (
@@ -224,14 +210,8 @@ export function SmartSearchModelsCard({
               </Button>
             ) : (
               !isActive && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  isLoading={isSwitching}
-                  disabled={activatingModelId !== null}
-                  onClick={() => void handleActivate(model)}
-                >
-                  {isSwitching ? 'Switching' : 'Use model'}
+                <Button size="sm" variant="outline" onClick={() => handleActivate(model)}>
+                  Use model
                 </Button>
               )
             )}

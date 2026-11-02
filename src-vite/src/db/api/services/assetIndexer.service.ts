@@ -2,6 +2,7 @@ import { DEFAULT_RESYNC_MODE, ResyncMode } from '@/common/resyncOptions';
 import { AllSupportedFormatsWithDots, getFileExtensionFromPath } from '@/common/supportedFormats';
 import { drainImportBacklog, geocodePendingLocations } from '@/media/import/importPipeline';
 import { deleteThumbnailsOfFiles, regenerateThumbnailOfFile } from '@/media/thumbnails/thumbnail';
+import { useWriteBackStore } from '@/stores/writeBackStore';
 import { errorLog } from '@/system/devLogger';
 import {
   currentOsPathSep,
@@ -11,7 +12,6 @@ import {
   tauriFileLastModified,
 } from '@/system/diskManager';
 import { HARDWARE_CONCURRENCY } from '@/system/hardware';
-import { useWriteBackStore } from '@/stores/writeBackStore';
 import { ProcessReporter } from '@/system/processTracker';
 import { epochMsToDate } from '@/utils/date.utils';
 import { join } from '@tauri-apps/api/path';
@@ -81,6 +81,7 @@ export async function syncFilesAndDirsOf(params: {
   albums: AlbumInClient[];
   resyncMode?: ResyncMode;
   presenceOnly?: boolean;
+  startSearch?: boolean;
   reporter?: ProcessReporter;
 }): Promise<SyncResult> {
   const { reporter } = params;
@@ -235,7 +236,7 @@ export async function syncFilesAndDirsOf(params: {
   }
 
   reporter?.throwIfStopped();
-  await drainImportBacklog(reporter);
+  await drainImportBacklog(reporter, { startSearch: params.startSearch });
 
   return {
     albumsScanned: totalAlbums,

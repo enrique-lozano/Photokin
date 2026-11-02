@@ -107,11 +107,14 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
     async () => {
       reporter.throwIfStopped();
       const modelId = useSmartSearchSettingsStore.getState().activeModel;
-      if ((await AppDataService.get(AppDataKey.SmartSearchModel)) !== modelId) {
+      if (!(await isModelDownloaded(modelId))) return { ids: [], modelId };
+      const rebuild = indexingRebuild;
+      indexingRebuild = false;
+      if (rebuild || (await AppDataService.get(AppDataKey.SmartSearchModel)) !== modelId) {
         await clearAssetEmbeddings();
         await AppDataService.set(AppDataKey.SmartSearchModel, modelId);
       }
-      const ids = (await isModelDownloaded(modelId)) ? await _unindexedAssetIds() : [];
+      const ids = await _unindexedAssetIds();
       return { ids, modelId };
     },
     { signal: reporter.signal },
@@ -161,6 +164,7 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
 // rerun afterwards, so assets added mid-run are still picked up.
 let indexingRunning = false;
 let indexingRerun = false;
+let indexingRebuild = false;
 
 /**
  * Kick off backlog indexing as its *own* background process (separate from the
@@ -169,7 +173,9 @@ let indexingRerun = false;
  * and — since it only targets not-yet-indexed assets — resumes any backlog left
  * behind when the app was closed mid-run.
  */
-export function startBackgroundIndexing(): void {
+export function startBackgroundIndexing(options: { rebuild?: boolean; startup?: boolean } = {}): void {
+  if (options.startup && !useSmartSearchSettingsStore.getState().indexMissingAtStartup) return;
+  if (options.rebuild) indexingRebuild = true;
   if (isImportWorkActive()) {
     debugLog('smart-search', 'deferred', { reason: 'import-active' });
     return;

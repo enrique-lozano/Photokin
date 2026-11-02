@@ -193,16 +193,22 @@ export function DuplicatesSidebar() {
       />
 
       {!showingIgnored && (
-        <Accordion type="single" collapsible className="dup-bulk">
+        <Accordion type="single" collapsible className="sidebar-footer-section">
           <AccordionItem value="actions" className="border-b-0">
-            <AccordionTrigger className="dup-bulk__trigger py-2 hover:no-underline">
-              <span className="dup-bulk__summary">
-                Remove <span className="text-destructive-text font-semibold">{totals.toRemoveCount}</span>{' '}
-                {scope.noun} · frees{' '}
-                <span className="text-success font-semibold">{formatBytes(totals.freesBytes)}</span>
+            <AccordionTrigger className="sidebar-footer-section__trigger">
+              <span className="sidebar-footer-section__heading">
+                <IconTrash size={16} aria-hidden="true" />
+                <span className="dup-bulk__heading">
+                  <span className="sidebar-footer-section__title">Review &amp; remove</span>
+                  <span className="dup-bulk__summary">
+                    {totals.toRemoveCount.toLocaleString()}{' '}
+                    {totals.toRemoveCount === 1 ? scope.singular : scope.noun} ·{' '}
+                    {formatBytes(totals.freesBytes)} to free
+                  </span>
+                </span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="dup-bulk__content pb-0">
+            <AccordionContent className="dup-bulk__content sidebar-footer-section__content">
               <Button
                 variant="default"
                 className="dup-bulk__cta"

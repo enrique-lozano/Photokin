@@ -13,7 +13,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toast';
-import { startBackgroundIndexing } from '@/media/smartSearch/indexing';
 import { downloadModel } from '@/media/smartSearch/modelDownload';
 import { CLIP_MODELS, formatModelSize, isModelDownloaded } from '@/media/smartSearch/models';
 import { useSmartSearchSettingsStore } from '@/stores/smartSearchSettingsStore';
@@ -54,15 +53,10 @@ export function SmartSearchStep({ goNext, goBack }: OnboardingStepProps) {
   const downloadAndContinue = () => {
     setActiveModel(selectedId);
     if (isSelectedDownloaded) {
-      startBackgroundIndexing();
       goNext();
       return;
     }
-    downloadModel(selectedId)
-      .then((result) => {
-        if (result.status === 'completed') startBackgroundIndexing();
-      })
-      .catch((error) => toast.error(`Could not download the model: ${String(error)}`));
+    downloadModel(selectedId).catch((error) => toast.error(`Could not download the model: ${String(error)}`));
     goNext();
   };
 

@@ -19,7 +19,7 @@ import { SecondaryTitleAndScrollableContent } from '@/pages/search/SecondaryTitl
 import { useAppStore } from '@/stores/appState';
 import { formatBytes } from '@/utils/numberFormatter';
 import { IconChartBar } from '@tabler/icons-react';
-import { startTransition, useEffect, useMemo, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { CaptureSettingsList } from './CaptureSettingsList';
 import './stats.css';
 import { ActivityChart, ChartPanel, DistributionBarChart, RankingBarChart } from './StatsCharts';
@@ -35,6 +35,7 @@ import {
   formatFocalLengthBucket,
   formatIso,
   formatShutterBucket,
+  summarizeMonthlyStats,
 } from './statsFormatters';
 import { StatsSummary } from './StatsSummary';
 import { useStatsQueries } from './useStatsQueries';
@@ -76,6 +77,7 @@ function OrderedBarPanel({
   onSelect: (datum: BarDatum) => void;
 }) {
   const [direction, setDirection] = useState<'vertical' | 'horizontal'>('vertical');
+  const topValues = useMemo(() => horizontalData.slice(0, TOP_VALUES_LIMIT), [horizontalData]);
 
   return (
     <ChartPanel
@@ -101,7 +103,7 @@ function OrderedBarPanel({
       {direction === 'vertical' ? (
         <DistributionBarChart data={verticalData} onSelect={onSelect} />
       ) : (
-        <RankingBarChart data={horizontalData.slice(0, TOP_VALUES_LIMIT)} onSelect={onSelect} />
+        <RankingBarChart data={topValues} onSelect={onSelect} />
       )}
     </ChartPanel>
   );
@@ -137,45 +139,79 @@ export function StatsPage() {
   const subtitle = overview
     ? `${overview.totalAssets.toLocaleString()} matching items · ${formatBytes(overview.totalSizeBytes)}`
     : 'Analyzing the current library filters';
-  const activity = fillMonthlyStats(queries.activity.data ?? []);
-  const years: BarDatum[] = _chronologicalYears(queries.years.data ?? []).map(({ year, totalImages }) => ({
-    label: String(year),
-    count: totalImages,
-    filters: [{ filterCriteria: FilterCriteria.year, operator: 'equals', value: year }],
-  }));
-  const months: BarDatum[] = completeMonthsOfYear(queries.months.data ?? []).map(
-    ({ value, label, count }) => ({
-      label,
-      count,
-      filters: [{ filterCriteria: FilterCriteria.month, operator: 'equals', value }],
-    }),
+  const activity = useMemo(() => fillMonthlyStats(queries.activity.data ?? []), [queries.activity.data]);
+  const captureMonths = useMemo(
+    () => summarizeMonthlyStats(queries.activity.data ?? []),
+    [queries.activity.data],
   );
-  const weekdays: BarDatum[] = completeWeekdays(queries.weekdays.data ?? []).map(
-    ({ value, label, count }) => ({
-      label,
-      count,
-      filters: [{ filterCriteria: FilterCriteria.weekday, operator: 'equals', value }],
-    }),
+  const years = useMemo<BarDatum[]>(
+    () =>
+      captureMonths.years.map(({ year, totalImages }) => ({
+        label: String(year),
+        count: totalImages,
+        filters: [{ filterCriteria: FilterCriteria.year, operator: 'equals', value: year }],
+      })),
+    [captureMonths.years],
   );
-  const datePartQuery = queries[datePart];
+  const months = useMemo<BarDatum[]>(
+    () =>
+      completeMonthsOfYear(captureMonths.months).map(({ value, label, count }) => ({
+        label,
+        count,
+        filters: [{ filterCriteria: FilterCriteria.month, operator: 'equals', value }],
+      })),
+    [captureMonths.months],
+  );
+  const weekdays = useMemo<BarDatum[]>(
+    () =>
+      completeWeekdays(queries.weekdays.data ?? []).map(({ value, label, count }) => ({
+        label,
+        count,
+        filters: [{ filterCriteria: FilterCriteria.weekday, operator: 'equals', value }],
+      })),
+    [queries.weekdays.data],
+  );
+  const datePartQuery = datePart === 'weekdays' ? queries.weekdays : queries.activity;
   const datePartData = { years, months, weekdays }[datePart];
-  const places: BarDatum[] = (queries.places.data ?? []).map(
-    ({ city, country, countryCode, totalImages }) => ({
-      label:
-        placeGroup === 'city'
-          ? (city ?? 'Unknown city')
-          : (countryNameFromCode(countryCode) ?? country ?? 'Unknown country'),
-      count: totalImages,
-      ...(placeGroup === 'country' ? { countryCode: countryCode ?? undefined } : {}),
-    }),
+  const placeRows = queries.places.data;
+  const places = useMemo<BarDatum[]>(
+    () =>
+      (placeRows ?? []).map(({ city, country, countryCode, totalImages }) => ({
+        label:
+          placeGroup === 'city'
+            ? (city ?? 'Unknown city')
+            : (countryNameFromCode(countryCode) ?? country ?? 'Unknown country'),
+        count: totalImages,
+        ...(placeGroup === 'country' ? { countryCode: countryCode ?? undefined } : {}),
+      })),
+    [placeGroup, placeRows],
   );
   const gear = queries.gear.data;
   const exposure = queries.exposure.data;
-  const addChartFilter = ({ filters }: BarDatum) => {
-    if (!filters?.length) return;
-    const currentQuery = useAppStore.getState().searchQuery;
-    startTransition(() => setSearchQuery(toggleCondition(currentQuery, filters)));
-  };
+  const gearData = useMemo(() => {
+    const withFilter =
+      (filterCriteria: typeof FilterCriteria.camera | typeof FilterCriteria.lens) =>
+      (datum: BarDatum): BarDatum => ({
+        ...datum,
+        filters: [{ filterCriteria, operator: 'equals', value: datum.label }],
+      });
+    return {
+      cameras: (gear?.cameras ?? []).map(withFilter(FilterCriteria.camera)),
+      lenses: (gear?.lenses ?? []).map(withFilter(FilterCriteria.lens)),
+    };
+  }, [gear]);
+  const addChartFilter = useCallback(
+    ({ filters }: BarDatum) => {
+      if (!filters?.length) return;
+      const currentQuery = useAppStore.getState().searchQuery;
+      startTransition(() => setSearchQuery(toggleCondition(currentQuery, filters)));
+    },
+    [setSearchQuery],
+  );
+  const filterActivityMonth = useCallback(
+    (month: string) => addChartFilter({ label: month, count: 0, filters: _monthFilters(month) }),
+    [addChartFilter],
+  );
   const rangeData = useMemo(
     () => ({
       iso: _rangeData(
@@ -210,28 +246,29 @@ export function StatsPage() {
       exposure?.shutterSpeedDistribution,
     ],
   );
-  const numericData = (
-    rows: { value: number; count: number }[] | undefined,
-    formatter: (value: number) => string,
-    criteria: (typeof NumberRangeFilterCriteria)[number],
-    ordered = false,
-  ) =>
-    (ordered ? [...(rows ?? [])].sort((a, b) => a.value - b.value) : (rows ?? [])).map(
-      ({ value, count }) => ({
-        label: formatter(value),
+  const topValues = useMemo(
+    () => ({
+      iso: _numericData(exposure?.iso, formatIso, FilterCriteria.iso),
+      focalLength: _numericData(exposure?.focalLengths, formatFocalLengthBucket, FilterCriteria.focalLength),
+      aperture: _numericData(exposure?.apertures, formatApertureBucket, FilterCriteria.aperture),
+      shutterSpeed: _numericData(exposure?.shutterSpeeds, formatShutterBucket, FilterCriteria.shutterSpeed),
+    }),
+    [exposure?.apertures, exposure?.focalLengths, exposure?.iso, exposure?.shutterSpeeds],
+  );
+  const ratings = useMemo<BarDatum[]>(
+    () =>
+      (queries.ratings.data ?? []).map(({ rating, count }) => ({
+        label: rating === null ? 'Unrated' : rating === 1 ? '1 star' : `${rating} stars`,
         count,
-        filters: [{ filterCriteria: criteria, operator: 'equals' as const, value }],
-      }),
-    );
-  const ratings: BarDatum[] = (queries.ratings.data ?? []).map(({ rating, count }) => ({
-    label: rating === null ? 'Unrated' : rating === 1 ? '1 star' : `${rating} stars`,
-    count,
-    filters: [
-      rating === null
-        ? { filterCriteria: FilterCriteria.rated, operator: 'equals' as const, value: false }
-        : { filterCriteria: FilterCriteria.rating, operator: 'equals' as const, value: rating },
-    ],
-  }));
+        filters: [
+          rating === null
+            ? { filterCriteria: FilterCriteria.rated, operator: 'equals' as const, value: false }
+            : { filterCriteria: FilterCriteria.rating, operator: 'equals' as const, value: rating },
+        ],
+      })),
+    [queries.ratings.data],
+  );
+  const ratingsByCount = useMemo(() => [...ratings].sort((a, b) => b.count - a.count), [ratings]);
 
   const content =
     overview?.totalAssets === 0 ? (
@@ -257,10 +294,7 @@ export function StatsPage() {
           empty={activity.length === 0}
           className="stats-panel--wide"
         >
-          <ActivityChart
-            data={activity}
-            onSelect={(month) => addChartFilter({ label: month, count: 0, filters: _monthFilters(month) })}
-          />
+          <ActivityChart data={activity} onSelect={filterActivityMonth} />
         </ChartPanel>
 
         <ChartPanel
@@ -283,7 +317,11 @@ export function StatsPage() {
             />
           }
         >
-          <DistributionBarChart data={datePartData} onSelect={addChartFilter} />
+          <DistributionBarChart
+            data={datePartData}
+            onSelect={addChartFilter}
+            timeline={datePart === 'years'}
+          />
         </ChartPanel>
         <ChartPanel
           title="Top places"
@@ -314,13 +352,7 @@ export function StatsPage() {
           error={queries.gear.error}
           empty={!gear?.cameras.length}
         >
-          <RankingBarChart
-            data={(gear?.cameras ?? []).map((datum) => ({
-              ...datum,
-              filters: [{ filterCriteria: FilterCriteria.camera, operator: 'equals', value: datum.label }],
-            }))}
-            onSelect={addChartFilter}
-          />
+          <RankingBarChart data={gearData.cameras} onSelect={addChartFilter} />
         </ChartPanel>
         <ChartPanel
           title="Lenses"
@@ -329,13 +361,7 @@ export function StatsPage() {
           error={queries.gear.error}
           empty={!gear?.lenses.length}
         >
-          <RankingBarChart
-            data={(gear?.lenses ?? []).map((datum) => ({
-              ...datum,
-              filters: [{ filterCriteria: FilterCriteria.lens, operator: 'equals', value: datum.label }],
-            }))}
-            onSelect={addChartFilter}
-          />
+          <RankingBarChart data={gearData.lenses} onSelect={addChartFilter} />
         </ChartPanel>
 
         <OrderedBarPanel
@@ -344,7 +370,7 @@ export function StatsPage() {
           loading={queries.exposure.loading && !queries.exposure.data}
           error={queries.exposure.error}
           verticalData={rangeData.iso}
-          horizontalData={numericData(exposure?.iso, formatIso, FilterCriteria.iso)}
+          horizontalData={topValues.iso}
           verticalLabel="ISO ranges"
           onSelect={addChartFilter}
         />
@@ -377,11 +403,7 @@ export function StatsPage() {
           loading={queries.exposure.loading && !queries.exposure.data}
           error={queries.exposure.error}
           verticalData={rangeData.focalLength}
-          horizontalData={numericData(
-            exposure?.focalLengths,
-            formatFocalLengthBucket,
-            FilterCriteria.focalLength,
-          )}
+          horizontalData={topValues.focalLength}
           verticalLabel="Focal-length ranges"
           onSelect={addChartFilter}
         />
@@ -391,7 +413,7 @@ export function StatsPage() {
           loading={queries.exposure.loading && !queries.exposure.data}
           error={queries.exposure.error}
           verticalData={rangeData.aperture}
-          horizontalData={numericData(exposure?.apertures, formatApertureBucket, FilterCriteria.aperture)}
+          horizontalData={topValues.aperture}
           verticalLabel="Aperture ranges"
           onSelect={addChartFilter}
         />
@@ -401,11 +423,7 @@ export function StatsPage() {
           loading={queries.exposure.loading && !queries.exposure.data}
           error={queries.exposure.error}
           verticalData={rangeData.shutterSpeed}
-          horizontalData={numericData(
-            exposure?.shutterSpeeds,
-            formatShutterBucket,
-            FilterCriteria.shutterSpeed,
-          )}
+          horizontalData={topValues.shutterSpeed}
           verticalLabel="Shutter-speed ranges"
           onSelect={addChartFilter}
         />
@@ -416,7 +434,7 @@ export function StatsPage() {
           loading={queries.ratings.loading && !queries.ratings.data}
           error={queries.ratings.error}
           verticalData={ratings}
-          horizontalData={[...ratings].sort((a, b) => b.count - a.count)}
+          horizontalData={ratingsByCount}
           onSelect={addChartFilter}
         />
       </div>
@@ -465,16 +483,15 @@ function _rangeData(
   }));
 }
 
-/** Years oldest-first, with gap years filled as zero so the columns read as a timeline. */
-function _chronologicalYears(rows: { year: string | null; totalImages: number }[]) {
-  const counts = new Map(rows.filter((row) => row.year).map((row) => [Number(row.year), row.totalImages]));
-  if (!counts.size) return [];
-
-  const first = Math.min(...counts.keys());
-  const last = Math.max(...counts.keys());
-  return Array.from({ length: last - first + 1 }, (_, index) => ({
-    year: first + index,
-    totalImages: counts.get(first + index) ?? 0,
+function _numericData(
+  rows: { value: number; count: number }[] | undefined,
+  formatter: (value: number) => string,
+  criteria: (typeof NumberRangeFilterCriteria)[number],
+): BarDatum[] {
+  return (rows ?? []).map(({ value, count }) => ({
+    label: formatter(value),
+    count,
+    filters: [{ filterCriteria: criteria, operator: 'equals' as const, value }],
   }));
 }
 

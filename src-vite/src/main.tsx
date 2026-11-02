@@ -8,6 +8,7 @@ import { listen } from '@tauri-apps/api/event';
 import { platform } from '@tauri-apps/plugin-os';
 import ReactDOM from 'react-dom/client';
 import { AppEntryPoint } from './App';
+import { initBackgroundTasks } from './system/backgroundTasks';
 import { initImageEditorHost } from './system/imageEditorHost';
 
 import './App.css';
@@ -43,6 +44,7 @@ const isAuxiliaryWindow =
 // The main window owns the live database connection, so it performs the wipe
 // when the settings window requests it.
 if (!isAuxiliaryWindow) {
+  if (isTauri()) initBackgroundTasks();
   initImageEditorHost();
   void listen<WipeUserDataPayload>(WIPE_USER_DATA_EVENT, (event) => {
     removeAllUserData({ deleteAiModels: event.payload?.deleteAiModels === true }).catch((error) => {

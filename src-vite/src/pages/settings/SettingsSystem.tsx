@@ -8,16 +8,18 @@ import {
   SettingsToggleRow,
 } from '@/components/settings/SettingsRow';
 import { SmartSearchModelsCard } from '@/components/smart-search/SmartSearchModelsCard';
-import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Button } from '@/components/ui/button';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { toast } from '@/components/ui/toast';
-import { hasAnyDownloadedModel } from '@/media/smartSearch/models';
 import { useModelDownloads } from '@/media/smartSearch/modelDownload';
+import { hasAnyDownloadedModel, isModelDownloaded } from '@/media/smartSearch/models';
 import { AppRoutes } from '@/router';
+import { useSmartSearchSettingsStore } from '@/stores/smartSearchSettingsStore';
+import { requestBackgroundTask } from '@/system/backgroundTasks';
 import { useDependencyStatus } from '@/system/useDependencyStatus';
 import {
-  ThumbnailCacheStats,
   SearchModelsStorageStats,
+  ThumbnailCacheStats,
   WIPE_USER_DATA_EVENT,
   WipeUserDataPayload,
   clearThumbnailCache,
@@ -28,7 +30,14 @@ import {
   getThumbnailsFolder,
 } from '@/system/userData';
 import { formatBytes } from '@/utils/numberFormatter';
-import { IconDatabase, IconFolder, IconPhoto, IconSparkles, IconTrash } from '@tabler/icons-react';
+import {
+  IconDatabase,
+  IconFolder,
+  IconPhoto,
+  IconRefresh,
+  IconSparkles,
+  IconTrash,
+} from '@tabler/icons-react';
 import { emitTo } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { openPath } from '@tauri-apps/plugin-opener';
@@ -79,6 +88,9 @@ function FolderRow({
 
 export function SettingsSystem() {
   const { dependencies, isLoading, error, reload } = useDependencyStatus();
+  const activeModel = useSmartSearchSettingsStore((state) => state.activeModel);
+  const indexMissingAtStartup = useSmartSearchSettingsStore((state) => state.indexMissingAtStartup);
+  const setIndexMissingAtStartup = useSmartSearchSettingsStore((state) => state.setIndexMissingAtStartup);
   const [folders, setFolders] = useState<Folders | null>(null);
   const [storageStats, setStorageStats] = useState<StorageStats | null>(null);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -90,6 +102,8 @@ export function SettingsSystem() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleteAiModels, setDeleteAiModels] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
+  const [reindexConfirmOpen, setReindexConfirmOpen] = useState(false);
+  const [isRequestingReindex, setIsRequestingReindex] = useState(false);
 
   const refreshStorageStats = useCallback(async () => {
     try {
@@ -149,6 +163,23 @@ export function SettingsSystem() {
     }
   };
 
+  const handleReindex = async () => {
+    setIsRequestingReindex(true);
+    try {
+      if (!(await isModelDownloaded(activeModel))) {
+        toast.error('Download the selected search model before rebuilding the index');
+        return;
+      }
+      await requestBackgroundTask('reindex-smart-search');
+      toast.success('Search index rebuild requested');
+      setReindexConfirmOpen(false);
+    } catch (error) {
+      toast.error(`Could not request a search index rebuild: ${String(error)}`);
+    } finally {
+      setIsRequestingReindex(false);
+    }
+  };
+
   const handleRemoveAllData = async () => {
     setIsWiping(true);
 
@@ -174,7 +205,40 @@ export function SettingsSystem() {
 
       <SettingsGroup title="Smart search">
         <SmartSearchModelsCard selectionPath={AppRoutes.settingsModels} />
+        <SettingsRow
+          icon={<IconRefresh size={18} />}
+          label="Rebuild search index"
+          description="Reprocess all photos with the selected model. This can take a very long time in large libraries."
+        >
+          <Button
+            size="sm"
+            variant="outline"
+            isLoading={isRequestingReindex}
+            onClick={() => setReindexConfirmOpen(true)}
+          >
+            <IconRefresh size={16} /> Rebuild
+          </Button>
+        </SettingsRow>
+        <SettingsToggleRow
+          label="Index missing photos at startup"
+          description="Resume unfinished smart search indexing when Photokin opens. New imports are still indexed automatically."
+          checked={indexMissingAtStartup}
+          onCheckedChange={setIndexMissingAtStartup}
+        />
       </SettingsGroup>
+
+      <ConfirmationDialog
+        open={reindexConfirmOpen}
+        onOpenChange={setReindexConfirmOpen}
+        icon={<IconRefresh size={24} />}
+        title="Rebuild the search index?"
+        description="This replaces the current smart search index and reprocesses all photos. It can take a very long time in large libraries. Smart search results will be incomplete until it finishes. Your original photos are not changed."
+        confirmLabel="Rebuild index"
+        tone="warning"
+        isConfirming={isRequestingReindex}
+        keepOpenOnConfirm
+        onConfirm={() => void handleReindex()}
+      />
 
       <SettingsGroup title="Photo tools">
         <DependencyStatusCards

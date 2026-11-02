@@ -1,14 +1,14 @@
-import { exists } from '@tauri-apps/plugin-fs';
 import { toast } from '@/components/ui/toast';
 import { AlbumsService } from '@/db/api/services/albums.service';
 import { AppDataService } from '@/db/api/services/appData.service';
 import { syncFilesAndDirsOf } from '@/db/api/services/assetIndexer.service';
 import { startBackgroundIndexing } from '@/media/smartSearch/indexing';
+import { ProcessKind } from '@/stores/processStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { trackProcess } from '@/system/processTracker';
 import { notifySyncResult } from '@/system/syncFeedback';
 import { appTaskQueue } from '@/utils/taskQueue/taskQueue';
-import { ProcessKind } from '@/stores/processStore';
+import { exists } from '@tauri-apps/plugin-fs';
 
 let startupCheckStarted = false;
 
@@ -49,6 +49,7 @@ export function startStartupFolderCheck(): boolean {
           const result = await syncFilesAndDirsOf({
             albums: availableAlbums,
             presenceOnly: true,
+            startSearch: false,
             reporter,
           });
 
@@ -76,10 +77,8 @@ export function startStartupFolderCheck(): boolean {
         );
       }
     })
-    .catch(() => {
-      // The process tracker already surfaced the error; indexing can still resume.
-      startBackgroundIndexing();
-    });
+    .catch(() => undefined)
+    .finally(() => startBackgroundIndexing({ startup: true }));
 
   return true;
 }

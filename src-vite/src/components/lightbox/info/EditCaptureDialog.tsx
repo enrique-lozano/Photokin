@@ -71,6 +71,18 @@ export function EditCaptureDialog({ asset, onClose }: { asset: AssetInClient; on
     );
   }
 
+  function section(title: string, start: number, end: number, defaultOpen: boolean) {
+    return (
+      <Collapsible className="info-surface" defaultOpen={defaultOpen}>
+        <CollapsibleTrigger className="capture-editor__trigger">
+          {title}
+          <CollapsibleChevron className="ml-auto" />
+        </CollapsibleTrigger>
+        <CollapsiblePanel>{fields(start, end)}</CollapsiblePanel>
+      </Collapsible>
+    );
+  }
+
   return (
     <Dialog
       open
@@ -90,7 +102,9 @@ export function EditCaptureDialog({ asset, onClose }: { asset: AssetInClient; on
         </DialogHeader>
         <DialogBody className="capture-editor__body">
           <aside>
-            <AssetThumbnail asset={asset} />
+            <div className="aspect-square overflow-hidden rounded-lg border bg-muted">
+              <AssetThumbnail asset={asset} className="h-full w-full" />
+            </div>
             <p>{asset.filename}</p>
           </aside>
           <div className="capture-editor__form">
@@ -108,21 +122,9 @@ export function EditCaptureDialog({ asset, onClose }: { asset: AssetInClient; on
                 Clear capture data
               </Button>
             </div>
-            <section className="info-surface">
-              <h5 className="mb-3.5 text-sm font-semibold">Camera</h5>
-              {fields(0, 3)}
-            </section>
-            <section className="info-surface">
-              <h5 className="mb-3.5 text-sm font-semibold">Shot settings</h5>
-              {fields(3, 7)}
-            </section>
-            <Collapsible className="info-surface">
-              <CollapsibleTrigger className="capture-editor__more">
-                More settings
-                <CollapsibleChevron className="ml-auto" />
-              </CollapsibleTrigger>
-              <CollapsiblePanel>{fields(7, 12)}</CollapsiblePanel>
-            </Collapsible>
+            {section('Camera', 0, 3, true)}
+            {section('Shot settings', 3, 7, true)}
+            {section('More settings', 7, 12, false)}
             {overwrite && (
               <p className="text-warning" role="status">
                 Existing capture values will be replaced when metadata is written to the file.
