@@ -139,10 +139,6 @@ function countryFilter({
     : { filterCriteria: FilterCriteria.locationCountry, operator: 'equals', value: country ?? '' };
 }
 
-function itemsLabel(count: number) {
-  return `${count.toLocaleString()} item${count === 1 ? '' : 's'}`;
-}
-
 /**
  * Builds a place row from the structured city/region/country columns. The most
  * specific available part becomes the primary label; the country is grouped by
@@ -561,15 +557,7 @@ function PlacesContent() {
             <SecondaryTitleAndScrollableContent
               icon={area ? <IconMap /> : selectedCountry ? <IconWorld /> : <IconMapPin />}
               title={area ? 'Map area' : (selectedCountry?.label ?? selectedPlace?.primaryLabel)}
-              subtitle={
-                area
-                  ? `${itemsLabel(areaIds?.length ?? 0)} · Photos with GPS coordinates`
-                  : selectedCountry
-                    ? `${selectedCountry.places.length.toLocaleString()} place${selectedCountry.places.length === 1 ? '' : 's'} · ${itemsLabel(selectedCountry.count)}`
-                    : selectedPlace?.secondaryLabel
-                      ? `${selectedPlace.secondaryLabel} · ${itemsLabel(selectedPlace.count)}`
-                      : itemsLabel(selectedItem?.count ?? 0)
-              }
+              subtitle={area ? 'Photos with GPS coordinates' : selectedPlace?.secondaryLabel}
               filters={chipsFilter}
               galleryLayout
               content={

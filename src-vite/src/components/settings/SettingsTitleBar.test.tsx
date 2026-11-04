@@ -1,10 +1,17 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SettingsTitleBar } from './SettingsTitleBar';
 
+const platformMock = vi.hoisted(() => vi.fn(() => 'windows'));
+
 vi.mock('@tauri-apps/api/window', () => ({ getCurrentWindow: vi.fn(() => ({})) }));
+vi.mock('@tauri-apps/plugin-os', () => ({ platform: platformMock }));
 
 describe('SettingsTitleBar', () => {
+  afterEach(() => {
+    platformMock.mockReturnValue('windows');
+  });
+
   it('keeps the plain title for windows without breadcrumbs', () => {
     const html = renderToStaticMarkup(<SettingsTitleBar title="Components" />);
     expect(html).toContain('Components');
@@ -28,5 +35,11 @@ describe('SettingsTitleBar', () => {
     expect(html).toContain('<span aria-current="page">Smart search models</span>');
     expect(html.indexOf('Settings</button>')).toBeLessThan(html.indexOf('System</button>'));
     expect(html).toContain('Close settings');
+  });
+
+  it('hides the custom close button on macOS, which has native traffic lights', () => {
+    platformMock.mockReturnValue('macos');
+    const html = renderToStaticMarkup(<SettingsTitleBar title="Components" />);
+    expect(html).not.toContain('Close components');
   });
 });

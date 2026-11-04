@@ -1,5 +1,6 @@
 import { toast } from '@/components/ui/toast';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { LogicalPosition } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
 
 export async function openEditorWindow(assetId: string): Promise<void> {
@@ -23,7 +24,11 @@ export async function openEditorWindow(assetId: string): Promise<void> {
       resizable: true,
       center: true,
       decorations: isMac,
-      ...(isMac && { titleBarStyle: 'overlay', hiddenTitle: true }),
+      ...(isMac && {
+        titleBarStyle: 'overlay',
+        hiddenTitle: true,
+        trafficLightPosition: new LogicalPosition(10, 19),
+      }),
     });
     void editor.once('tauri://error', () => toast.error('The photo editor could not be opened.'));
   } catch (error) {

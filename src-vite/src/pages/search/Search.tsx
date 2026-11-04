@@ -1,20 +1,20 @@
-import { IconAlertTriangle, IconLoader2, IconSearch } from '@tabler/icons-react';
+import { describeFilter } from '@/common/query/filters/FilterLabels';
+import { decodeQueryValue } from '@/common/query/queryLexer';
+import { parseSearchBarInput } from '@/common/query/searchInput';
 import { useHasActiveLibraryFilters } from '@/components/app-shell/ClearLibraryFilters';
-import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { OrderedAssetGallery } from '@/components/ordered-gallery/OrderedAssetGallery';
+import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { SmartSearchHint } from '@/components/smart-search/SmartSearchHint';
 import { TimelineGallery } from '@/components/timeline-gallery/TimelineGallery';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Separator } from '@/components/ui/separator';
-import { describeFilter } from '@/common/query/filters/FilterLabels';
-import { parseSearchBarInput } from '@/common/query/searchInput';
-import { decodeQueryValue } from '@/common/query/queryLexer';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
+import { IconAlertTriangle, IconLoader2, IconSearch } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
-import { useSearchResults } from './useSearchResults';
 import './secondaryTitleAndScrollableContent.css';
+import { useSearchResults } from './useSearchResults';
 
 export function Search() {
   const [urlSearchParams, setSearchParams] = useSearchParams();
@@ -85,11 +85,6 @@ export function Search() {
     <div className="search-page">
       <header className="main-page-header">
         <h4 className="font-semibold">Results for &quot;{query}&quot;</h4>
-        {resultCount != null && (
-          <span className="ml-2 text-sm text-muted-foreground">
-            {resultCount.toLocaleString()} item{resultCount === 1 ? '' : 's'}
-          </span>
-        )}
       </header>
 
       <Separator className="separator"></Separator>

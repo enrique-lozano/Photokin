@@ -207,17 +207,7 @@ export function SuggestedFaces() {
       cover={<HeroIcon icon={<IconSparkles size={28} />} />}
       title="Suggestions"
       subtitle={
-        loading ? (
-          'Loading suggestions…'
-        ) : (
-          <>
-            <b className="font-semibold text-foreground">
-              {totalFaces.toLocaleString()} {totalFaces === 1 ? 'face' : 'faces'}
-            </b>{' '}
-            may belong to {groups.length.toLocaleString()} {groups.length === 1 ? 'person' : 'people'} you
-            have already named
-          </>
-        )
+        loading ? 'Loading suggestions…' : 'These faces may belong to people you have already named.'
       }
       actions={
         !loading &&

@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EntityOverflowMenu, HeaderActionsBar } from '@/components/entity-actions/HeaderActionsBar';
 import { AssetsService } from '@/db/api/services/assets.service';
-import { TagsService } from '@/db/api/services/tags.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { FilterCriteria } from '@/common/query/filters/FilterCriteria';
 import { IconArrowLeft, IconHierarchy, IconTag } from '@tabler/icons-react';
@@ -90,12 +89,6 @@ export function TagDetail() {
     { extDependencies: [tagScopedQuery] },
   );
 
-  const { data: assetCount } = useLiveQuery(
-    () => (id ? TagsService.getAssetCount(id) : Promise.resolve(0)),
-    ['fileTags', 'tagRegionInfo', 'tags'],
-    { extDependencies: [id] },
-  );
-
   const {
     chips,
     activeChipIds,
@@ -165,7 +158,6 @@ export function TagDetail() {
   const galleryQuery = mergeSearchQueries(tagScopedQuery, conditions);
 
   const color = tag?.color ?? colorFromId(tag?.rootId ?? id);
-  const count = assetCount ?? 0;
   const dateMeta =
     dateRange &&
     `${formatDate(new Date(dateRange.min), { year: 'numeric', month: 'short' })} – ${formatDate(
@@ -194,9 +186,7 @@ export function TagDetail() {
     <SecondaryTitleAndScrollableContent
       cover={<HeroIcon icon={<IconTag size={28} />} color={color} />}
       title={tag?.name ?? 'Tag'}
-      subtitle={[`${count.toLocaleString()} ${count === 1 ? 'photo' : 'photos'}`, dateMeta]
-        .filter(Boolean)
-        .join(' · ')}
+      subtitle={dateMeta}
       actions={headerActions}
       compactActions={compactActions}
       filters={

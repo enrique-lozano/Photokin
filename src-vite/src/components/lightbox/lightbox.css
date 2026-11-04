@@ -3,7 +3,7 @@
 .lightbox {
   /* Matches --toolbar-height so the macOS traffic lights stay centred. */
   --lightbox-stage: var(--muted);
-  --lightbox-topbar-height: 52px;
+  --lightbox-topbar-height: var(--toolbar-height);
   --lightbox-info-panel-width: 400px;
   display: flex;
   z-index: 999999;

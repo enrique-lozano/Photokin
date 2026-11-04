@@ -25,7 +25,6 @@ import {
   CalendarSelection,
   WHOLE,
   buildSelectionSearchQuery,
-  getSelectionCount,
   getSortedMonths,
   getSortedYears,
   groupDaySections,
@@ -105,7 +104,6 @@ export function CalendarPage() {
     }
   };
 
-  const selectionCount = selection ? getSelectionCount(calendarData, selection) : 0;
   const galleryQuery = selection ? buildSelectionSearchQuery(searchQuery, selection) : searchQuery;
   const canJumpToToday = sortedYears.some((year) =>
     Object.keys(calendarData[year]).some((month) => isCurrentMonth(year, Number(month))),
@@ -229,7 +227,6 @@ export function CalendarPage() {
             <SecondaryTitleAndScrollableContent
               icon={<IconCalendarMonth />}
               title={selectionTitle(selection)}
-              subtitle={`${selectionCount.toLocaleString()} item${selectionCount === 1 ? '' : 's'}`}
               galleryLayout
               content={<TimelineGallery key={JSON.stringify(selection)} searchQuery={galleryQuery} />}
             />

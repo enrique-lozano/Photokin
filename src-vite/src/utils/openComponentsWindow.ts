@@ -1,5 +1,6 @@
 import { toast } from '@/components/ui/toast';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { LogicalPosition } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
 
 export async function openComponentsWindow(): Promise<void> {
@@ -24,7 +25,11 @@ export async function openComponentsWindow(): Promise<void> {
       maximizable: false,
       center: true,
       decorations: isMac,
-      ...(isMac && { titleBarStyle: 'overlay', hiddenTitle: true }),
+      ...(isMac && {
+        titleBarStyle: 'overlay',
+        hiddenTitle: true,
+        trafficLightPosition: new LogicalPosition(10, 19),
+      }),
     });
     void components.once('tauri://error', () => toast.error('The component gallery could not be opened.'));
   } catch (error) {

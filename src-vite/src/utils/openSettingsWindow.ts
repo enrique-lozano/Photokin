@@ -1,5 +1,6 @@
 import { emit } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { LogicalPosition } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
 import { useSettingsStore } from '../stores/settingsStore';
 import { normalizeScale } from './theme';
@@ -43,6 +44,7 @@ export async function openSettingsWindow(tabIndex?: number): Promise<void> {
         titleBarStyle: 'overlay',
         hiddenTitle: true,
         minimizable: false,
+        trafficLightPosition: new LogicalPosition(10, 20),
       }),
     });
 

@@ -6,13 +6,13 @@ import { HeroToggle } from '@/components/page-content/HeroToggle';
 import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { Button } from '@/components/ui/button.tsx';
-import { EmptyState } from '@/components/ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
 import { AssetsService } from '@/db/api/services/assets.service';
 import { ProcessKind } from '@/stores/processStore';
 import {
@@ -556,15 +556,7 @@ export function AlbumsPage() {
             title={heroTitle}
             // Where it lives on disk stays one hover away for experts.
             breadcrumbTitle={activeAlbumView === 'selectedAlbums' ? selectedAlbum?.fullPath : undefined}
-            subtitle={[
-              `${totalCount.toLocaleString()} ${totalCount === 1 ? 'photo' : 'photos'}`,
-              activeAlbumView === 'selectedAlbums' && selectedAlbums.length > 1
-                ? `${selectedAlbums.length} albums`
-                : null,
-              dateMeta,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+            subtitle={dateMeta}
             actions={
               activeAlbumView === 'trash' ? (
                 <Button

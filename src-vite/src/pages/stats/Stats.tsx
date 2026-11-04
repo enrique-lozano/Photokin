@@ -17,7 +17,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { countryNameFromCode } from '@/media/metadata/location/countryCode';
 import { SecondaryTitleAndScrollableContent } from '@/pages/search/SecondaryTitleAndScrollableContent';
 import { useAppStore } from '@/stores/appState';
-import { formatBytes } from '@/utils/numberFormatter';
 import { IconChartBar } from '@tabler/icons-react';
 import { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 import { CaptureSettingsList } from './CaptureSettingsList';
@@ -136,9 +135,7 @@ export function StatsPage() {
   );
   usePageChrome('stats', footerStatus);
 
-  const subtitle = overview
-    ? `${overview.totalAssets.toLocaleString()} matching items · ${formatBytes(overview.totalSizeBytes)}`
-    : 'Analyzing the current library filters';
+  const subtitle = overview ? undefined : 'Analyzing the current library filters';
   const activity = useMemo(() => fillMonthlyStats(queries.activity.data ?? []), [queries.activity.data]);
   const captureMonths = useMemo(
     () => summarizeMonthlyStats(queries.activity.data ?? []),

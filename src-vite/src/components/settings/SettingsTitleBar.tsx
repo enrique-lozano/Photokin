@@ -1,5 +1,6 @@
 import { IconChevronRight, IconX } from '@tabler/icons-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { platform } from '@tauri-apps/plugin-os';
 import type { MouseEvent } from 'react';
 import './settingsTitleBar.css';
 
@@ -61,16 +62,18 @@ export function SettingsTitleBar({ title, breadcrumbs }: SettingsTitleBarProps) 
         </div>
       )}
       <div className="settings-title-bar-spacer" data-tauri-drag-region />
-      <div className="settings-window-controls" onMouseDown={(event) => event.stopPropagation()}>
-        <button
-          type="button"
-          className="settings-window-control-button settings-window-control-button-close"
-          aria-label={`Close ${title.toLowerCase()}`}
-          onClick={handleCloseWindow}
-        >
-          <IconX size={16} />
-        </button>
-      </div>
+      {platform() !== 'macos' && (
+        <div className="settings-window-controls" onMouseDown={(event) => event.stopPropagation()}>
+          <button
+            type="button"
+            className="settings-window-control-button settings-window-control-button-close"
+            aria-label={`Close ${title.toLowerCase()}`}
+            onClick={handleCloseWindow}
+          >
+            <IconX size={16} />
+          </button>
+        </div>
+      )}
     </header>
   );
 }

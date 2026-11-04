@@ -191,9 +191,6 @@ export function PersonDetail() {
       new Date(dateRange.max),
       { year: 'numeric', month: 'short' },
     )}`;
-  const photoSummary = [`${photoCount.toLocaleString()} ${photoCount === 1 ? 'photo' : 'photos'}`, dateMeta]
-    .filter(Boolean)
-    .join(' · ');
 
   const rejectRegion = (regionId: string) => void discardFacesWithUndo([regionId]);
   const hideRegion = (regionId: string) => void hideFacesWithUndo([regionId]);
@@ -246,8 +243,7 @@ export function PersonDetail() {
         }
         roundCover
         title={person?.displayName ?? 'Person'}
-        subtitle={photoSummary}
-        compactSubtitle={photoSummary}
+        subtitle={dateMeta}
         heroBelow={tag && hasPersonAbout ? <PersonAbout personId={tag.id} bio={personBio} /> : undefined}
         actions={tag ? <HeaderActionsBar actions={personActions} menuLabel="Person actions" /> : undefined}
         compactActions={

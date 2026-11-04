@@ -1,7 +1,7 @@
 @reference '../../App.css';
 
 .compare-photos {
-  --lightbox-topbar-height: 52px;
+  --lightbox-topbar-height: var(--toolbar-height);
   --lightbox-info-panel-width: min(400px, 85vw);
   --lightbox-info-panel-duration: 180ms;
   position: fixed;
