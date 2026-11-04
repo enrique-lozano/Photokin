@@ -4,6 +4,7 @@ import { getConditions } from '../../common/searchQueryUtils';
 import { useAppStore } from '../../stores/appState';
 import { getGlobalFiltersState } from '../page-content/usePageChrome';
 import { Button } from '../ui/button';
+import { SearchFilterIcon } from '../page-content/SearchFilterIcon';
 
 /**
  * Persistent strip that surfaces the active global ("library") filters below the
@@ -21,6 +22,7 @@ export function GlobalFiltersStrip() {
     condition.filters.map((filter, filterIndex) => ({
       key: `${conditionIndex}:${filterIndex}`,
       label: describeFilter(filter),
+      filter,
       conditionIndex,
       filterIndex,
     })),
@@ -58,6 +60,7 @@ export function GlobalFiltersStrip() {
 
       {pills.map((pill) => (
         <span className="global-filters-strip__pill" key={pill.key} title={pill.label}>
+          <SearchFilterIcon filter={pill.filter} />
           {pill.label}
           <button
             type="button"

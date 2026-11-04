@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import { FIELD_ICONS, SearchBar, SearchQueryContent, SearchSuggestionContent } from './SearchBar';
+import { SearchBar, SearchQueryContent, SearchSuggestionContent } from './SearchBar';
+import { FIELD_ICONS } from '@/components/page-content/SearchFilterIcon';
 import { parseSearchBarInput } from '@/common/query/searchInput';
 import { SEARCH_KEYWORDS } from '@/common/query/searchKeywords';
 vi.mock('@/components/ui/toast', () => ({ toast: { error: vi.fn() } }));

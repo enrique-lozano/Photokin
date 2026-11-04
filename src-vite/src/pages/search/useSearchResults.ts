@@ -43,16 +43,16 @@ export async function resolveQuery(
   const filters = await resolveEntityFilters(parsed.filters);
   const scope = filters.length ? addConditionsToQuery(globalQuery, filters) : globalQuery;
   if (options.isCancelled?.() || !parsed.freeText) {
-    return { mode: 'timeline' as const, scope, assetIds: [] };
+    return { mode: 'timeline' as const, scope, filters, assetIds: [] };
   }
   const candidateIds = getConditions(scope).some((condition) => condition.filters.length)
     ? await AssetsService.getScopedAssetIds({ searchQuery: scope })
     : undefined;
   if (options.isCancelled?.() || candidateIds?.length === 0) {
-    return { mode: 'ordered' as const, scope, assetIds: [] };
+    return { mode: 'ordered' as const, scope, filters, assetIds: [] };
   }
   const assetIds = await resolveSearchResults(parsed.freeText, { ...options, candidateIds });
-  return { mode: 'ordered' as const, scope, assetIds };
+  return { mode: 'ordered' as const, scope, filters, assetIds };
 }
 
 export function useSearchResults(query: string) {
@@ -67,6 +67,7 @@ export function useSearchResults(query: string) {
     key: string;
     mode: SearchResultsMode;
     searchQuery: SearchQuery;
+    queryFilters: SearchFilter[];
     assetIds: string[];
     isSearching: boolean;
     smartSearchFailed: boolean;
@@ -76,6 +77,7 @@ export function useSearchResults(query: string) {
     key: '',
     mode: 'timeline',
     searchQuery: globalSearchQuery,
+    queryFilters: [],
     assetIds: [],
     isSearching: true,
     smartSearchFailed: false,
@@ -90,6 +92,7 @@ export function useSearchResults(query: string) {
       key: searchKey,
       mode: parsed.freeText ? 'ordered' : 'timeline',
       searchQuery: globalSearchQuery,
+      queryFilters: [],
       assetIds: [],
       isSearching: true,
       smartSearchFailed: false,
@@ -115,6 +118,7 @@ export function useSearchResults(query: string) {
             ...state,
             mode: resolved.mode,
             searchQuery: resolved.scope,
+            queryFilters: resolved.filters,
             assetIds: resolved.assetIds,
             isSearching: false,
           }));
@@ -134,6 +138,7 @@ export function useSearchResults(query: string) {
   return {
     ...result,
     assetIds: current ? result.assetIds : [],
+    queryFilters: current ? result.queryFilters : [],
     smartSearchFailed: current && result.smartSearchFailed,
     isSearching: !current || result.isSearching,
     error: current ? result.error : null,

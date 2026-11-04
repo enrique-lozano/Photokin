@@ -30,6 +30,7 @@ describe('strict search scope', () => {
     const result = await resolveQuery(parseSearchBarInput('type:video rating>=4'), []);
     expect(result.mode).toBe('timeline');
     expect(result.scope).toEqual([{ filters: parseSearchBarInput('type:video rating>=4').filters }]);
+    expect(result.filters).toEqual(parseSearchBarInput('type:video rating>=4').filters);
     expect(mocks.rank).not.toHaveBeenCalled();
   });
 
@@ -39,6 +40,7 @@ describe('strict search scope', () => {
     expect(result.assetIds).toEqual([]);
     expect(mocks.rank).not.toHaveBeenCalled();
     expect(mocks.candidates.mock.calls[0][0].searchQuery[0].filters[0].value).toEqual([]);
+    expect(result.filters[0].value).toEqual([]);
   });
 
   it('combines global and typed filters, even when ranking finds nothing', async () => {
@@ -105,6 +107,17 @@ describe('entity name resolution', () => {
     mocks.tags.mockResolvedValue(tags);
     const filters = await resolveEntityFilters(parseSearchBarInput('person:Ana').filters);
     expect(filters[0].value).toEqual(tags);
+  });
+
+  it('exposes resolved typed filters separately from the existing library scope', async () => {
+    const ana = tag('1', 'Ana', 'Family/Ana');
+    mocks.tags.mockResolvedValue([ana]);
+    const global: SearchQuery = [{ filters: parseSearchBarInput('year:2024').filters }];
+    const result = await resolveQuery(parseSearchBarInput('person:Ana beach'), global);
+    expect(result.filters).toEqual([
+      { filterCriteria: FilterCriteria.person, operator: 'contains', value: [ana] },
+    ]);
+    expect(result.scope).toEqual([...global, { filters: result.filters }]);
   });
 
   it('prefers an exact full path over another entity with the same leaf spelling', async () => {

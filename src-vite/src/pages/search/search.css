@@ -1,0 +1,148 @@
+@reference '../../App.css';
+
+.search-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.search-page .main-page-header {
+  gap: 12px;
+}
+
+.search-page__title {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.search-page .scrollable-content {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.search-page .photo-grid__sections:has(> .empty-state) {
+  display: flex;
+  flex: 1;
+}
+
+/* TimelineGallery renders its own scrubber; keep the native bar only for
+   ordered text-search results, which do not have that control. */
+.search-page .scrollable-content:has(.timeline-scrubber-rail) {
+  scrollbar-width: none;
+}
+
+.search-page .scrollable-content:has(.timeline-scrubber-rail)::-webkit-scrollbar {
+  display: none;
+}
+
+.search-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.search-summary:has(> *) {
+  margin-bottom: 16px;
+}
+
+.search-summary .smart-search-hint {
+  margin: 0;
+}
+
+.search-interpretation {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid hsl(var(--border) / 0.6);
+  border-radius: var(--radius);
+  background-color: hsl(var(--muted) / 0.25);
+}
+
+.search-interpretation__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search-interpretation__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-interpretation__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding: 4px 6px;
+  border-radius: var(--radius);
+  @apply text-xs text-muted-foreground;
+}
+
+.search-interpretation__details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.search-interpretation__filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px;
+}
+
+.search-interpretation__action {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.search-interpretation__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background) / 0.7);
+  overflow-wrap: anywhere;
+  @apply text-xs;
+}
+
+.search-fallback-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  @apply text-sm;
+  @apply text-muted-foreground;
+}
+
+.search-fallback-note > svg {
+  flex-shrink: 0;
+}
+
+.search-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px;
+  @apply text-sm;
+  @apply text-muted-foreground;
+}
+
+.search-loading__spinner {
+  animation: search-loading-spin 0.8s linear infinite;
+}
+
+@keyframes search-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

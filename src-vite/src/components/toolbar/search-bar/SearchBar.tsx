@@ -1,35 +1,20 @@
 import { QueryToken } from '@/common/query/queryLexer';
 import { parseSearchBarInput } from '@/common/query/searchInput';
+import { FIELD_ICONS } from '@/components/page-content/SearchFilterIcon';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { toast } from '@/components/ui/toast';
 import { useRecentSearchesStore } from '@/stores/recentSearchesStore';
 import {
   IconAdjustmentsHorizontal,
-  IconAperture,
-  IconBolt,
-  IconCalendar,
-  IconCalendarPlus,
-  IconCamera,
   IconCheck,
   IconChevronRight,
   IconClock,
-  IconExposure,
-  IconFile,
-  IconFileDescription,
   IconFilter,
-  IconFocusCentered,
   IconHeart,
   IconList,
-  IconMapPin,
   IconMinus,
-  IconPhoto,
-  IconRuler,
   IconSearch,
-  IconStar,
-  IconSunHigh,
-  IconTag,
-  IconUsers,
   IconVideo,
   IconX,
 } from '@tabler/icons-react';
@@ -60,39 +45,6 @@ type SearchBarProps = {
   queryFromUrl: string;
   onSubmit: (query: string) => void;
   trailing?: ReactNode;
-};
-
-export const FIELD_ICONS: Record<string, typeof IconSearch> = {
-  type: IconPhoto,
-  person: IconUsers,
-  person_count: IconUsers,
-  tag: IconTag,
-  tag_count: IconTag,
-  rating: IconStar,
-  date: IconCalendar,
-  after: IconCalendar,
-  before: IconCalendar,
-  year: IconCalendar,
-  month: IconCalendar,
-  day: IconCalendar,
-  weekday: IconCalendar,
-  added: IconCalendarPlus,
-  filename: IconFile,
-  description: IconFileDescription,
-  size: IconFile,
-  camera: IconCamera,
-  lens: IconAperture,
-  aperture: IconAperture,
-  iso: IconCamera,
-  focal: IconRuler,
-  shutter: IconClock,
-  whitebalance: IconSunHigh,
-  flashvalue: IconBolt,
-  exposureprogram: IconExposure,
-  metering: IconFocusCentered,
-  location: IconMapPin,
-  has: IconCheck,
-  no: IconMinus,
 };
 
 export function SearchSuggestionContent({ item, fieldKey }: { item: QuerySuggestion; fieldKey: string }) {

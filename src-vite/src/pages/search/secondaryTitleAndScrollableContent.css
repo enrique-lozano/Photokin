@@ -1,12 +1,5 @@
 @reference '../../App.css';
 
-.search-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-width: 0;
-}
-
 .main-page-header {
   position: relative;
   border-top-left-radius: var(--secondary-navbar-radius);
@@ -94,66 +87,4 @@
   overflow: auto;
   background-color: hsl(var(--background));
   padding: 0 16px;
-}
-
-.search-page .photo-grid__sections:has(> .empty-state) {
-  display: flex;
-  flex: 1;
-}
-
-/* TimelineGallery renders its own scrubber; keep the native bar only for
-   ordered text-search results, which do not have that control. */
-.search-page .scrollable-content:has(.timeline-scrubber-rail) {
-  scrollbar-width: none;
-}
-
-.search-page .scrollable-content:has(.timeline-scrubber-rail)::-webkit-scrollbar {
-  display: none;
-}
-
-.search-interpretation {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 10px 2px 0;
-}
-
-.search-interpretation__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid hsl(var(--border));
-  background-color: hsl(var(--muted));
-  @apply text-xs;
-}
-
-.search-fallback-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 8px 0 0;
-  @apply text-sm;
-  @apply text-muted-foreground;
-}
-
-.search-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 2px;
-  @apply text-sm;
-  @apply text-muted-foreground;
-}
-
-.search-loading__spinner {
-  animation: search-loading-spin 0.8s linear infinite;
-}
-
-@keyframes search-loading-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }

@@ -55,6 +55,18 @@ it, or **Clear history** to remove all saved queries.
 History saves query text only. Running a recent query uses your current library
 filters, not the library filters from the original search.
 
+Recognized filters appear in a subtle, initially collapsed card above the results.
+Choose the **detected filters** count and caret on the right to reveal the labeled
+icon chips and **Add as library filters** action. Choose
+the **About these filters** info button beside the label for details about how
+filters combine and what assigned tags and detected faces mean. Search warnings
+remain visible above the results. Choose **Add as library filters** inside the
+expanded card to apply those filters across library views
+that support filtering. This keeps existing library filters and leaves your search
+text unchanged; plain words are not added as filters. The **Library filters**
+banner shows each active filter with its icon. Remove one with its **×** button,
+or choose **Clear all** to remove all library filters.
+
 Nothing is selected automatically. You can always type a value yourself,
 including a name that isn't in the suggestions.
 
