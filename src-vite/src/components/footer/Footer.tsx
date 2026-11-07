@@ -23,6 +23,7 @@ export function OutletFooter() {
   const displayedElementsCount = useAppStore((state) => state.displayedElementsCount);
   const displayedElementsSizeBytes = useAppStore((state) => state.displayedElementsSizeBytes);
   const pageChrome = useAppStore((state) => state.pageChrome);
+  const toolbarOwnsSlider = useAppStore((state) => state.secondaryToolbarMounted);
 
   const isFiltered = getConditions(searchQuery).length > 0;
 
@@ -41,7 +42,7 @@ export function OutletFooter() {
   // shows only where the page renders photo or face thumbnails.
   const slider =
     status?.slider ??
-    (pageChrome?.kind === 'photos' || pageChrome?.kind === 'faces'
+    (!toolbarOwnsSlider && (pageChrome?.kind === 'photos' || pageChrome?.kind === 'faces')
       ? {
           value: galleryThumbnailSize,
           min: 140,

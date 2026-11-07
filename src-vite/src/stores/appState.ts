@@ -91,6 +91,15 @@ interface AppGlobalState {
   /** Gallery layout selected from the toolbar "Layout" popover. */
   layoutMode: GalleryLayoutMode;
   setLayoutMode: (layoutMode: GalleryLayoutMode) => void;
+  /** Active quick-filter chips on the current page; drives the toolbar badge and row visibility. */
+  quickFilterActiveCount: number;
+  setQuickFilterActiveCount: (count: number) => void;
+  /** True while a secondary toolbar owns the thumbnail-size slider (the footer then omits it). */
+  secondaryToolbarMounted: boolean;
+  setSecondaryToolbarMounted: (mounted: boolean) => void;
+  /** Select toggle: clicking a photo adds it to the selection instead of opening it. */
+  selectionMode: boolean;
+  setSelectionMode: (selectionMode: boolean) => void;
   secondaryNavbarWidth: number | null;
   setSecondaryNavbarWidth: (width: number) => void;
   galleryThumbnailSize: number;
@@ -135,6 +144,12 @@ export const useAppStore = create<AppGlobalState>()((set) => ({
   setPageChrome: (pageChrome) => set({ pageChrome }),
   layoutMode: 'justified',
   setLayoutMode: (layoutMode) => set({ layoutMode }),
+  quickFilterActiveCount: 0,
+  setQuickFilterActiveCount: (quickFilterActiveCount) => set({ quickFilterActiveCount }),
+  secondaryToolbarMounted: false,
+  setSecondaryToolbarMounted: (secondaryToolbarMounted) => set({ secondaryToolbarMounted }),
+  selectionMode: false,
+  setSelectionMode: (selectionMode) => set({ selectionMode }),
   secondaryNavbarWidth: null,
   setSecondaryNavbarWidth: (width) =>
     set((state) => {

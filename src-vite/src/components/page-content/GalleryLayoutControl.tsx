@@ -1,57 +1,25 @@
-import { IconChevronDown, IconLayoutCollage, IconLayoutDashboard, IconLayoutGrid } from '@tabler/icons-react';
+import { Segmented, type SegmentedOption } from '@/components/segmented/Segmented';
 import { GalleryLayoutMode, useAppStore } from '@/stores/appState';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { IconLayoutCollage, IconLayoutDashboard, IconLayoutGrid } from '@tabler/icons-react';
 
-import type { JSX } from 'react';
-
-const OPTIONS = [
+const OPTIONS: SegmentedOption<GalleryLayoutMode>[] = [
   { value: 'justified', label: 'Justified rows', icon: <IconLayoutCollage size={16} /> },
-  { value: 'masonry', label: 'Masonry', icon: <IconLayoutDashboard size={16} /> },
   { value: 'card', label: 'Cards', icon: <IconLayoutGrid size={16} /> },
-] satisfies { value: GalleryLayoutMode; label: string; icon: JSX.Element }[];
+  { value: 'masonry', label: 'Masonry', icon: <IconLayoutDashboard size={16} /> },
+];
 
-/**
- * A set-once preference, so one compact menu button rather than a second
- * segmented control. `disabled` keeps its slot when the current view has no
- * photo grid (a person's Faces), so the sub-header never shifts.
- */
-export function GalleryLayoutControl({ disabled = false }: { disabled?: boolean }) {
+/** Icon-only switch between the photo grid layouts (rows / square cards / masonry). */
+export function GalleryLayoutControl() {
   const layoutMode = useAppStore((state) => state.layoutMode);
   const setLayoutMode = useAppStore((state) => state.setLayoutMode);
-  const active = OPTIONS.find((option) => option.value === layoutMode) ?? OPTIONS[0];
-  const title = disabled ? 'Layout applies to the Photos view' : `Layout: ${active.label}`;
 
   return (
-    // The wrapper carries the tooltip: disabled buttons don't receive hover.
-    <span title={title}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild disabled={disabled}>
-          <Button variant="subtle" size="sm" className="gap-0.5 px-2" aria-label={title}>
-            {active.icon}
-            <IconChevronDown size={12} className="opacity-70" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuRadioGroup
-            value={layoutMode}
-            onValueChange={(next) => setLayoutMode(next as GalleryLayoutMode)}
-          >
-            {OPTIONS.map((option) => (
-              <DropdownMenuRadioItem key={option.value} value={option.value} className="gap-2">
-                {option.icon}
-                {option.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </span>
+    <Segmented
+      options={OPTIONS}
+      value={layoutMode}
+      onChange={setLayoutMode}
+      ariaLabel="Gallery layout"
+      className="secondary-toolbar__layout"
+    />
   );
 }

@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { SelectionBar } from '../selection-bar/SelectionBar';
 import { ImportStatus, ImportStatusProvider } from './ImportStatus';
 import './pageContent.css';
@@ -28,6 +28,8 @@ interface ScrollablePageContentProps {
   heroBelow?: ReactNode;
   /** Sticky sub-header with temporal filters and view toggles. */
   subHeader?: ReactNode;
+  /** Total height (px) of the stacked sub-header rows, for sticky offsets below it. Defaults to one 48px row. */
+  subHeaderHeight?: number;
   /** Main body, typically a timeline gallery. */
   children: ReactNode;
 }
@@ -43,6 +45,7 @@ export function ScrollablePageContent({
   compactHero,
   heroBelow,
   subHeader,
+  subHeaderHeight,
   children,
 }: ScrollablePageContentProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -82,6 +85,11 @@ export function ScrollablePageContent({
     <div className="page-scroll-layout">
       <div
         ref={scrollRef}
+        style={
+          subHeaderHeight === undefined
+            ? undefined
+            : ({ '--chip-row-h': `${subHeaderHeight}px` } as CSSProperties)
+        }
         className={clsx(
           'page-scroll',
           compactHero && 'page-scroll--has-compact-hero',

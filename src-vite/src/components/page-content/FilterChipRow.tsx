@@ -1,6 +1,8 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { VerticalDivider } from '@/components/ui/verticalDivider';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useAppStore } from '@/stores/appState';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ContentFilterChip } from './contentFilterChips';
 import { FilterChip } from './FilterChip';
 import { FilterChipLeading } from './FilterChipLeading';
@@ -63,7 +65,20 @@ function structureSignature(chips: ContentFilterChip[], activeIds: string[]): st
  * same frame as the click — it never waits for the (much slower) recount of the
  * suggestions, which arrives later as a second, independent motion.
  */
-export function FilterChipRow({ chips, activeChipIds, onToggle, disabled }: FilterChipRowProps) {
+export function FilterChipRow({ chips: allChips, activeChipIds, onToggle, disabled }: FilterChipRowProps) {
+  const showQuickFilters = useSettingsStore((state) => state.showQuickFilters);
+  const setQuickFilterActiveCount = useAppStore((state) => state.setQuickFilterActiveCount);
+  // Hiding the row only drops the suggestions; active filters must stay visible.
+  const chips = useMemo(
+    () => (showQuickFilters ? allChips : allChips.filter((chip) => activeChipIds.includes(chip.id))),
+    [allChips, activeChipIds, showQuickFilters],
+  );
+
+  useEffect(() => {
+    setQuickFilterActiveCount(activeChipIds.length);
+  }, [activeChipIds.length, setQuickFilterActiveCount]);
+  useEffect(() => () => setQuickFilterActiveCount(0), [setQuickFilterActiveCount]);
+
   const [items, setItems] = useState<RenderItem[]>(() =>
     chips.map((chip) => ({ chip, selected: activeChipIds.includes(chip.id), exiting: false })),
   );

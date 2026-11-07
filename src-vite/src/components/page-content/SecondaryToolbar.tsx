@@ -1,0 +1,112 @@
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { useAppStore } from '@/stores/appState';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { IconCheck, IconChevronUp, IconFilter, IconMinus, IconPlus } from '@tabler/icons-react';
+import clsx from 'clsx';
+import { useLayoutEffect } from 'react';
+import { GalleryLayoutControl } from './GalleryLayoutControl';
+import { GroupSortControl } from './GroupSortControl';
+
+interface SecondaryToolbarProps {
+  /** The page has quick filters, so the toolbar offers their show/hide chip. */
+  hasQuickFilters: boolean;
+  /** The view has no photo grid (a person's Faces): only size and select apply. */
+  gridControls: boolean;
+}
+
+/**
+ * Toolbar under the page header: quick-filters chip, group & sort, layout,
+ * thumbnail size and select. It folds into a thin handle (persisted) and sizes
+ * its labels from its own width, not the window's.
+ */
+export function SecondaryToolbar({ hasQuickFilters, gridControls }: SecondaryToolbarProps) {
+  const expanded = useSettingsStore((state) => state.showSecondaryToolbar);
+  const setExpanded = useSettingsStore((state) => state.setShowSecondaryToolbar);
+  const showQuickFilters = useSettingsStore((state) => state.showQuickFilters);
+  const setShowQuickFilters = useSettingsStore((state) => state.setShowQuickFilters);
+  const activeCount = useAppStore((state) => state.quickFilterActiveCount);
+  const size = useAppStore((state) => state.galleryThumbnailSize);
+  const setSize = useAppStore((state) => state.setGalleryThumbnailSize);
+  const selectionMode = useAppStore((state) => state.selectionMode);
+  const setSelectionMode = useAppStore((state) => state.setSelectionMode);
+  const setMounted = useAppStore((state) => state.setSecondaryToolbarMounted);
+
+  // The toolbar owns the size slider, even while folded away.
+  useLayoutEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, [setMounted]);
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        className="secondary-toolbar-handle"
+        aria-label="Show toolbar"
+        title="Show toolbar"
+        onClick={() => setExpanded(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="secondary-toolbar" role="toolbar" aria-label="Gallery options">
+      {hasQuickFilters && (
+        <Button
+          variant="outline"
+          size="sm"
+          className={clsx('secondary-toolbar__chip', showQuickFilters && 'secondary-toolbar__chip--active')}
+          aria-pressed={showQuickFilters}
+          title={showQuickFilters ? 'Hide quick filters' : 'Show quick filters'}
+          onClick={() => setShowQuickFilters(!showQuickFilters)}
+        >
+          <IconFilter size={16} aria-hidden="true" />
+          <span className="secondary-toolbar__chip-label">Quick</span>
+          {activeCount > 0 && <span className="secondary-toolbar__badge">{activeCount}</span>}
+        </Button>
+      )}
+
+      <span className="flex-1" />
+
+      {gridControls && <GroupSortControl />}
+      {gridControls && <GalleryLayoutControl />}
+
+      <div className="secondary-toolbar__size">
+        <IconMinus size={14} className="text-muted-foreground" aria-hidden="true" />
+        <Slider
+          min={140}
+          max={260}
+          step={10}
+          value={[size]}
+          onValueChange={([next]) => setSize(next)}
+          className="secondary-toolbar__slider"
+          aria-label="Thumbnail size"
+        />
+        <IconPlus size={14} className="text-muted-foreground" aria-hidden="true" />
+      </div>
+
+      <Button
+        variant="outline"
+        size="icon-sm"
+        className={clsx(selectionMode && 'secondary-toolbar__chip--active')}
+        aria-pressed={selectionMode}
+        aria-label="Select photos"
+        title="Select photos"
+        onClick={() => setSelectionMode(!selectionMode)}
+      >
+        <IconCheck size={16} aria-hidden="true" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Hide toolbar"
+        title="Hide toolbar"
+        onClick={() => setExpanded(false)}
+      >
+        <IconChevronUp size={16} aria-hidden="true" />
+      </Button>
+    </div>
+  );
+}

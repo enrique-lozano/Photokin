@@ -593,3 +593,100 @@
   align-self: center;
   @apply text-primary;
 }
+
+/* ───── Secondary headers (toolbar + quick-filters row) ───── */
+.secondary-headers {
+  position: sticky;
+  top: var(--compact-hero-h, 0px);
+  z-index: 5;
+  background-color: hsl(var(--background));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.secondary-headers .content-subheader {
+  position: static;
+  border-bottom: 0;
+}
+
+.secondary-headers > * + .content-subheader {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.secondary-toolbar {
+  container: secondary-toolbar / inline-size;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 var(--page-inline-padding);
+}
+
+.secondary-toolbar-handle {
+  display: block;
+  width: 100%;
+  height: 14px;
+  cursor: pointer;
+  position: relative;
+}
+
+.secondary-toolbar-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 36px;
+  height: 4px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+.secondary-toolbar-handle:hover::after {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+.secondary-toolbar__chip {
+  border-radius: 9999px;
+}
+
+.secondary-toolbar__chip--active {
+  border-color: hsl(var(--primary) / 0.4);
+  background: hsl(var(--primary) / 0.12);
+}
+
+.secondary-toolbar__badge {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: hsl(var(--primary));
+  @apply text-primary-foreground text-xs;
+  text-align: center;
+}
+
+.secondary-toolbar__size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.secondary-toolbar__slider {
+  width: 96px;
+  cursor: grab;
+}
+
+.secondary-toolbar__layout .segmented__label {
+  display: none;
+}
+
+/* Labels fold into icons as the list area (not the window) narrows. */
+@container secondary-toolbar (max-width: 640px) {
+  .secondary-toolbar__chip-label {
+    display: none;
+  }
+}
+
+@container secondary-toolbar (max-width: 460px) {
+  .secondary-toolbar__slider {
+    width: 64px;
+  }
+}

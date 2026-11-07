@@ -1,6 +1,8 @@
 import { VerticalDivider } from '@/components/ui/verticalDivider';
 import { useHorizontalScrollFades } from '@/hooks/useHorizontalScrollFades';
 import { useHorizontalWheelScroll } from '@/hooks/useHorizontalWheelScroll';
+import { Button } from '@/components/ui/button';
+import { IconChevronUp } from '@tabler/icons-react';
 import { useRef, type ReactNode } from 'react';
 
 interface ContentSubHeaderProps {
@@ -8,6 +10,8 @@ interface ContentSubHeaderProps {
   filters?: ReactNode;
   /** Right side: view toggles (include children, zoom on faces, group-by, …). */
   actions?: ReactNode;
+  /** Adds a trailing button that hides the row (the quick-filters row). */
+  onHide?: () => void;
 }
 
 /**
@@ -18,14 +22,14 @@ interface ContentSubHeaderProps {
  * Renders nothing when there are neither filter chips nor right-side actions,
  * so an item with no useful recommendations doesn't show an empty bar.
  */
-export function ContentSubHeader({ filters, actions }: ContentSubHeaderProps) {
+export function ContentSubHeader({ filters, actions, onHide }: ContentSubHeaderProps) {
   const filtersRef = useRef<HTMLDivElement>(null);
   useHorizontalWheelScroll(filtersRef);
   useHorizontalScrollFades(filtersRef);
 
   const hasFilters = Array.isArray(filters) ? filters.length > 0 : Boolean(filters);
 
-  if (!hasFilters && !actions) {
+  if (!hasFilters && !actions && !onHide) {
     return null;
   }
 
@@ -34,8 +38,23 @@ export function ContentSubHeader({ filters, actions }: ContentSubHeaderProps) {
       <div ref={filtersRef} className="content-subheader__filters">
         {filters}
       </div>
-      {hasFilters && actions && <VerticalDivider className="mx-2" />}
-      {actions && <div className="content-subheader__actions">{actions}</div>}
+      {hasFilters && (actions || onHide) && <VerticalDivider className="mx-2" />}
+      {(actions || onHide) && (
+        <div className="content-subheader__actions">
+          {actions}
+          {onHide && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Hide quick filters"
+              title="Hide quick filters"
+              onClick={onHide}
+            >
+              <IconChevronUp size={16} aria-hidden="true" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

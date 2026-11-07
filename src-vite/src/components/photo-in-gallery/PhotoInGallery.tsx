@@ -77,7 +77,8 @@ export const PhotoInGallery = memo(function PhotoInGallery(props: {
   }
 
   // While a selection is active a click adds to it rather than opening the photo.
-  const isSelecting = selectedImages.length > 0;
+  const selectionMode = useAppStore((state) => state.selectionMode);
+  const isSelecting = selectedImages.length > 0 || selectionMode;
 
   return (
     <SelectionActionsContextMenu img={props.img} isSelected={isImageSelected}>

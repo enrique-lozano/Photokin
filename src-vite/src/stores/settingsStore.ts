@@ -57,6 +57,10 @@ export interface SettingsState {
   showTimelineGroupLocation: boolean;
   /** Calendar unit used to group photos in timeline galleries. */
   timelineGroupBy: TimelineGroupBy;
+  /** Whether the quick-filter suggestions row is shown under the page header. */
+  showQuickFilters: boolean;
+  /** Whether the secondary toolbar (group & sort, size, select) is expanded. */
+  showSecondaryToolbar: boolean;
   /** Include pending face detections in Alone/Group/No people filters. */
   countUnverifiedFaces: boolean;
   /** Initial visibility for hidden people, faces, and albums each launch. */
@@ -90,6 +94,8 @@ interface SettingsStore extends SettingsState {
   setShowTimelineGroupCount: (showTimelineGroupCount: boolean) => void;
   setShowTimelineGroupLocation: (showTimelineGroupLocation: boolean) => void;
   setTimelineGroupBy: (timelineGroupBy: TimelineGroupBy) => void;
+  setShowQuickFilters: (showQuickFilters: boolean) => void;
+  setShowSecondaryToolbar: (showSecondaryToolbar: boolean) => void;
   setCountUnverifiedFaces: (countUnverifiedFaces: boolean) => void;
   setShowHiddenItemsAtStartup: (showHiddenItemsAtStartup: boolean) => void;
   setAutoPlayVideo: (autoPlayVideo: boolean) => void;
@@ -118,6 +124,8 @@ export const DEFAULT_SETTINGS: SettingsState = {
   showTimelineGroupCount: true,
   showTimelineGroupLocation: true,
   timelineGroupBy: 'day',
+  showQuickFilters: true,
+  showSecondaryToolbar: true,
   countUnverifiedFaces: true,
   showHiddenItemsAtStartup: false,
   autoPlayVideo: true,
@@ -149,6 +157,8 @@ export const useSettingsStore = create<SettingsStore>()(
       setShowTimelineGroupCount: (showTimelineGroupCount) => set({ showTimelineGroupCount }),
       setShowTimelineGroupLocation: (showTimelineGroupLocation) => set({ showTimelineGroupLocation }),
       setTimelineGroupBy: (timelineGroupBy) => set({ timelineGroupBy }),
+      setShowQuickFilters: (showQuickFilters) => set({ showQuickFilters }),
+      setShowSecondaryToolbar: (showSecondaryToolbar) => set({ showSecondaryToolbar }),
       setCountUnverifiedFaces: (countUnverifiedFaces) => set({ countUnverifiedFaces }),
       setShowHiddenItemsAtStartup: (showHiddenItemsAtStartup) => set({ showHiddenItemsAtStartup }),
       setAutoPlayVideo: (autoPlayVideo) => set({ autoPlayVideo }),

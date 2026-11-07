@@ -1,12 +1,19 @@
 import { ContentSubHeader } from '@/components/page-content/ContentSubHeader';
-import { GalleryLayoutControl } from '@/components/page-content/GalleryLayoutControl';
 import { HeroBreadcrumb } from '@/components/page-content/HeroBreadcrumb';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { PageHero } from '@/components/page-content/PageHero';
 import { ScrollablePageContent } from '@/components/page-content/ScrollablePageContent';
+import { SecondaryToolbar } from '@/components/page-content/SecondaryToolbar';
+import { useAppStore } from '@/stores/appState';
+import { useSettingsStore } from '@/stores/settingsStore';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 import './secondaryTitleAndScrollableContent.css';
+
+/** Heights (px) of the stacked secondary rows; mirror the CSS in pageContent.css. */
+const TOOLBAR_HEIGHT = 48;
+const TOOLBAR_HANDLE_HEIGHT = 14;
+const ROW_HEIGHT = 48;
 
 type SecondaryTitleAndScrollableContentProps = {
   /** Explicit cover node (image / thumbnail / colored badge). Takes precedence over `icon`. */
@@ -82,17 +89,33 @@ export function SecondaryTitleAndScrollableContent({
 
   const hasFilters = Array.isArray(filters) ? filters.length > 0 : Boolean(filters);
   const compactMeta = compactSubtitle ?? subtitle;
-  const resolvedActions =
-    subHeaderActions || galleryLayout ? (
-      <>
-        {subHeaderActions}
-        {galleryLayout && <GalleryLayoutControl disabled={galleryLayout === 'disabled'} />}
-      </>
-    ) : undefined;
-  const resolvedSubHeader =
-    hasFilters || resolvedActions ? (
-      <ContentSubHeader filters={filters} actions={resolvedActions} />
-    ) : undefined;
+  const showQuickFilters = useSettingsStore((state) => state.showQuickFilters);
+  const setShowQuickFilters = useSettingsStore((state) => state.setShowQuickFilters);
+  const showToolbar = useSettingsStore((state) => state.showSecondaryToolbar);
+  const activeQuickFilters = useAppStore((state) => state.quickFilterActiveCount);
+
+  let resolvedSubHeader: ReactNode;
+  let subHeaderHeight: number | undefined;
+  if (galleryLayout) {
+    // Hiding the row keeps active chips on screen; only suggestions go away.
+    const showFiltersRow = hasFilters && (showQuickFilters || activeQuickFilters > 0);
+    resolvedSubHeader = (
+      <div className="secondary-headers">
+        <SecondaryToolbar hasQuickFilters={hasFilters} gridControls={galleryLayout === true} />
+        {showFiltersRow && (
+          <ContentSubHeader
+            filters={filters}
+            actions={subHeaderActions}
+            onHide={showQuickFilters ? () => setShowQuickFilters(false) : undefined}
+          />
+        )}
+      </div>
+    );
+    subHeaderHeight =
+      (showToolbar ? TOOLBAR_HEIGHT : TOOLBAR_HANDLE_HEIGHT) + (showFiltersRow ? ROW_HEIGHT : 0);
+  } else if (hasFilters || subHeaderActions) {
+    resolvedSubHeader = <ContentSubHeader filters={filters} actions={subHeaderActions} />;
+  }
 
   // Slim variant of the hero that pins once the full hero scrolls away, so the
   // user can always answer "which item am I inside?" (icon + name + meta).
@@ -127,6 +150,7 @@ export function SecondaryTitleAndScrollableContent({
       compactHero={compactHero}
       heroBelow={heroBelow}
       subHeader={resolvedSubHeader}
+      subHeaderHeight={subHeaderHeight}
     >
       {content}
     </ScrollablePageContent>
