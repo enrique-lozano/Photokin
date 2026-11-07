@@ -14,16 +14,26 @@ export function normalizeScale(scale: number): number {
 
 export const SCALE_LABELS = ['Smaller', 'Small', 'Default', 'Large', 'Larger'];
 
-/** Light or dark UI. Numeric because the persisted settings have always stored 0/1. */
+/** Numeric because appearance is persisted in settings. */
 export enum Appearance {
   Light = 0,
   Dark = 1,
+  System = 2,
 }
 
 export const APPEARANCE_OPTIONS = [
   { label: 'Light', value: Appearance.Light },
   { label: 'Dark', value: Appearance.Dark },
+  { label: 'Auto', value: Appearance.System },
 ];
+
+export function getResolvedAppearance(appearance: Appearance): Appearance.Light | Appearance.Dark {
+  if (appearance === Appearance.Dark) return Appearance.Dark;
+  if (appearance !== Appearance.System) return Appearance.Light;
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ? Appearance.Dark
+    : Appearance.Light;
+}
 
 // Self-hosted fonts (bundled via @fontsource, see src/styles/fonts.ts).
 // `stack` is the CSS font-family value applied to the whole app.
@@ -180,11 +190,12 @@ export function getThemeId(themeIndex: number): string {
 }
 
 export function applyAppearance(appearance: Appearance): void {
-  document.documentElement.classList.toggle('dark', appearance === Appearance.Dark);
+  document.documentElement.classList.toggle('dark', getResolvedAppearance(appearance) === Appearance.Dark);
 }
 
 export function applyTheme(appearance: Appearance, lightTheme: number, darkTheme: number): void {
-  const themeId = getThemeId(appearance === Appearance.Light ? lightTheme : darkTheme);
+  const resolvedAppearance = getResolvedAppearance(appearance);
+  const themeId = getThemeId(resolvedAppearance === Appearance.Light ? lightTheme : darkTheme);
   document.documentElement.dataset.theme = themeId;
 
   const theme = THEME_OPTIONS.find((item) => item.id === themeId);
@@ -200,7 +211,7 @@ export function applyTheme(appearance: Appearance, lightTheme: number, darkTheme
     document.documentElement.style.removeProperty('--secondary-navbar-foreground');
     return;
   }
-  const palette = appearance === Appearance.Light ? theme.light : theme.dark;
+  const palette = resolvedAppearance === Appearance.Light ? theme.light : theme.dark;
 
   document.documentElement.style.setProperty('--primary', palette.primary);
   document.documentElement.style.setProperty('--primary-foreground', palette.primaryForeground);
@@ -208,7 +219,7 @@ export function applyTheme(appearance: Appearance, lightTheme: number, darkTheme
   document.documentElement.style.setProperty('--action-foreground', '0 0% 100%');
   document.documentElement.style.setProperty(
     '--ring',
-    appearance === Appearance.Light ? theme.action : palette.primary,
+    resolvedAppearance === Appearance.Light ? theme.action : palette.primary,
   );
   document.documentElement.style.setProperty('--main-navbar', palette.navbar);
   document.documentElement.style.setProperty('--main-navbar-foreground', palette.navbarForeground);
@@ -235,8 +246,9 @@ export function applyAllSettings(settings: {
   scale: number;
   font: number;
 }): void {
-  applyAppearance(settings.appearance);
-  applyTheme(settings.appearance, settings.lightTheme, settings.darkTheme);
+  const appearance = getResolvedAppearance(settings.appearance);
+  applyAppearance(appearance);
+  applyTheme(appearance, settings.lightTheme, settings.darkTheme);
   applyFontScale(settings.scale);
   applyFont(settings.font);
 }

@@ -1,9 +1,10 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import { EntityDetailRoute } from './components/page-content/EntityDetailRoute';
 import { AlbumsPage } from './pages/albums/Albums';
 import { CalendarPage } from './pages/calendar/Calendar';
 import { ComponentsPage } from './pages/components/ComponentsPage';
 import Dashboard from './pages/Dashboard';
+import { HomeRedirect } from './pages/HomeRedirect';
 import { DuplicatesPage } from './pages/duplicates/Duplicates';
 import { EditorPage } from './pages/editor/EditorPage';
 import { Onboarding } from './pages/onboarding/Onboarding';
@@ -19,6 +20,7 @@ import { ReviewSelection } from './pages/review-selection/ReviewSelection';
 import { Search } from './pages/search/Search';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { SettingsModels } from './pages/settings/SettingsModels';
+import { SettingsNavigation } from './pages/settings/SettingsNavigation';
 import { StatsPage } from './pages/stats/Stats';
 import { AllTags } from './pages/tags/AllTags';
 import { TagDetail } from './pages/tags/TagDetail';
@@ -37,6 +39,7 @@ export enum AppRoutes {
   reviewSelection = '/review-selection',
   settings = '/settings',
   settingsModels = '/settings/smart-search/models',
+  settingsNavigation = '/settings/navigation',
   editor = '/editor',
   onboarding = '/onboarding',
   allFaces = '/people/all',
@@ -61,7 +64,10 @@ export const router = createBrowserRouter([
   {
     path: AppRoutes.settings,
     element: <SettingsPage />,
-    children: [{ path: 'smart-search/models', element: <SettingsModels /> }],
+    children: [
+      { path: 'smart-search/models', element: <SettingsModels /> },
+      { path: 'navigation', element: <SettingsNavigation /> },
+    ],
   },
   ...(import.meta.env.DEV ? [{ path: AppRoutes.components, element: <ComponentsPage /> }] : []),
   {
@@ -74,7 +80,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: AppRoutes.home,
-        element: <Navigate to={AppRoutes.albums} replace />,
+        element: <HomeRedirect />,
       },
       {
         path: AppRoutes.albums,

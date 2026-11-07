@@ -1,23 +1,26 @@
 import { isMetadataMode, isWriteBackTiming } from '@/common/metadataOptions';
 import { RatingMode } from '@/common/ratingModeOptions';
 import { isResyncMode } from '@/common/resyncOptions';
+import { normalizeNavigationPages } from '@/common/navigationPages';
 import { isTauri } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useEffect } from 'react';
 import { TimelineGroupBy, useSettingsStore, ViewerMouseWheel } from '../stores/settingsStore';
 import { Appearance, applyAllSettings } from '../utils/theme';
 import type { ExternalAppKind } from '@/system/externalApp';
+import { useEffectiveAppearance } from './useEffectiveAppearance';
 
 export function useSettingsSync(): void {
   const appearance = useSettingsStore((state) => state.appearance);
+  const effectiveAppearance = useEffectiveAppearance(appearance);
   const lightTheme = useSettingsStore((state) => state.lightTheme);
   const darkTheme = useSettingsStore((state) => state.darkTheme);
   const scale = useSettingsStore((state) => state.scale);
   const font = useSettingsStore((state) => state.font);
 
   useEffect(() => {
-    applyAllSettings({ appearance, lightTheme, darkTheme, scale, font });
-  }, [appearance, lightTheme, darkTheme, scale, font]);
+    applyAllSettings({ appearance: effectiveAppearance, lightTheme, darkTheme, scale, font });
+  }, [effectiveAppearance, lightTheme, darkTheme, scale, font]);
 
   useEffect(() => {
     // Cross-window sync only exists inside Tauri (the UI kit also runs in a browser).
@@ -53,6 +56,11 @@ export function useSettingsSync(): void {
       unlisteners.push(
         await listen<number>('settings-font-changed', (event) => {
           useSettingsStore.getState().setFont(event.payload);
+        }),
+      );
+      unlisteners.push(
+        await listen<unknown>('settings-navigationPages-changed', (event) => {
+          useSettingsStore.getState().setNavigationPages(normalizeNavigationPages(event.payload));
         }),
       );
       unlisteners.push(

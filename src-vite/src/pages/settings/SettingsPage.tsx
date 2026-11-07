@@ -9,7 +9,7 @@ import {
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import clsx from 'clsx';
 import { useEffect } from 'react';
-import { useNavigate, useOutlet } from 'react-router-dom';
+import { useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { AppRoutes } from '@/router';
 import { SettingsTitleBar } from '../../components/settings/SettingsTitleBar';
 import { Button } from '../../components/ui/button';
@@ -38,9 +38,11 @@ export function SettingsPage() {
   const setTabIndex = useSettingsStore((state) => state.setTabIndex);
   const outlet = useOutlet();
   const navigate = useNavigate();
-  // Sub-pages (the model list) live under System.
+  const { pathname } = useLocation();
+  const isNavigationPage = pathname === AppRoutes.settingsNavigation;
+  const subpageTab = isNavigationPage ? SettingsTab.General : SettingsTab.System;
   const activeTab =
-    SETTINGS_TABS.find((tab) => tab.tab === (outlet ? SettingsTab.System : tabIndex)) ?? SETTINGS_TABS[0];
+    SETTINGS_TABS.find((tab) => tab.tab === (outlet ? subpageTab : tabIndex)) ?? SETTINGS_TABS[0];
 
   const openTab = (tab: SettingsTab) => {
     setTabIndex(tab);
@@ -69,7 +71,7 @@ export function SettingsPage() {
         breadcrumbs={[
           { label: 'Settings', onClick: () => openTab(SettingsTab.General) },
           { label: activeTab.label, onClick: () => openTab(activeTab.tab) },
-          ...(outlet ? [{ label: 'Smart search models' }] : []),
+          ...(outlet ? [{ label: isNavigationPage ? 'Navigation' : 'Smart search models' }] : []),
         ]}
       />
 

@@ -165,6 +165,15 @@ const SORT_NAMES: Record<TimelineSortBy, string> = {
   random: 'Random',
 };
 
+const SORT_CHIP_NAMES: Record<TimelineSortBy, string> = {
+  dateTaken: 'Date',
+  dateAdded: 'Added',
+  fileName: 'Name',
+  rating: 'Rating',
+  fileSize: 'Size',
+  random: 'Random',
+};
+
 export function groupName(groupBy: TimelineGroupBy): string {
   return GROUP_NAMES[groupBy];
 }
@@ -173,7 +182,7 @@ export function sortName(sortBy: TimelineSortBy): string {
   return SORT_NAMES[sortBy];
 }
 
-/** Chip label, e.g. `Day · Date taken ↓`. */
+/** Chip label, e.g. `Day · Date ↓`. */
 export function summarizeLabel(
   groupBy: TimelineGroupBy,
   sortBy: TimelineSortBy,
@@ -181,7 +190,7 @@ export function summarizeLabel(
 ): string {
   const arrow =
     sortBy === 'random' ? '' : effectiveSortDirection(sortBy, sortReversed) === 'desc' ? ' ↓' : ' ↑';
-  return `${GROUP_NAMES[groupBy]} · ${SORT_NAMES[sortBy]}${arrow}`;
+  return `${GROUP_NAMES[groupBy]} · ${SORT_CHIP_NAMES[sortBy]}${arrow}`;
 }
 
 /** Plain-language sentence describing the current arrangement. */

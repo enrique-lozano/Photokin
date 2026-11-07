@@ -20,7 +20,7 @@ const OPTIONS: SegmentedOption<GalleryLayoutMode>[] = [
   { value: 'justified', label: 'Justified rows', icon: <IconLayoutCollage size={16} /> },
   { value: 'card', label: 'Cards', icon: <IconLayoutGrid size={16} /> },
   { value: 'masonry', label: 'Masonry', icon: <IconLayoutDashboard size={16} /> },
-  { value: 'strips', label: 'Strips (one scrolling row per group)', icon: <IconRowInsertBottom size={16} /> },
+  { value: 'strips', label: 'Strips', icon: <IconRowInsertBottom size={16} /> },
 ];
 
 /**

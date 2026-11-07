@@ -13,8 +13,11 @@ import {
   IconUsers,
 } from '@tabler/icons-react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AppRoutes } from '@/router';
 import {
   SettingsGroup,
+  SettingsButtonRow,
   SettingsPageHeader,
   SettingsRadioGroup,
   SettingsSegmentedRow,
@@ -34,9 +37,12 @@ import {
   normalizeScale,
 } from '../../utils/theme';
 import { SETTINGS_BASE_HEIGHT, SETTINGS_BASE_WIDTH } from '../../utils/openSettingsWindow';
+import { useEffectiveAppearance } from '../../hooks/useEffectiveAppearance';
 
 export function SettingsGeneral() {
+  const navigate = useNavigate();
   const appearance = useSettingsStore((state) => state.appearance);
+  const effectiveAppearance = useEffectiveAppearance(appearance);
   const lightTheme = useSettingsStore((state) => state.lightTheme);
   const darkTheme = useSettingsStore((state) => state.darkTheme);
   const scale = useSettingsStore((state) => state.scale);
@@ -48,7 +54,7 @@ export function SettingsGeneral() {
   const countUnverifiedFaces = useSettingsStore((state) => state.countUnverifiedFaces);
   const showHiddenItemsAtStartup = useSettingsStore((state) => state.showHiddenItemsAtStartup);
 
-  const currentTheme = appearance === Appearance.Light ? lightTheme : darkTheme;
+  const currentTheme = effectiveAppearance === Appearance.Light ? lightTheme : darkTheme;
   const appearanceOptions = APPEARANCE_OPTIONS.map(({ label, value }) => ({
     label,
     value: String(value),
@@ -178,6 +184,16 @@ export function SettingsGeneral() {
           value={String(font)}
           options={fontOptions}
           onValueChange={(value) => useSettingsStore.getState().setFont(Number(value))}
+        />
+      </SettingsGroup>
+
+      <SettingsGroup title="Navigation">
+        <SettingsButtonRow
+          icon={<IconLayoutGrid size={18} />}
+          label="Main pages"
+          description="Choose the sidebar order, visible pages and the page shown on start."
+          buttonLabel="Configure"
+          onAction={() => navigate(AppRoutes.settingsNavigation)}
         />
       </SettingsGroup>
 

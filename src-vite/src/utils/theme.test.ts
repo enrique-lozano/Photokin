@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { parse } from 'postcss';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Appearance, applyTheme, THEME_LABELS } from './theme';
+import { Appearance, applyAppearance, applyTheme, getResolvedAppearance, THEME_LABELS } from './theme';
 
 function _rgb(hsl: string): number[] {
   const [hue, saturationPercent, lightnessPercent] = hsl.split(' ').map(parseFloat);
@@ -67,6 +67,39 @@ describe.each([Appearance.Light, Appearance.Dark])('theme contrast in appearance
       }
     },
   );
+});
+
+describe('system appearance', () => {
+  it.each([
+    [false, Appearance.Light],
+    [true, Appearance.Dark],
+  ] as const)('resolves system appearance with dark preference %s', (matches, expected) => {
+    vi.stubGlobal('window', { matchMedia: vi.fn(() => ({ matches })) });
+
+    expect(getResolvedAppearance(Appearance.System)).toBe(expected);
+  });
+
+  it('applies the system appearance and matching theme palette', () => {
+    const properties = new Map<string, string>();
+    let isDark = false;
+    vi.stubGlobal('window', { matchMedia: vi.fn(() => ({ matches: true })) });
+    vi.stubGlobal('document', {
+      documentElement: {
+        dataset: {},
+        classList: { toggle: (_className: string, value: boolean) => (isDark = value) },
+        style: {
+          setProperty: (name: string, value: string) => properties.set(name, value),
+          removeProperty: vi.fn(),
+        },
+      },
+    });
+
+    applyAppearance(Appearance.System);
+    applyTheme(Appearance.System, 0, 0);
+
+    expect(isDark).toBe(true);
+    expect(properties.get('--primary')).toBe('217.2 91.2% 59.8%');
+  });
 });
 
 describe('base semantic colors', () => {

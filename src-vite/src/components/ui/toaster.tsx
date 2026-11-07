@@ -1,6 +1,7 @@
 import { Slide, ToastContainer, type ToastPosition } from 'react-toastify';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { Appearance } from '../../utils/theme';
+import { useEffectiveAppearance } from '../../hooks/useEffectiveAppearance';
 import 'react-toastify/ReactToastify.css';
 import './toast.css';
 
@@ -19,7 +20,8 @@ type AppToasterProps = {
  */
 export function AppToaster({ position = 'bottom-right' }: AppToasterProps) {
   const appearance = useSettingsStore((state) => state.appearance);
-  const theme = appearance === Appearance.Dark ? 'dark' : 'light';
+  const effectiveAppearance = useEffectiveAppearance(appearance);
+  const theme = effectiveAppearance === Appearance.Dark ? 'dark' : 'light';
 
   return (
     <ToastContainer

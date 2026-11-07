@@ -3,21 +3,39 @@
 The sidebar has a page for each way of looking at your library: **Albums**,
 **Tags**, **People**, **Places**, **Calendar**, **Stats** and **Duplicates**.
 
-## The timeline
+In **Settings → General → Navigation**, choose **Configure** beside **Main pages**
+to reorder pages with **Move up** / **Move down**, or show and hide them with
+the switches. Changes apply immediately and are saved on this device. Photokin
+opens the first visible page on start. At least one page must stay visible;
+hiding a page only removes its sidebar entry, not access through other links.
+Choose **Restore defaults** to show every page in its original order.
 
-Inside an album, tag or person, photos appear as a timeline grouped by date.
-In **Settings → General → Timeline** you can:
+## Grouping and sorting photos
 
-- **Group photos by** day, month or year.
-- **Show photo count per group** and **Show location per group** in each
-  group's heading.
+Use **Group & sort** in the gallery options toolbar to choose how photos are
+organized:
 
-Use the slider in the footer to make thumbnails bigger or smaller.
+- **Group into sections:** None, by day, month, year, rating or place.
+- **Sort photos:** by date taken, date added, file name, rating, file size or
+  in random order. You can also change the order of sections and the direction
+  photos are sorted within them.
+
+In **Settings → General → Timeline**, turn on **Show photo count per group**
+or **Show location per group** to add those details to section headings.
+When photos are grouped, select a whole section with the circle beside its
+heading.
+
+Use the thumbnail-size slider in the gallery options toolbar to make thumbnails
+bigger or smaller. If the toolbar is collapsed, choose **Show toolbar**.
 
 ## Calendar, Places and Stats
 
 - **Calendar** shows every month at a glance, so you can see which days you
-  took photos and jump straight to them.
+  took photos and jump straight to them. Use **Quick filters** in the gallery
+  options toolbar to narrow photos within the selected year, month or day.
+  Date section headings are hidden when grouping by the selected period or a
+  broader one, since the page heading already names that period. Finer groups
+  and groups based on date added keep their headings.
 - **Places** groups every photo that has a location by country and place
   (city or town), so you can browse trip by trip. Open **Map** at the bottom of
   the sidebar to explore your library geographically. Selecting a place frames

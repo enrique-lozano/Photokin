@@ -1,3 +1,4 @@
+import { useEffectiveLens } from '@/components/timeline-gallery/lens';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useAppStore } from '@/stores/appState';
@@ -5,10 +6,9 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { IconChevronUp, IconFilter, IconMinus, IconPlus } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { useLayoutEffect, type ReactNode } from 'react';
-import { useEffectiveLens } from '@/components/timeline-gallery/lens';
-import { LensSwitcher } from './LensSwitcher';
 import { GalleryLayoutControl } from './GalleryLayoutControl';
 import { GroupSortControl } from './GroupSortControl';
+import { LensSwitcher } from './LensSwitcher';
 
 interface SecondaryToolbarProps {
   /** The page has quick filters, so the toolbar offers their show/hide chip. */
@@ -66,7 +66,6 @@ export function SecondaryToolbar({ hasQuickFilters, scopeControls, gridControls 
             onClick={() => setShowQuickFilters(!showQuickFilters)}
           >
             <IconFilter size={16} aria-hidden="true" />
-            <span className="secondary-toolbar__chip-label">Quick</span>
             {activeCount > 0 && <span className="secondary-toolbar__badge">{activeCount}</span>}
           </Button>
         )}

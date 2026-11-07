@@ -124,6 +124,9 @@ type TimelineGalleryProps = {
    */
   dateField?: AssetDateField;
 
+  /** The selected calendar period is already named in the page header. */
+  hideDateGroupHeaders?: boolean;
+
   /** Component to display if there aren't any elements in the current gallery */
   onNoResults?: JSX.Element;
   pendingImport?: 'metadata' | 'places';
@@ -154,6 +157,7 @@ export function TimelineGallery({
   searchQuery,
   assetIdsFilter,
   dateField: dateFieldProp = 'date',
+  hideDateGroupHeaders = false,
   onNoResults,
   pendingImport = 'metadata',
 }: TimelineGalleryProps) {
@@ -479,6 +483,7 @@ export function TimelineGallery({
                     assetIdsFilter={assetIdsFilter}
                     dateField={dateField}
                     groupBy={groupBy}
+                    hideDateGroupHeaders={hideDateGroupHeaders}
                     sortBy={sortBy}
                     sortReversed={sortReversed}
                     sectionReversed={sectionReversed}
@@ -517,6 +522,7 @@ const TimelineSegments = memo(function TimelineSegments(props: {
   assetIdsFilter?: string[];
   dateField: AssetDateField;
   groupBy: TimelineGroupBy;
+  hideDateGroupHeaders: boolean;
   sortBy: TimelineSortBy;
   sortReversed: boolean;
   sectionReversed: boolean;
@@ -584,7 +590,7 @@ const TimelineSegments = memo(function TimelineSegments(props: {
 
       return {
         segmentId: `${props.sectionId}__${key}`,
-        label,
+        label: props.hideDateGroupHeaders ? '' : label,
         location: getDominantLocation(images),
         images,
         layoutInfo: computeSegmentLayout(props.layoutMode, sizes, props.config),
@@ -594,6 +600,7 @@ const TimelineSegments = memo(function TimelineSegments(props: {
     files,
     props.config,
     props.groupBy,
+    props.hideDateGroupHeaders,
     props.sectionId,
     props.layoutMode,
     props.dateField,

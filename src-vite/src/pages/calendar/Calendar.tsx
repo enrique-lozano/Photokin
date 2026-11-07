@@ -5,6 +5,11 @@ import {
   IconChevronRight,
 } from '@tabler/icons-react';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
+import { ChipFiltersEmptyState } from '@/components/page-content/ChipFiltersEmptyState';
+import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
+import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
+import { mergeSearchQueries } from '@/common/searchQueryUtils';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ClearLibraryFiltersButton,
@@ -38,6 +43,7 @@ import {
   getSortedYears,
   groupDaySections,
   isCurrentMonth,
+  shouldHideCalendarGroupHeaders,
 } from './calendar.utils';
 
 type CalendarView = 'monthly' | 'daily';
@@ -108,6 +114,8 @@ export function CalendarPage() {
   const hasLibraryFilters = useHasActiveLibraryFilters();
   const [view, setView] = useState<CalendarView>('monthly');
   const [selection, setSelection] = useState<CalendarSelection | null>(null);
+  const groupBy = useSettingsStore((state) => state.timelineGroupBy);
+  const sortBy = useSettingsStore((state) => state.timelineSortBy);
 
   const { data: daySections } = useLiveQuery(
     () => AssetsService.getFileCountByDay({ searchQuery }),
@@ -152,7 +160,24 @@ export function CalendarPage() {
     }
   };
 
-  const galleryQuery = selection ? buildSelectionSearchQuery(searchQuery, selection) : searchQuery;
+  const selectionKey = JSON.stringify(selection);
+  const selectionQuery = useMemo(
+    () => (selection ? buildSelectionSearchQuery(searchQuery, selection) : searchQuery),
+    [searchQuery, selection],
+  );
+  const {
+    chips,
+    activeChipIds,
+    toggleChip,
+    clear: clearChips,
+    conditions,
+    isLoading: chipsLoading,
+    isRefreshing: chipsRefreshing,
+  } = useContentFilterChips({
+    searchQuery: selectionQuery,
+    resetKey: selectionKey,
+  });
+  const galleryQuery = mergeSearchQueries(selectionQuery, conditions);
   const canJumpToToday = sortedYears.some((year) =>
     Object.keys(calendarData[year]).some((month) => isCurrentMonth(year, Number(month))),
   );
@@ -292,8 +317,29 @@ export function CalendarPage() {
                   />
                 </>
               }
+              filters={
+                chipsLoading ? (
+                  <FilterChipPlaceholders />
+                ) : (
+                  <FilterChipRow
+                    chips={chips}
+                    activeChipIds={activeChipIds}
+                    onToggle={toggleChip}
+                    disabled={chipsRefreshing}
+                  />
+                )
+              }
               galleryLayout
-              content={<TimelineGallery key={JSON.stringify(selection)} searchQuery={galleryQuery} />}
+              content={
+                <TimelineGallery
+                  key={selectionKey}
+                  searchQuery={galleryQuery}
+                  hideDateGroupHeaders={shouldHideCalendarGroupHeaders(selection, groupBy, sortBy)}
+                  onNoResults={
+                    activeChipIds.length > 0 ? <ChipFiltersEmptyState onClear={clearChips} /> : undefined
+                  }
+                />
+              }
             />
           </div>
         )}

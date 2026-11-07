@@ -6,6 +6,11 @@ import {
 } from '@/common/metadataOptions';
 import { DEFAULT_RATING_MODE, RatingMode } from '@/common/ratingModeOptions';
 import { DEFAULT_RESYNC_MODE, ResyncMode } from '@/common/resyncOptions';
+import {
+  DEFAULT_NAVIGATION_PAGES,
+  normalizeNavigationPages,
+  type NavigationPage,
+} from '@/common/navigationPages';
 import { Appearance, SCALE_VALUES } from '@/utils/theme';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -48,6 +53,7 @@ export interface SettingsState {
   darkTheme: number;
   scale: number;
   font: number;
+  navigationPages: NavigationPage[];
   /** Whether Photokin checks for new and missing files after startup. */
   checkFoldersAtStartup: boolean;
   /** How the library sync decides an indexed file changed on disk. */
@@ -110,6 +116,7 @@ interface SettingsStore extends SettingsState {
   setDarkTheme: (darkTheme: number) => void;
   setScale: (scale: number) => void;
   setFont: (font: number) => void;
+  setNavigationPages: (navigationPages: NavigationPage[]) => void;
   setCheckFoldersAtStartup: (checkFoldersAtStartup: boolean) => void;
   setResyncMode: (resyncMode: ResyncMode) => void;
   setMetadataMode: (metadataMode: MetadataMode) => void;
@@ -144,6 +151,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   darkTheme: 0,
   scale: 1,
   font: 0,
+  navigationPages: DEFAULT_NAVIGATION_PAGES,
   checkFoldersAtStartup: false,
   resyncMode: DEFAULT_RESYNC_MODE,
   metadataMode: DEFAULT_METADATA_MODE,
@@ -181,6 +189,8 @@ export const useSettingsStore = create<SettingsStore>()(
       setDarkTheme: (darkTheme) => set({ darkTheme }),
       setScale: (scale) => set({ scale }),
       setFont: (font) => set({ font }),
+      setNavigationPages: (navigationPages) =>
+        set({ navigationPages: normalizeNavigationPages(navigationPages) }),
       setCheckFoldersAtStartup: (checkFoldersAtStartup) => set({ checkFoldersAtStartup }),
       setResyncMode: (resyncMode) => set({ resyncMode }),
       setMetadataMode: (metadataMode) => set({ metadataMode }),
@@ -238,7 +248,11 @@ function _sanitizePersisted(persisted: unknown): Partial<SettingsState> {
     clean[key] = value;
   }
 
-  if (clean.appearance !== Appearance.Light && clean.appearance !== Appearance.Dark) {
+  if (
+    clean.appearance !== Appearance.Light &&
+    clean.appearance !== Appearance.Dark &&
+    clean.appearance !== Appearance.System
+  ) {
     delete clean.appearance;
   }
   if (!SCALE_VALUES.some((value) => value === clean.scale)) {
@@ -258,6 +272,9 @@ function _sanitizePersisted(persisted: unknown): Partial<SettingsState> {
   }
   if (!['navigate', 'zoom'].includes(clean.viewerMouseWheel as string)) {
     delete clean.viewerMouseWheel;
+  }
+  if ('navigationPages' in stored) {
+    clean.navigationPages = normalizeNavigationPages(stored.navigationPages);
   }
 
   return clean as Partial<SettingsState>;

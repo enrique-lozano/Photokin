@@ -1,6 +1,7 @@
 import { SearchQuery } from '../../common/fileSearchFilters';
 import { FilterCriteria } from '../../common/query/filters/FilterCriteria';
 import { addConditionsToQuery } from '../../common/searchQueryUtils';
+import type { TimelineGroupBy, TimelineSortBy } from '../../stores/settingsStore';
 
 /**
  * `-1` is used as a sentinel that means "the whole parent unit is selected":
@@ -101,6 +102,23 @@ export type SelectionGranularity = 'year' | 'month' | 'day';
 export function getSelectionGranularity({ month, date }: CalendarSelection): SelectionGranularity {
   if (month === WHOLE) return 'year';
   return date === WHOLE ? 'month' : 'day';
+}
+
+export function shouldHideCalendarGroupHeaders(
+  selection: CalendarSelection,
+  groupBy: TimelineGroupBy,
+  sortBy: TimelineSortBy,
+): boolean {
+  if (sortBy === 'dateAdded') return false;
+  const timeframe: Record<TimelineGroupBy, number> = {
+    none: 0,
+    rating: 0,
+    place: 0,
+    day: 1,
+    month: 2,
+    year: 3,
+  };
+  return timeframe[groupBy] >= timeframe[getSelectionGranularity(selection)];
 }
 
 /**

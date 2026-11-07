@@ -1,5 +1,3 @@
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   arrangementWarning,
   describeArrangement,
@@ -9,6 +7,8 @@ import {
   sortName,
   summarizeLabel,
 } from '@/components/timeline-gallery/groupSort';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppStore } from '@/stores/appState';
 import { TIMELINE_GROUP_BY_VALUES, TIMELINE_SORT_BY_VALUES, useSettingsStore } from '@/stores/settingsStore';
 import { IconAlertTriangle, IconArrowsSort, IconCheck, IconChevronDown } from '@tabler/icons-react';
@@ -95,7 +95,7 @@ export function GroupSortControl() {
           variant="outline"
           size="sm"
           className="secondary-toolbar__chip"
-          aria-label={`Group & sort: ${label}`}
+          aria-label={`Group & sort: ${describeArrangement(groupBy, sortBy, sectionReversed, sortReversed)}`}
           title="Group & sort"
         >
           <IconArrowsSort size={16} aria-hidden="true" />

@@ -740,13 +740,6 @@
   display: none;
 }
 
-/* Labels fold into icons as the list area (not the window) narrows. */
-@container secondary-toolbar (max-width: 640px) {
-  .secondary-toolbar__chip-label {
-    display: none;
-  }
-}
-
 /* The lens switcher shows icon + label, folding to icons when the toolbar is narrow. */
 @container secondary-toolbar (max-width: 860px) {
   .secondary-toolbar__lens .segmented__label {

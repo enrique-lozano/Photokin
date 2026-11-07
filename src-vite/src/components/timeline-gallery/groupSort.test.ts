@@ -79,8 +79,10 @@ describe('groupAssets', () => {
 
 describe('labels', () => {
   it('summarises and warns', () => {
-    expect(summarizeLabel('day', 'dateTaken', false)).toBe('Day · Date taken ↓');
-    expect(summarizeLabel('none', 'fileName', false)).toBe('No sections · File name ↑');
+    expect(summarizeLabel('day', 'dateTaken', false)).toBe('Day · Date ↓');
+    expect(summarizeLabel('day', 'dateAdded', false)).toBe('Day · Added ↓');
+    expect(summarizeLabel('day', 'fileName', false)).toBe('Day · Name ↑');
+    expect(summarizeLabel('day', 'fileSize', false)).toBe('Day · Size ↓');
     expect(arrangementWarning('rating', 'rating')).not.toBeNull();
     expect(arrangementWarning('day', 'rating')).toBeNull();
   });

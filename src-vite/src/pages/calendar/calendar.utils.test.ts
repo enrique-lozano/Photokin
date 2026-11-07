@@ -5,7 +5,9 @@ import {
   getAdjacentSelection,
   getSelectionGranularity,
   getSelectionSummary,
+  shouldHideCalendarGroupHeaders,
 } from './calendar.utils';
+import type { TimelineGroupBy } from '../../stores/settingsStore';
 
 const data: CalendarData = {
   2024: { 12: [{ date: 30, count: 1 }] },
@@ -23,6 +25,34 @@ describe('getSelectionGranularity', () => {
     expect(getSelectionGranularity({ year: 2025, month: WHOLE, date: WHOLE })).toBe('year');
     expect(getSelectionGranularity({ year: 2025, month: 3, date: WHOLE })).toBe('month');
     expect(getSelectionGranularity({ year: 2025, month: 3, date: 2 })).toBe('day');
+  });
+});
+
+describe('shouldHideCalendarGroupHeaders', () => {
+  const groups: TimelineGroupBy[] = ['day', 'month', 'year', 'none', 'rating', 'place'];
+
+  it.each([
+    { selection: { year: 2025, month: 3, date: 2 }, hidden: ['day', 'month', 'year'] },
+    { selection: { year: 2025, month: 3, date: WHOLE }, hidden: ['month', 'year'] },
+    { selection: { year: 2025, month: WHOLE, date: WHOLE }, hidden: ['year'] },
+  ])('hides only equal or broader date groups for $selection', ({ selection, hidden }) => {
+    for (const group of groups) {
+      expect(shouldHideCalendarGroupHeaders(selection, group, 'dateTaken')).toBe(hidden.includes(group));
+    }
+  });
+
+  it('keeps date-added headings because capture-date selection does not scope them', () => {
+    for (const group of groups) {
+      expect(shouldHideCalendarGroupHeaders({ year: 2025, month: 3, date: 2 }, group, 'dateAdded')).toBe(
+        false,
+      );
+    }
+  });
+
+  it('still hides redundant capture-date groups when sorting by other fields', () => {
+    expect(shouldHideCalendarGroupHeaders({ year: 2025, month: 3, date: WHOLE }, 'month', 'rating')).toBe(
+      true,
+    );
   });
 });
 

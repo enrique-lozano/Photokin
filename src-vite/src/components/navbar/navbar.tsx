@@ -18,7 +18,8 @@ import { Link, Path, useLocation } from 'react-router-dom';
 import { PhotokinMark } from '../brand/PhotokinMark';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { AppRoutes } from '../../router';
-import { SettingsTab } from '../../stores/settingsStore';
+import { SettingsTab, useSettingsStore } from '../../stores/settingsStore';
+import { MAIN_PAGES, type MainPageId } from '@/common/navigationPages';
 import { openSettingsWindow } from '../../utils/openSettingsWindow';
 import './navbar.css';
 
@@ -40,50 +41,50 @@ function isNavItemActive(pathname: string, path: NavBarEl['path']): boolean {
 }
 
 export function Navbar() {
-  const navElements: NavBarEl[] = [
-    {
-      label: 'Albums',
+  const navigationPages = useSettingsStore((state) => state.navigationPages);
+  const navElements: Record<MainPageId, Omit<NavBarEl, 'label'>> = {
+    albums: {
       icon: <IconFolderBolt size={MENU_ICON_SIZE} />,
       selectedIcon: <IconFolderFilled size={MENU_ICON_SIZE} />,
       path: AppRoutes.albums,
     },
-    {
-      label: 'Tags',
+    tags: {
       icon: <IconTag size={MENU_ICON_SIZE} />,
       selectedIcon: <IconTagFilled size={MENU_ICON_SIZE} />,
       path: AppRoutes.tags,
     },
-    {
-      label: 'People',
+    people: {
       icon: <IconMoodNerd size={MENU_ICON_SIZE} />,
       selectedIcon: <IconMoodNerd size={MENU_ICON_SIZE} className="navbar-icon--filled-face" />,
       path: AppRoutes.people,
     },
-    {
-      label: 'Places',
+    places: {
       icon: <IconMapPin size={MENU_ICON_SIZE} />,
       selectedIcon: <IconMapPinFilled size={MENU_ICON_SIZE} />,
       path: AppRoutes.places,
     },
-    {
-      label: 'Calendar',
+    calendar: {
       icon: <IconCalendarMonth size={MENU_ICON_SIZE} />,
       selectedIcon: <IconCalendarMonthFilled size={MENU_ICON_SIZE} />,
       path: AppRoutes.calendar,
     },
-    {
-      label: 'Stats',
+    stats: {
       icon: <IconChartBar size={MENU_ICON_SIZE} />,
       selectedIcon: <IconChartBar size={MENU_ICON_SIZE} fill="currentColor" />,
       path: AppRoutes.stats,
     },
-    {
-      label: 'Duplicates',
+    duplicates: {
       icon: <IconCopy size={MENU_ICON_SIZE} />,
       selectedIcon: <IconCopyFilled size={MENU_ICON_SIZE} />,
       path: AppRoutes.duplicates,
     },
-  ];
+  };
+  const visibleElements: NavBarEl[] = navigationPages
+    .filter(({ visible }) => visible)
+    .map(({ id }) => ({
+      ...navElements[id],
+      label: MAIN_PAGES.find((page) => page.id === id)!.label,
+    }));
 
   const { pathname } = useLocation();
 
@@ -95,7 +96,7 @@ export function Navbar() {
 
       <nav className="page-selector">
         <ul className="menu">
-          {navElements.map((navItem) => (
+          {visibleElements.map((navItem) => (
             <li key={navItem.label}>
               <Tooltip>
                 <TooltipTrigger asChild>
