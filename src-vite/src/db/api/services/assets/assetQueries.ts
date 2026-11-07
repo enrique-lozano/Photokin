@@ -328,10 +328,11 @@ export async function getFileCountByPlace(params: { searchQuery?: SearchQuery })
  * Places map. Lightweight on purpose: the map clusters thousands of these and
  * only loads full assets for the few clusters it shows.
  */
-export async function getGeoPoints(params: { searchQuery?: SearchQuery }) {
+export async function getGeoPoints(params: { searchQuery?: SearchQuery; assetIds?: string[]; limit?: number },
+) {
   return selectFromDB(
     kyselyDB
-      .selectFrom(scopedAssetsSubquery(params.searchQuery))
+      .selectFrom(scopedAssetsSubquery(params.searchQuery, params.assetIds))
       .select([
         'filesQueryRes.id as id',
         'filesQueryRes.latitude as latitude',
@@ -339,7 +340,8 @@ export async function getGeoPoints(params: { searchQuery?: SearchQuery }) {
       ])
       .where('filesQueryRes.latitude', 'is not', null)
       .where('filesQueryRes.longitude', 'is not', null)
-      .orderBy('filesQueryRes.date', 'desc'),
+      .orderBy('filesQueryRes.date', 'desc')
+      .$if(params.limit !== undefined, (qb) => qb.limit(params.limit as number)),
   ) as Promise<{ id: string; latitude: number; longitude: number }[]>;
 }
 

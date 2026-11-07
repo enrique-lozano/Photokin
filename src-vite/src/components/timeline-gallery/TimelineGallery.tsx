@@ -37,10 +37,15 @@ import {
 } from './galleryLayout.ts';
 import { createGalleryScrollAnchor } from './galleryScrollAnchor';
 import './timelineGallery.css';
+import { GalleryMap } from './GalleryMap';
+import { Lens, useEffectiveLens } from './lens';
+import { ListRows, StripRow } from './TimelineLensViews';
 import { buildTimelineMonthFilters, type TimelineMonthSectionId } from './timelineMonthFilters';
 import { ScrubberSection, TimelineScrubber } from './TimelineScrubber.tsx';
 
 const dayLabelHeight = 40;
+/** Keep in sync with `.list-row` in timelineGallery.css. */
+const LIST_ROW_HEIGHT = 52;
 
 /**
  * Carries the active gallery scope (search query + asset id filter) down to the
@@ -152,6 +157,8 @@ export function TimelineGallery({
   const galleryThumbnailSize = useAppStore((state) => state.galleryThumbnailSize);
   const groupBy = useSettingsStore((state) => state.timelineGroupBy);
   const layoutMode = useAppStore((state) => state.layoutMode);
+  const setMapLensAvailable = useAppStore((state) => state.setMapLensAvailable);
+  const { lens } = useEffectiveLens();
   const setDisplayedElementsCount = useAppStore((state) => state.setDisplayedElementsCount);
   const setDisplayedElementsSizeBytes = useAppStore((state) => state.setDisplayedElementsSizeBytes);
   const setGallerySelectionScope = useAppStore((state) => state.setGallerySelectionScope);
@@ -273,6 +280,18 @@ export function TimelineGallery({
 
   useLayoutEffect(() => restoreScrollAnchor(), [sections, restoreScrollAnchor]);
 
+  // The Map lens needs at least one geotagged photo in this list.
+  useEffect(() => {
+    let cancelled = false;
+    void AssetsService.getGeoPoints({ searchQuery, assetIds: assetIdsFilter, limit: 1 }).then((points) => {
+      if (!cancelled) setMapLensAvailable(points.length > 0);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchQueryKey, assetIdsFilterKey, showHiddenItems, setMapLensAvailable]);
+  useEffect(() => () => setMapLensAvailable(null), [setMapLensAvailable]);
+
   useEffect(() => {
     const totalElements = sections?.reduce((acc, section) => acc + section.totalImages, 0) ?? 0;
     const totalSizeInBytes = sections?.reduce((acc, section) => acc + section.totalSizeInBytes, 0) ?? 0;
@@ -376,6 +395,10 @@ export function TimelineGallery({
     return onNoResults ?? <TimelineEmptyState pendingImport={pendingImport} />;
   }
 
+  if (lens === 'map') {
+    return <GalleryMap searchQuery={searchQuery} assetIdsFilter={assetIdsFilter} />;
+  }
+
   return (
     <GalleryScopeContext.Provider value={galleryScope}>
       {/* Rendered before the grid so the sticky scrubber rail pins from the top
@@ -397,13 +420,20 @@ export function TimelineGallery({
               width: `${timelineConfig.containerWidth}px`,
               height: intersectingSections.includes(section.sectionId)
                 ? undefined
-                : `${estimateSectionHeight(layoutMode, section.totalImages, timelineConfig)}px`,
+                : `${estimateLensHeight(lens, groupBy, layoutMode, section.totalImages, timelineConfig)}px`,
             }}
           >
             {intersectingSections.some((x) => x == section.sectionId) && (
               <TimelineSegments
                 config={timelineConfig}
-                estimatedHeight={estimateSectionHeight(layoutMode, section.totalImages, timelineConfig)}
+                estimatedHeight={estimateLensHeight(
+                  lens,
+                  groupBy,
+                  layoutMode,
+                  section.totalImages,
+                  timelineConfig,
+                )}
+                lens={lens}
                 sectionId={section.sectionId as TimelineMonthSectionId}
                 searchQuery={searchQuery}
                 assetIdsFilter={assetIdsFilter}
@@ -433,6 +463,7 @@ interface Segment {
 }
 
 const TimelineSegments = memo(function TimelineSegments(props: {
+  lens: Lens;
   sectionId: TimelineMonthSectionId;
   config: JustifiedLayoutOptions;
   estimatedHeight: number;
@@ -519,6 +550,7 @@ const TimelineSegments = memo(function TimelineSegments(props: {
         <TimelineSegment
           key={segment.segmentId}
           segment={segment}
+          lens={props.lens}
           layoutMode={props.layoutMode}
           containerWidth={props.config.containerWidth ?? 0}
           showGroupCount={showGroupCount}
@@ -590,12 +622,14 @@ const SegmentSelectButton = memo(function SegmentSelectButton({
 
 const TimelineSegment = memo(function TimelineSegment({
   segment,
+  lens,
   layoutMode,
   containerWidth,
   showGroupCount,
   showGroupLocation,
 }: {
   segment: Segment;
+  lens: Lens;
   layoutMode: GalleryLayoutMode;
   containerWidth: number;
   showGroupCount: boolean;
@@ -627,16 +661,53 @@ const TimelineSegment = memo(function TimelineSegment({
       <div
         id={segment.segmentId}
         className="segment"
-        style={{
-          width: `${containerWidth}px`,
-          height: `${segment.layoutInfo.containerHeight}px`,
-        }}
+        style={
+          lens === 'grid'
+            ? { width: `${containerWidth}px`, height: `${segment.layoutInfo.containerHeight}px` }
+            : { width: `${containerWidth}px` }
+        }
       >
-        <FileTiles segment={segment} layoutMode={layoutMode} />
+        {lens === 'grid' ? (
+          <FileTiles segment={segment} layoutMode={layoutMode} />
+        ) : (
+          <LensBody lens={lens} images={segment.images} />
+        )}
       </div>
     </div>
   );
 });
+
+/** Strips and List bodies of a segment; open photos inside the gallery's current scope. */
+function LensBody({ lens, images }: { lens: Lens; images: AssetInClient[] }) {
+  const { openLightbox } = useContext(LightboxImageContext);
+  const galleryScope = useContext(GalleryScopeContext);
+  const open = useCallback(
+    (img: AssetInClient, origin?: LightboxOrigin) => openLightbox(img, origin, galleryScope),
+    [openLightbox, galleryScope],
+  );
+  return lens === 'strips' ? (
+    <StripRow images={images} onOpen={open} />
+  ) : (
+    <ListRows images={images} onOpen={open} />
+  );
+}
+
+/** Scroll-placeholder height of a section under the active lens (Grid defers to its layout maths). */
+function estimateLensHeight(
+  lens: Lens,
+  groupBy: TimelineGroupBy,
+  layoutMode: GalleryLayoutMode,
+  totalImages: number,
+  options: JustifiedLayoutOptions,
+): number {
+  if (lens === 'grid' || lens === 'map') return estimateSectionHeight(layoutMode, totalImages, options);
+  if (totalImages <= 0) return 0;
+  if (lens === 'list') return totalImages * LIST_ROW_HEIGHT + dayLabelHeight;
+  const size = (options.targetRowHeight ?? 200) * 1.25;
+  // Day groups hold a few dozen photos at most; coarser groups are one long row each.
+  const groups = groupBy === 'day' ? Math.max(1, Math.ceil(totalImages / 20)) : 1;
+  return groups * (size + dayLabelHeight);
+}
 
 /**
  * Only virtualize segments that exceed this tile count. Smaller segments are

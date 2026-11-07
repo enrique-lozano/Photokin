@@ -9,6 +9,10 @@ export type SegmentedOption<T extends string> = {
   icon?: ReactNode;
   /** Optional trailing/stacked count — e.g. the Duplicates type filter. */
   count?: ReactNode;
+  /** Greys the option out; `title` should then say why. */
+  disabled?: boolean;
+  /** Tooltip; defaults to the label. */
+  title?: string;
 };
 
 /**
@@ -49,7 +53,11 @@ export function Segmented<T extends string>({
     event.preventDefault();
 
     const current = options.findIndex((option) => option.value === value);
-    const nextIndex = (current + step + options.length) % options.length;
+    let nextIndex = (current + step + options.length) % options.length;
+    for (let tries = 0; options[nextIndex].disabled && tries < options.length; tries++) {
+      nextIndex = (nextIndex + step + options.length) % options.length;
+    }
+    if (options[nextIndex].disabled) return;
 
     onChange(options[nextIndex].value);
     event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')[nextIndex]?.focus();
@@ -71,7 +79,8 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={selected}
             aria-label={option.label}
-            title={option.label}
+            title={option.title ?? option.label}
+            disabled={option.disabled}
             tabIndex={selected ? 0 : -1}
             className={clsx('segmented__option hover:text-secondary-navbar-foreground', selected && 'active')}
             onClick={() => onChange(option.value)}

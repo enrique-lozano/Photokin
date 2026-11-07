@@ -23,7 +23,8 @@ interface PhotoMapProps {
   focus?: GeoPoint[] | null;
   /** Opens a photo, with the photos it was grouped with as the viewer's scope. */
   onOpen: (id: string, scopeIds: string[]) => void;
-  onSelectArea: (bounds: MapBounds) => void;
+  /** Omit to hide the "view photos in this area" action. */
+  onSelectArea?: (bounds: MapBounds) => void;
 }
 
 function _mapBounds(bounds: L.LatLngBounds): MapBounds {
@@ -212,6 +213,7 @@ export function PhotoMap({ points, focus, onOpen, onSelectArea }: PhotoMapProps)
   const mapContent = (
     <div className={`location-map photo-map${moving ? ' photo-map--moving' : ''}`}>
       <div ref={canvasRef} className="location-map__canvas" />
+      {onSelectArea && (
       <div
         className="photo-map__area-action"
         hidden={expanded}
@@ -230,6 +232,7 @@ export function PhotoMap({ points, focus, onOpen, onSelectArea }: PhotoMapProps)
           View photos in this area
         </Button>
       </div>
+      )}
       {tilesUnavailable && points.length > 0 && (
         <div className="location-map__offline text-foreground">
           Map unavailable offline. You can still browse places in the list.

@@ -5,6 +5,8 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { IconCheck, IconChevronUp, IconFilter, IconMinus, IconPlus } from '@tabler/icons-react';
 import clsx from 'clsx';
 import { useLayoutEffect } from 'react';
+import { useEffectiveLens } from '@/components/timeline-gallery/lens';
+import { LensSwitcher } from './LensSwitcher';
 import { GalleryLayoutControl } from './GalleryLayoutControl';
 import { GroupSortControl } from './GroupSortControl';
 
@@ -30,6 +32,7 @@ export function SecondaryToolbar({ hasQuickFilters, gridControls }: SecondaryToo
   const setSize = useAppStore((state) => state.setGalleryThumbnailSize);
   const selectionMode = useAppStore((state) => state.selectionMode);
   const setSelectionMode = useAppStore((state) => state.setSelectionMode);
+  const { lens } = useEffectiveLens();
   const setMounted = useAppStore((state) => state.setSecondaryToolbarMounted);
 
   // The toolbar owns the size slider, even while folded away.
@@ -52,6 +55,8 @@ export function SecondaryToolbar({ hasQuickFilters, gridControls }: SecondaryToo
 
   return (
     <div className="secondary-toolbar" role="toolbar" aria-label="Gallery options">
+      {gridControls && <LensSwitcher />}
+
       {hasQuickFilters && (
         <Button
           variant="outline"
@@ -69,22 +74,24 @@ export function SecondaryToolbar({ hasQuickFilters, gridControls }: SecondaryToo
 
       <span className="flex-1" />
 
-      {gridControls && <GroupSortControl />}
-      {gridControls && <GalleryLayoutControl />}
+      {gridControls && lens !== 'map' && <GroupSortControl />}
+      {gridControls && lens === 'grid' && <GalleryLayoutControl />}
 
-      <div className="secondary-toolbar__size">
-        <IconMinus size={14} className="text-muted-foreground" aria-hidden="true" />
-        <Slider
-          min={140}
-          max={260}
-          step={10}
-          value={[size]}
-          onValueChange={([next]) => setSize(next)}
-          className="secondary-toolbar__slider"
-          aria-label="Thumbnail size"
-        />
-        <IconPlus size={14} className="text-muted-foreground" aria-hidden="true" />
-      </div>
+      {(lens === 'grid' || lens === 'strips') && (
+        <div className="secondary-toolbar__size">
+          <IconMinus size={14} className="text-muted-foreground" aria-hidden="true" />
+          <Slider
+            min={140}
+            max={260}
+            step={10}
+            value={[size]}
+            onValueChange={([next]) => setSize(next)}
+            className="secondary-toolbar__slider"
+            aria-label="Thumbnail size"
+          />
+          <IconPlus size={14} className="text-muted-foreground" aria-hidden="true" />
+        </div>
+      )}
 
       <Button
         variant="outline"

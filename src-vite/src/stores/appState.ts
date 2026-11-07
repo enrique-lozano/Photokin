@@ -94,6 +94,9 @@ interface AppGlobalState {
   /** Active quick-filter chips on the current page; drives the toolbar badge and row visibility. */
   quickFilterActiveCount: number;
   setQuickFilterActiveCount: (count: number) => void;
+  /** Whether the list in view has geotagged photos (`null` while unknown); gates the Map lens. */
+  mapLensAvailable: boolean | null;
+  setMapLensAvailable: (available: boolean | null) => void;
   /** True while a secondary toolbar owns the thumbnail-size slider (the footer then omits it). */
   secondaryToolbarMounted: boolean;
   setSecondaryToolbarMounted: (mounted: boolean) => void;
@@ -146,6 +149,8 @@ export const useAppStore = create<AppGlobalState>()((set) => ({
   setLayoutMode: (layoutMode) => set({ layoutMode }),
   quickFilterActiveCount: 0,
   setQuickFilterActiveCount: (quickFilterActiveCount) => set({ quickFilterActiveCount }),
+  mapLensAvailable: null,
+  setMapLensAvailable: (mapLensAvailable) => set({ mapLensAvailable }),
   secondaryToolbarMounted: false,
   setSecondaryToolbarMounted: (secondaryToolbarMounted) => set({ secondaryToolbarMounted }),
   selectionMode: false,

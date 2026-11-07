@@ -122,3 +122,110 @@
     left 220ms ease,
     top 220ms ease;
 }
+
+/* ───── Lenses ───── */
+.gallery-map {
+  height: calc(100dvh - 360px);
+  min-height: 420px;
+  margin: 0 calc(-1 * var(--page-inline-padding, 0px));
+  overflow: hidden;
+}
+
+/* Strips: one snapping, horizontally scrolling row per group. */
+.strip-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  --fade-start: 0px;
+  --fade-end: 0px;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--fade-start),
+    #000 calc(100% - var(--fade-end)),
+    transparent 100%
+  );
+}
+
+.strip-row::-webkit-scrollbar {
+  display: none;
+}
+
+.strip-tile {
+  position: relative;
+  flex: none;
+  scroll-snap-align: start;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* List: a table of rows with inline metadata. */
+.list-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: 40px minmax(120px, 2fr) minmax(130px, 1.2fr) minmax(100px, 1.5fr) 110px 80px;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 8px;
+  border-bottom: 1px solid hsl(var(--border));
+  @apply text-sm;
+  cursor: pointer;
+}
+
+.list-row:hover {
+  background: hsl(var(--accent) / 0.5);
+}
+
+.list-row.is-selected {
+  background: hsl(var(--primary) / 0.12);
+}
+
+.list-row__thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.list-row__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @apply font-medium;
+}
+
+.list-row__cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @apply text-muted-foreground;
+}
+
+.list-row__size {
+  text-align: right;
+}
+
+.list-row__favorite {
+  display: inline-flex;
+  width: 24px;
+  @apply text-muted-foreground;
+}
+
+.list-row__favorite.is-favorite {
+  color: hsl(var(--primary));
+}

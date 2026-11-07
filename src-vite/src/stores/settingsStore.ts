@@ -59,6 +59,8 @@ export interface SettingsState {
   timelineGroupBy: TimelineGroupBy;
   /** Whether the quick-filter suggestions row is shown under the page header. */
   showQuickFilters: boolean;
+  /** Last lens used on each list, by route path. Grid is the default and not stored. */
+  lensByList: Record<string, string>;
   /** Whether the secondary toolbar (group & sort, size, select) is expanded. */
   showSecondaryToolbar: boolean;
   /** Include pending face detections in Alone/Group/No people filters. */
@@ -94,6 +96,7 @@ interface SettingsStore extends SettingsState {
   setShowTimelineGroupCount: (showTimelineGroupCount: boolean) => void;
   setShowTimelineGroupLocation: (showTimelineGroupLocation: boolean) => void;
   setTimelineGroupBy: (timelineGroupBy: TimelineGroupBy) => void;
+  setListLens: (path: string, lens: string) => void;
   setShowQuickFilters: (showQuickFilters: boolean) => void;
   setShowSecondaryToolbar: (showSecondaryToolbar: boolean) => void;
   setCountUnverifiedFaces: (countUnverifiedFaces: boolean) => void;
@@ -125,6 +128,7 @@ export const DEFAULT_SETTINGS: SettingsState = {
   showTimelineGroupLocation: true,
   timelineGroupBy: 'day',
   showQuickFilters: true,
+  lensByList: {},
   showSecondaryToolbar: true,
   countUnverifiedFaces: true,
   showHiddenItemsAtStartup: false,
@@ -157,6 +161,13 @@ export const useSettingsStore = create<SettingsStore>()(
       setShowTimelineGroupCount: (showTimelineGroupCount) => set({ showTimelineGroupCount }),
       setShowTimelineGroupLocation: (showTimelineGroupLocation) => set({ showTimelineGroupLocation }),
       setTimelineGroupBy: (timelineGroupBy) => set({ timelineGroupBy }),
+      setListLens: (path, lens) =>
+        set((state) => {
+          const lensByList = { ...state.lensByList };
+          if (lens === 'grid') delete lensByList[path];
+          else lensByList[path] = lens;
+          return { lensByList };
+        }),
       setShowQuickFilters: (showQuickFilters) => set({ showQuickFilters }),
       setShowSecondaryToolbar: (showSecondaryToolbar) => set({ showSecondaryToolbar }),
       setCountUnverifiedFaces: (countUnverifiedFaces) => set({ countUnverifiedFaces }),
@@ -205,6 +216,9 @@ function _sanitizePersisted(persisted: unknown): Partial<SettingsState> {
   }
   if (!['day', 'month', 'year'].includes(clean.timelineGroupBy as string)) {
     delete clean.timelineGroupBy;
+  }
+  if (typeof clean.lensByList !== 'object' || clean.lensByList === null) {
+    delete clean.lensByList;
   }
   if (!['navigate', 'zoom'].includes(clean.viewerMouseWheel as string)) {
     delete clean.viewerMouseWheel;
