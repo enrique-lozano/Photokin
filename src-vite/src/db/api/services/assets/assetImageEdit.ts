@@ -1,7 +1,7 @@
 import { getFileExtensionFromPath, isSupportedVideoPath } from '@/common/supportedFormats';
 import { executeInDB, selectFirstFromDB, selectFromDB } from '@/db/connection/db.service';
 import { kyselyDB } from '@/db/connection/kysely';
-import { transformRegion, type ImageEdit } from '@/media/edit/editGeometry';
+import { transformRegion, withAppliedArea, type ImageEdit, type PixelArea } from '@/media/edit/editGeometry';
 import { editMetadataArgs } from '@/media/edit/editMetadata';
 import type { EditorData, EditorPreview, PreparedEditorEdit } from '@/media/edit/editorProtocol';
 import { executeExiftoolWithArgs } from '@/media/metadata/exiftool/write/exiftool-run';
@@ -105,6 +105,7 @@ export async function loadImageEditor(assetId: string): Promise<EditorData> {
     bytes: asset.filesize,
     format: _outputFormat(asset.filename),
     canOverwrite,
+    canLossless: extension === 'jpg' || extension === 'jpeg',
     regions: regions.map(({ x, y, w, h }) => ({ x, y, w, h })),
   };
   session = { data, sourceHash, regions, snapshot };
@@ -116,6 +117,17 @@ function _requireSession(assetId: string): EditSession {
   return session;
 }
 
+function _requireLosslessSupport(current: EditSession, edit: ImageEdit) {
+  if (edit.lossless && (!current.data.canLossless || edit.format !== 'jpg'))
+    throw new Error('Lossless editing is only available when saving a JPEG photo as a JPEG.');
+}
+
+export async function planImageEditor(assetId: string, edit: ImageEdit): Promise<PixelArea> {
+  const current = _requireSession(assetId);
+  _requireLosslessSupport(current, edit);
+  return invoke<PixelArea>('plan_lossless_image_edit', { sourcePath: current.data.fullPath, edit });
+}
+
 export async function previewImageEditor(assetId: string, edit: ImageEdit): Promise<EditorPreview> {
   const current = _requireSession(assetId);
   if (!current.data.canOverwrite && edit.format !== 'jpg')
@@ -125,6 +137,8 @@ export async function previewImageEditor(assetId: string, edit: ImageEdit): Prom
     sourcePath: current.data.canOverwrite ? current.data.fullPath : current.data.previewPath,
     format: edit.format,
     quality: edit.quality,
+    jpegSubsampling: edit.jpegSubsampling,
+    optimizeJpeg: edit.optimizeJpeg,
   });
 }
 
@@ -133,6 +147,7 @@ export async function prepareImageEditor(assetId: string, edit: ImageEdit): Prom
   await _discardPrepared(current);
   if (!current.data.canOverwrite && edit.format !== 'jpg')
     throw new Error('This source can only be saved as a JPEG copy.');
+  _requireLosslessSupport(current, edit);
   const prepared = await invoke<Omit<PreparedEditorEdit, 'token' | 'suggestedName'>>('prepare_image_edit', {
     sourcePath: current.data.fullPath,
     edit,
@@ -141,10 +156,16 @@ export async function prepareImageEditor(assetId: string, edit: ImageEdit): Prom
   try {
     if (prepared.sourceHash !== current.sourceHash)
       throw new Error('The original changed. Reopen the editor before saving.');
-    const namedRegions = current.regions.flatMap((region) => {
-      const area = transformRegion(region, edit, current.data.width, current.data.height);
-      return area && region.confirmed && region.personName ? [{ name: region.personName, area }] : [];
-    });
+    // A lossless crop snaps to the JPEG block grid, so faces must follow the area actually kept.
+    const applied = prepared.losslessArea
+      ? withAppliedArea(edit, prepared.losslessArea, current.data.width, current.data.height)
+      : edit;
+    const namedRegions = edit.keepMetadata
+      ? current.regions.flatMap((region) => {
+          const area = transformRegion(region, applied, current.data.width, current.data.height);
+          return area && region.confirmed && region.personName ? [{ name: region.personName, area }] : [];
+        })
+      : [];
     const stderr: string[] = [];
     const result = await executeExiftoolWithArgs(
       editMetadataArgs(
@@ -153,10 +174,13 @@ export async function prepareImageEditor(assetId: string, edit: ImageEdit): Prom
         prepared.width,
         prepared.height,
         namedRegions,
+        edit.keepMetadata,
       ),
       (line) => stderr.push(line),
     );
-    if (result.code !== 0 || stderr.some((line) => /error|warning/i.test(line))) {
+    // Nothing to copy (no ICC profile) is expected when details are dropped.
+    const harmless = edit.keepMetadata ? null : /^Warning: No writable tags set/i;
+    if (result.code !== 0 || stderr.some((line) => /error|warning/i.test(line) && !harmless?.test(line))) {
       throw new Error(`Metadata could not be preserved safely: ${stderr.join(' ') || result.stdout}`);
     }
     const directory = await dirname(current.data.fullPath);
@@ -167,12 +191,13 @@ export async function prepareImageEditor(assetId: string, edit: ImageEdit): Prom
     }
     const final = {
       ...prepared,
+      losslessArea: prepared.losslessArea ?? null,
       bytes: (await stat(prepared.tempPath)).size,
       token: crypto.randomUUID(),
       suggestedName,
     };
     current.prepared = final;
-    current.edit = edit;
+    current.edit = applied;
     return final;
   } catch (error) {
     await invoke('discard_image_edit', {

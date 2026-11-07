@@ -1,5 +1,6 @@
 import { IconChevronDown, IconLayoutCollage, IconLayoutDashboard, IconLayoutGrid } from '@tabler/icons-react';
 import { GalleryLayoutMode, useAppStore } from '@/stores/appState';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,10 +33,10 @@ export function GalleryLayoutControl({ disabled = false }: { disabled?: boolean 
     <span title={title}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild disabled={disabled}>
-          <button type="button" className="gallery-layout-control" aria-label={title}>
+          <Button variant="subtle" size="sm" className="gap-0.5 px-2" aria-label={title}>
             {active.icon}
-            <IconChevronDown size={12} className="gallery-layout-control__chevron" />
-          </button>
+            <IconChevronDown size={12} className="opacity-70" />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuRadioGroup

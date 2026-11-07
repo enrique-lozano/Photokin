@@ -9,6 +9,12 @@ export interface ImageEdit {
   height: number;
   format: 'jpg' | 'png' | 'webp';
   quality: number;
+  jpegSubsampling: '444' | '422' | '420';
+  optimizeJpeg: boolean;
+  /** Move JPEG blocks instead of re-encoding; the saved crop snaps to the JPEG block grid. */
+  lossless: boolean;
+  /** Copy EXIF, GPS, keywords and other embedded details to the saved photo. */
+  keepMetadata: boolean;
 }
 
 export function transformedSize(width: number, height: number, turns: number) {
@@ -70,6 +76,28 @@ export function initialEdit(width: number, height: number, format: ImageEdit['fo
     height,
     format,
     quality: 92,
+    jpegSubsampling: '444',
+    optimizeJpeg: true,
+    lossless: false,
+    keepMetadata: true,
+  };
+}
+
+export interface PixelArea {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The edit with its crop replaced by the area a lossless save really kept. */
+export function withAppliedArea(edit: ImageEdit, area: PixelArea, width: number, height: number): ImageEdit {
+  const size = transformedSize(width, height, edit.turns);
+  return {
+    ...edit,
+    crop: [area.x / size.width, area.y / size.height, area.width / size.width, area.height / size.height],
+    width: area.width,
+    height: area.height,
   };
 }
 

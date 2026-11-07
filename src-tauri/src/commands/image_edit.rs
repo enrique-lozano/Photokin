@@ -1,4 +1,7 @@
-use crate::shared::{decode_oriented_image, downscale_to_fit, run_blocking};
+use crate::shared::jpeg_encode::JpegSubsampling;
+use crate::shared::{
+    decode_oriented_image, downscale_to_fit, jpeg_encode, jpeg_lossless, probe_image, run_blocking,
+};
 use image::{imageops::FilterType, DynamicImage, ImageDecoder, ImageEncoder, ImageReader};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -10,6 +13,7 @@ use std::time::SystemTime;
 
 static NEXT_EDIT: AtomicU64 = AtomicU64::new(0);
 const EDIT_PREVIEW_EDGE: u32 = 1600;
+const LOSSLESS_HEADER_BYTES: u64 = 1 << 20;
 static EDIT_PREVIEW: Mutex<Option<EditPreviewCache>> = Mutex::new(None);
 
 struct EditPreviewCache {
@@ -50,6 +54,8 @@ fn encode_preview(
     format: String,
     quality: u8,
     profile: &[u8],
+    jpeg_subsampling: JpegSubsampling,
+    optimize_jpeg: bool,
 ) -> Result<(Vec<u8>, u64), String> {
     if !(1..=100).contains(&quality) {
         return Err("Invalid photo quality".into());
@@ -63,6 +69,9 @@ fn encode_preview(
         height: image.height(),
         format,
         quality,
+        jpeg_subsampling,
+        optimize_jpeg,
+        lossless: false,
     };
     let encoded = encode(image, &edit)?;
     let bytes = encoded.len() as u64;
@@ -86,11 +95,15 @@ fn encode_preview(
     Ok((display, bytes))
 }
 
+/// IPC: `sourcePath`, `format`, `quality`, optional `jpegSubsampling` ("444"/"422"/"420",
+/// default "444") and `optimizeJpeg` (default true). JPEG options do not affect PNG/WebP.
 #[tauri::command]
 pub async fn preview_image_edit(
     source_path: String,
     format: String,
     quality: u8,
+    jpeg_subsampling: Option<JpegSubsampling>,
+    optimize_jpeg: Option<bool>,
 ) -> Result<EditPreview, String> {
     run_blocking("Preview photo quality", move || {
         let metadata = std::fs::metadata(&source_path).map_err(|error| error.to_string())?;
@@ -126,7 +139,14 @@ pub async fn preview_image_edit(
             });
         }
         let current = cache.as_mut().ok_or("Photo preview cache is unavailable")?;
-        let (display, bytes) = encode_preview(&current.image, format, quality, &current.profile)?;
+        let (display, bytes) = encode_preview(
+            &current.image,
+            format,
+            quality,
+            &current.profile,
+            jpeg_subsampling.unwrap_or_default(),
+            optimize_jpeg.unwrap_or(true),
+        )?;
         let sequence = NEXT_EDIT.fetch_add(1, Ordering::Relaxed);
         let path = std::env::temp_dir().join(format!(
             "photokin-editor-preview-{}-{sequence}.png",
@@ -174,6 +194,19 @@ pub struct ImageEdit {
     pub height: u32,
     pub format: String,
     pub quality: u8,
+    /// JPEG re-encoding only; lossless block transforms preserve the source sampling.
+    #[serde(default)]
+    pub jpeg_subsampling: JpegSubsampling,
+    /// JPEG re-encoding only; lossless block transforms already optimize Huffman coding.
+    #[serde(default = "default_optimize_jpeg")]
+    pub optimize_jpeg: bool,
+    /// Move JPEG blocks instead of re-encoding pixels; `width`/`height` are then ignored.
+    #[serde(default)]
+    pub lossless: bool,
+}
+
+fn default_optimize_jpeg() -> bool {
+    true
 }
 
 #[derive(Serialize)]
@@ -184,6 +217,8 @@ pub struct PreparedEdit {
     bytes: u64,
     width: u32,
     height: u32,
+    /// Area of the transformed photo a lossless edit kept; it may extend the requested crop.
+    lossless_area: Option<jpeg_lossless::Rect>,
 }
 
 fn fingerprint(path: &Path) -> Result<String, String> {
@@ -216,8 +251,26 @@ fn transform(mut image: DynamicImage, edit: &ImageEdit) -> Result<DynamicImage, 
     if edit.flip_vertical {
         image = image.flipv();
     }
-    let [left, top, width, height] = edit.crop;
-    if edit.crop.iter().any(|value| !value.is_finite())
+    let (crop_left, crop_top, crop_width, crop_height) =
+        crop_pixels(&edit.crop, image.width(), image.height())?;
+    if edit.width == 0 || edit.height == 0 || edit.width > crop_width || edit.height > crop_height {
+        return Err("Output must fit within the crop; upscaling is disabled".into());
+    }
+    image = image.crop_imm(crop_left, crop_top, crop_width, crop_height);
+    if image.width() != edit.width || image.height() != edit.height {
+        image = image.resize_exact(edit.width, edit.height, FilterType::Lanczos3);
+    }
+    Ok(image)
+}
+
+/// Pixel `(left, top, width, height)` of a fractional crop within the transformed photo.
+fn crop_pixels(
+    crop: &[f64; 4],
+    full_width: u32,
+    full_height: u32,
+) -> Result<(u32, u32, u32, u32), String> {
+    let [left, top, width, height] = *crop;
+    if crop.iter().any(|value| !value.is_finite())
         || left < 0.0
         || top < 0.0
         || width <= 0.0
@@ -227,22 +280,82 @@ fn transform(mut image: DynamicImage, edit: &ImageEdit) -> Result<DynamicImage, 
     {
         return Err("Crop is outside the photo".into());
     }
-    let full_width = image.width();
-    let full_height = image.height();
     let crop_left = (left * full_width as f64).round() as u32;
     let crop_top = (top * full_height as f64).round() as u32;
     let crop_right = ((left + width) * full_width as f64).round() as u32;
     let crop_bottom = ((top + height) * full_height as f64).round() as u32;
-    let crop_width = crop_right.min(full_width).saturating_sub(crop_left);
-    let crop_height = crop_bottom.min(full_height).saturating_sub(crop_top);
-    if edit.width == 0 || edit.height == 0 || edit.width > crop_width || edit.height > crop_height {
-        return Err("Output must fit within the crop; upscaling is disabled".into());
+    Ok((
+        crop_left,
+        crop_top,
+        crop_right.min(full_width).saturating_sub(crop_left),
+        crop_bottom.min(full_height).saturating_sub(crop_top),
+    ))
+}
+
+/// How a lossless edit maps onto libjpeg: the combined EXIF + user transform and the
+/// requested crop in the coordinates of the fully transformed photo.
+fn lossless_request(
+    source_path: &str,
+    edit: &ImageEdit,
+) -> Result<(jpeg_lossless::Dihedral, jpeg_lossless::Rect), String> {
+    if edit.turns > 3 {
+        return Err("Invalid rotation".into());
     }
-    image = image.crop_imm(crop_left, crop_top, crop_width, crop_height);
-    if image.width() != edit.width || image.height() != edit.height {
-        image = image.resize_exact(edit.width, edit.height, FilterType::Lanczos3);
+    let (width, height, orientation) =
+        probe_image(source_path).ok_or("The photo cannot be read")?;
+    let (oriented_width, oriented_height) = if orientation >= 5 {
+        (height, width)
+    } else {
+        (width, height)
+    };
+    let (full_width, full_height) = if edit.turns % 2 == 1 {
+        (oriented_height, oriented_width)
+    } else {
+        (oriented_width, oriented_height)
+    };
+    let (x, y, width, height) = crop_pixels(&edit.crop, full_width, full_height)?;
+    let transform = jpeg_lossless::Dihedral::from_exif_orientation(orientation).then(
+        jpeg_lossless::Dihedral::from_edit(edit.turns, edit.flip_horizontal, edit.flip_vertical),
+    );
+    Ok((
+        transform,
+        jpeg_lossless::Rect {
+            x,
+            y,
+            width,
+            height,
+        },
+    ))
+}
+
+fn lossless_edit(
+    source_path: &str,
+    edit: &ImageEdit,
+) -> Result<(Vec<u8>, jpeg_lossless::Rect), String> {
+    if edit.format != "jpg" {
+        return Err("Lossless editing only saves JPEG photos".into());
     }
-    Ok(image)
+    let (transform, crop) = lossless_request(source_path, edit)?;
+    let source = std::fs::read(source_path).map_err(|error| error.to_string())?;
+    jpeg_lossless::transform(&source, transform, crop)
+}
+
+/// Check whether a lossless edit is possible and report the area it would keep, which
+/// snaps outward to the JPEG block grid. Only the start of the file is read.
+#[tauri::command]
+pub async fn plan_lossless_image_edit(
+    source_path: String,
+    edit: ImageEdit,
+) -> Result<jpeg_lossless::Rect, String> {
+    run_blocking("Plan lossless edit", move || {
+        let (transform, crop) = lossless_request(&source_path, &edit)?;
+        let mut header = Vec::new();
+        std::fs::File::open(&source_path)
+            .and_then(|file| file.take(LOSSLESS_HEADER_BYTES).read_to_end(&mut header))
+            .map_err(|error| error.to_string())?;
+        jpeg_lossless::plan(&header, transform, crop)
+    })
+    .await
 }
 
 fn encode(image: &DynamicImage, edit: &ImageEdit) -> Result<Vec<u8>, String> {
@@ -257,9 +370,12 @@ fn encode(image: &DynamicImage, edit: &ImageEdit) -> Result<Vec<u8>, String> {
             if image.color().has_alpha() {
                 return Err("Choose PNG or WebP to preserve transparency".into());
             }
-            image::codecs::jpeg::JpegEncoder::new_with_quality(&mut output, edit.quality)
-                .encode_image(image)
-                .map_err(|error| error.to_string())?;
+            output = jpeg_encode::encode(
+                image,
+                edit.quality,
+                edit.jpeg_subsampling,
+                edit.optimize_jpeg,
+            )?;
         }
         "png" => image::codecs::png::PngEncoder::new(&mut output)
             .write_image(
@@ -290,13 +406,20 @@ pub async fn prepare_image_edit(
     run_blocking("Edit photo", move || {
         let source = Path::new(&source_path);
         let source_hash = fingerprint(source)?;
-        let decoded =
-            decode_oriented_image(&source_path).or_else(|error| match decode_path.as_deref() {
+        let (encoded, width, height, lossless_area) = if edit.lossless {
+            let (jpeg, area) = lossless_edit(&source_path, &edit)?;
+            (jpeg, area.width, area.height, Some(area))
+        } else {
+            let decoded = decode_oriented_image(&source_path).or_else(|error| match decode_path
+                .as_deref()
+            {
                 Some(path) => decode_oriented_image(path),
                 None => Err(error),
             })?;
-        let image = transform(decoded, &edit)?;
-        let encoded = encode(&image, &edit)?;
+            let image = transform(decoded, &edit)?;
+            let encoded = encode(&image, &edit)?;
+            (encoded, image.width(), image.height(), None)
+        };
         let parent = source.parent().ok_or("Photo has no parent directory")?;
         let sequence = NEXT_EDIT.fetch_add(1, Ordering::Relaxed);
         let temp = parent.join(format!(
@@ -317,8 +440,9 @@ pub async fn prepare_image_edit(
             temp_path: temp.to_string_lossy().into_owned(),
             source_hash,
             bytes: encoded.len() as u64,
-            width: image.width(),
-            height: image.height(),
+            width,
+            height,
+            lossless_area,
         })
     })
     .await

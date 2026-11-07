@@ -1,7 +1,9 @@
 import type { ButtonProps } from '@/components/ui/button';
+import type { SettingsToggleRow } from '@/components/settings/SettingsRow';
 import { initialEdit } from '@/media/edit/editGeometry';
 import type { EditorData } from '@/media/edit/editorProtocol';
 import type { ComponentProps, PropsWithChildren, ReactElement } from 'react';
+import { useEffect } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type ReactCrop from 'react-image-crop';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   stateIndex: 0,
   refIndex: 0,
   buttons: [] as ButtonProps[],
+  toggles: [] as ComponentProps<typeof SettingsToggleRow>[],
   crop: undefined as ComponentProps<typeof ReactCrop> | undefined,
   request: vi.fn(),
 }));
@@ -39,6 +42,17 @@ vi.mock('@/components/ui/button', () => ({
   Button: (props: ButtonProps) => {
     mocks.buttons.push(props);
     return <span>{props.children}</span>;
+  },
+}));
+vi.mock('@/components/settings/SettingsRow', () => ({
+  SettingsToggleRow: (props: ComponentProps<typeof SettingsToggleRow>) => {
+    mocks.toggles.push(props);
+    return (
+      <label>
+        {props.label}
+        <input type="checkbox" checked={props.checked} readOnly />
+      </label>
+    );
   },
 }));
 vi.mock('@/components/ui/tooltip', () => ({
@@ -72,12 +86,14 @@ const data = {
   previewPath: 'photo.jpg',
   regions: [],
   canOverwrite: true,
+  canLossless: true,
 } satisfies EditorData;
 
 function render() {
   mocks.stateIndex = 0;
   mocks.refIndex = 0;
   mocks.buttons = [];
+  mocks.toggles = [];
   return renderToStaticMarkup(<EditorPage />);
 }
 
@@ -91,6 +107,109 @@ function click(label: string) {
   button(label).onClick?.({} as Parameters<NonNullable<ButtonProps['onClick']>>[0]);
   return render();
 }
+
+describe('lossless and metadata controls', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal('window', { location: { search: '?assetId=photo' } });
+    mocks.refs = [];
+  });
+
+  it('offers original-quality transforms without a redundant quality banner or advanced controls', () => {
+    mocks.states = [data, { ...initialEdit(data.width, data.height, 'jpg'), lossless: true }];
+    const markup = render();
+    expect(markup).toContain('Keep original quality');
+    expect(markup).toContain('Keep photo details');
+    expect(markup).not.toContain('Photo quality');
+    expect(markup).not.toContain('Advanced JPEG settings');
+    expect(markup).not.toContain('aria-label="Photo quality"');
+    expect(markup).toContain('Output size');
+  });
+
+  it('hides the lossless option when the photo cannot use it', () => {
+    mocks.states = [{ ...data, canLossless: false }, initialEdit(data.width, data.height, 'jpg')];
+    const markup = render();
+    expect(markup).not.toContain('Keep original quality');
+    expect(markup).toContain('Keep photo details');
+    expect(markup).not.toContain('<strong>Original</strong>');
+  });
+
+  it('shows compression controls when original quality is turned off', () => {
+    mocks.states = [data, { ...initialEdit(data.width, data.height, 'jpg'), lossless: true }];
+    render();
+    mocks.toggles.find(({ label }) => label === 'Keep original quality')!.onCheckedChange(false);
+    const markup = render();
+    expect(markup).toContain('aria-label="Photo quality"');
+    expect(markup).toContain('Advanced JPEG settings');
+    expect(mocks.states[1]).toMatchObject({ jpegSubsampling: '444', optimizeJpeg: true });
+  });
+
+  it.each(['png', 'webp'] as const)('does not offer JPEG options for %s', (format) => {
+    mocks.states = [{ ...data, canLossless: false }, initialEdit(data.width, data.height, format)];
+    const markup = render();
+    expect(markup).not.toContain('Advanced JPEG settings');
+    if (format === 'png') expect(markup).not.toContain('aria-label="Photo quality"');
+  });
+
+  it('uses the original image without a compression spinner in original-quality mode', () => {
+    mocks.states = [data, { ...initialEdit(data.width, data.height, 'jpg'), lossless: true }];
+    render();
+    expect(oriented().props.children[0].props).toMatchObject({ src: data.previewPath });
+    expect(render()).not.toContain('Updating photo');
+  });
+
+  it.each([
+    ['444', true],
+    ['422', false],
+    ['420', true],
+  ] as const)(
+    'requests matching JPEG preview settings for %s / optimize %s',
+    async (jpegSubsampling, optimizeJpeg) => {
+      vi.useFakeTimers();
+      try {
+        vi.stubGlobal('window', {
+          location: { search: '?assetId=photo' },
+          setTimeout: globalThis.setTimeout,
+          clearTimeout: globalThis.clearTimeout,
+        });
+        mocks.states = [
+          data,
+          { ...initialEdit(data.width, data.height, 'jpg'), jpegSubsampling, optimizeJpeg },
+        ];
+        mocks.request.mockResolvedValue({
+          previewPath: 'preview.png',
+          bytes: 1000,
+          width: 1200,
+          height: 800,
+          profileBytes: 0,
+        });
+        render();
+        oriented().props.children[0].props.onLoad();
+        vi.mocked(useEffect).mockClear();
+        render();
+        const effect = vi
+          .mocked(useEffect)
+          .mock.calls.find(([, deps]) => deps?.includes(`jpg:92:${jpegSubsampling}:${optimizeJpeg}`))![0];
+        const cleanup = effect();
+        await vi.advanceTimersByTimeAsync(250);
+        expect(mocks.request).toHaveBeenCalledWith({
+          action: 'preview',
+          assetId: 'photo',
+          edit: expect.objectContaining({ jpegSubsampling, optimizeJpeg, quality: 92 }),
+        });
+        render();
+        expect(oriented().props.children[0].props).toMatchObject({ src: 'preview.png' });
+        mocks.toggles.find(({ label }) => label === 'Keep original quality')!.onCheckedChange(true);
+        render();
+        expect(oriented().props.children[0].props).toMatchObject({ src: data.previewPath });
+        expect(render()).not.toContain('Updating photo');
+        if (typeof cleanup === 'function') cleanup();
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+});
 
 function oriented() {
   return mocks.crop!.children as ReactElement<{

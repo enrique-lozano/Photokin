@@ -9,6 +9,12 @@ const mocks = vi.hoisted(() => ({
   importing: vi.fn(),
   track: vi.fn(),
   query: vi.fn(),
+  queue: vi.fn(),
+  getFiles: vi.fn(),
+  embed: vi.fn(),
+  shutdown: vi.fn(),
+  paused: false,
+  waitIfPaused: vi.fn(),
 }));
 
 vi.mock('@/common/supportedFormats', () => ({
@@ -19,7 +25,7 @@ vi.mock('@/db/api/services/appData.service', () => ({
   AppDataKey: { SmartSearchModel: 'model' },
   AppDataService: { get: mocks.getModel, set: mocks.setModel },
 }));
-vi.mock('@/db/api/services/assets.service', () => ({ AssetsService: {} }));
+vi.mock('@/db/api/services/assets.service', () => ({ AssetsService: { getFiles: mocks.getFiles } }));
 vi.mock('@/db/connection/db.service', () => ({ selectFromDB: mocks.query }));
 vi.mock('@/db/connection/kysely', () => ({
   kyselyDB: {
@@ -47,8 +53,10 @@ vi.mock('@/stores/smartSearchSettingsStore', () => ({
 vi.mock('@/system/devLogger', () => ({ debugLog: vi.fn() }));
 vi.mock('@/system/hardware', () => ({ HARDWARE_CONCURRENCY: 4 }));
 vi.mock('@/system/processTracker', () => ({ trackProcess: mocks.track }));
-vi.mock('@/utils/taskQueue/taskQueue', () => ({ appTaskQueue: { add: (work: () => unknown) => work() } }));
-vi.mock('./clipSidecar', () => ({ ClipImageSession: vi.fn() }));
+vi.mock('@/utils/taskQueue/taskQueue', () => ({ appTaskQueue: { add: mocks.queue } }));
+vi.mock('./clipSidecar', () => ({
+  ClipImageSession: vi.fn(() => ({ embedImages: mocks.embed, shutdown: mocks.shutdown })),
+}));
 vi.mock('./embeddingStore', () => ({ clearAssetEmbeddings: mocks.clear, storeAssetEmbeddings: vi.fn() }));
 vi.mock('./models', () => ({ isModelDownloaded: mocks.downloaded }));
 
@@ -61,9 +69,19 @@ describe('search indexing requests', () => {
     mocks.downloaded.mockResolvedValue(true);
     mocks.getModel.mockResolvedValue('model');
     mocks.query.mockResolvedValue([]);
+    mocks.queue.mockImplementation((work: () => Promise<unknown>) => work());
+    mocks.paused = false;
+    mocks.waitIfPaused.mockResolvedValue(undefined);
+    mocks.getFiles.mockResolvedValue([]);
+    mocks.shutdown.mockResolvedValue(undefined);
     mocks.track.mockImplementation(async (_config, work) =>
       work({
         throwIfStopped: vi.fn(),
+        waitIfPaused: mocks.waitIfPaused,
+        get paused() {
+          return mocks.paused;
+        },
+        update: vi.fn(),
         signal: new AbortController().signal,
       }),
     );
@@ -119,5 +137,49 @@ describe('search indexing requests', () => {
     finishQuery?.([]);
     await vi.waitFor(() => expect(mocks.clear).toHaveBeenCalledOnce());
     expect(mocks.track).toHaveBeenCalledTimes(2);
+  });
+
+  it('rechecks pause after a batch reaches the queue without holding the queue while paused', async () => {
+    const { TaskQueue } = await vi.importActual<typeof import('@/utils/taskQueue/taskQueue')>(
+      '@/utils/taskQueue/taskQueue',
+    );
+    const queue = new TaskQueue({ concurrency: 1 });
+    let resume = () => {};
+    const resumed = new Promise<void>((resolve) => {
+      resume = resolve;
+    });
+    mocks.query.mockResolvedValue([{ id: 'photo' }]);
+    mocks.waitIfPaused.mockImplementation(async () => {
+      if (mocks.paused) await resumed;
+    });
+    // The setup runs first. Pause the next batch after it was enqueued.
+    mocks.queue
+      .mockImplementation((work: () => Promise<unknown>) => queue.add(work))
+      .mockImplementationOnce((work: () => Promise<unknown>) => queue.add(work))
+      .mockImplementationOnce((work: () => Promise<unknown>) => {
+        void queue.add(async () => {
+          mocks.paused = true;
+        });
+        return queue.add(work);
+      });
+
+    const { startBackgroundIndexing } = await import('./indexing');
+    startBackgroundIndexing();
+
+    await vi.waitFor(() => expect(mocks.waitIfPaused).toHaveBeenCalledTimes(4));
+    expect(mocks.getFiles).not.toHaveBeenCalled();
+    expect(mocks.queue).toHaveBeenCalledTimes(2);
+    expect(queue.running).toBe(0);
+
+    // Unrelated work can still run through the shared queue.
+    const otherWork = vi.fn().mockResolvedValue('done');
+    await queue.add(otherWork);
+    expect(otherWork).toHaveBeenCalledOnce();
+
+    mocks.paused = false;
+    resume();
+    await vi.waitFor(() => expect(mocks.shutdown).toHaveBeenCalledOnce());
+    expect(mocks.getFiles).toHaveBeenCalledTimes(1);
+    expect(mocks.getFiles).toHaveBeenCalledWith({ assetIds: ['photo'] });
   });
 });

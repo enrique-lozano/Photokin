@@ -4,6 +4,8 @@ import { generateID } from '../db/models/dbEntityWithID';
 
 export type ProcessStatus = 'running' | 'success' | 'error' | 'stopped';
 
+const RECENT_PROCESS_LIMIT = 10;
+
 /**
  * Categories of long-running work tracked by the process center. They map to a
  * dedicated icon/accent so the user can tell at a glance what is going on.
@@ -30,7 +32,12 @@ export interface AppProcess {
   message?: string;
   /** Progress in the 0..1 range, or `null` when the work is indeterminate. */
   progress: number | null;
+  progressCurrent?: number;
+  progressTotal?: number;
+  progressUnit?: string;
   status: ProcessStatus;
+  paused: boolean;
+  canPause: boolean;
   /** Whether this process offers a user-initiated Stop action. */
   canStop: boolean;
   /** True after Stop is requested while cooperative cleanup is still running. */
@@ -39,13 +46,11 @@ export interface AppProcess {
   error?: string;
   /**
    * Non-fatal issues collected while the work ran (e.g. files that couldn't be
-   * read). Surfaced through a "View details" action on the finished toast.
+   * read). Surfaced through a "View skipped items" action on the finished row.
    */
   warnings?: string[];
   /** Reversible/inspectable actions attached after successful completion. */
   successAction?: AppToastAction;
-  /** Close the success toast sooner; see {@link StartProcessInput.briefSuccess}. */
-  briefSuccess?: boolean;
   startedAt: number;
   updatedAt: number;
   finishedAt?: number;
@@ -58,14 +63,23 @@ export interface StartProcessInput {
   message?: string;
   progress?: number | null;
   canStop?: boolean;
-  /**
-   * The result is as easy to reverse in place as through the toast's Undo
-   * (e.g. Favorite ⇄ Unfavorite), so the success toast need not linger.
-   */
-  briefSuccess?: boolean;
+  canPause?: boolean;
 }
 
-export type ProcessPatch = Partial<Pick<AppProcess, 'title' | 'message' | 'progress' | 'stopping'>>;
+export type ProcessPatch = Partial<
+  Pick<
+    AppProcess,
+    | 'title'
+    | 'message'
+    | 'progress'
+    | 'progressCurrent'
+    | 'progressTotal'
+    | 'progressUnit'
+    | 'paused'
+    | 'stopping'
+    | 'successAction'
+  >
+>;
 
 export interface FinishProcessInput {
   status: Exclude<ProcessStatus, 'running'>;
@@ -82,6 +96,13 @@ interface ProcessStoreState {
   updateProcess: (id: string, patch: ProcessPatch) => void;
   finishProcess: (id: string, result: FinishProcessInput) => void;
   removeProcess: (id: string) => void;
+  clearFinishedProcesses: () => void;
+}
+
+function _retainRecentProcesses(processes: AppProcess[]): AppProcess[] {
+  const active = processes.filter((process) => process.status === 'running');
+  const recent = processes.filter((process) => process.status !== 'running').slice(0, RECENT_PROCESS_LIMIT);
+  return [...active, ...recent];
 }
 
 export const useProcessStore = create<ProcessStoreState>()((set) => ({
@@ -92,7 +113,7 @@ export const useProcessStore = create<ProcessStoreState>()((set) => ({
     const now = Date.now();
 
     set((state) => ({
-      processes: [
+      processes: _retainRecentProcesses([
         ...state.processes.filter((process) => process.id !== id),
         {
           id,
@@ -101,13 +122,14 @@ export const useProcessStore = create<ProcessStoreState>()((set) => ({
           message: input.message,
           progress: input.progress ?? null,
           status: 'running',
+          paused: false,
           canStop: input.canStop ?? false,
+          canPause: input.canPause ?? false,
           stopping: false,
-          briefSuccess: input.briefSuccess,
           startedAt: now,
           updatedAt: now,
         },
-      ],
+      ]),
     }));
 
     return id;
@@ -121,28 +143,44 @@ export const useProcessStore = create<ProcessStoreState>()((set) => ({
     })),
 
   finishProcess: (id, result) =>
-    set((state) => ({
-      processes: state.processes.map((process) =>
+    set((state) => {
+      const updated = state.processes.map((process) =>
         process.id === id
           ? {
               ...process,
               status: result.status,
+              paused: false,
               message: result.message ?? process.message,
               error: result.error,
               warnings: result.warnings ?? process.warnings,
               successAction: result.successAction,
               progress: result.status === 'success' ? 1 : process.progress,
+              progressCurrent:
+                result.status === 'success' && process.progressTotal !== undefined
+                  ? process.progressTotal
+                  : process.progressCurrent,
               stopping: false,
               updatedAt: Date.now(),
               finishedAt: Date.now(),
             }
           : process,
-      ),
-    })),
+      );
+      const finished = updated.find((process) => process.id === id);
+      return {
+        processes: _retainRecentProcesses(
+          finished ? [finished, ...updated.filter((process) => process.id !== id)] : updated,
+        ),
+      };
+    }),
 
   removeProcess: (id) =>
     set((state) => ({
       processes: state.processes.filter((process) => process.id !== id),
+    })),
+
+  clearFinishedProcesses: () =>
+    set((state) => ({
+      processes: selectActiveProcesses(state.processes),
     })),
 }));
 

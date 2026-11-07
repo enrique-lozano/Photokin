@@ -1,6 +1,8 @@
 mod blocking;
 mod fs_walk;
 mod image;
+pub mod jpeg_encode;
+pub mod jpeg_lossless;
 mod video;
 
 pub use blocking::run_blocking;

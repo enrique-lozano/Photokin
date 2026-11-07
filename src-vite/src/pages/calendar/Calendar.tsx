@@ -1,4 +1,9 @@
-import { IconCalendarMonth, IconCalendarSearch } from '@tabler/icons-react';
+import {
+  IconCalendarMonth,
+  IconCalendarSearch,
+  IconChevronLeft,
+  IconChevronRight,
+} from '@tabler/icons-react';
 import { usePageChrome } from '@/components/page-content/usePageChrome';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -23,8 +28,12 @@ import { CalendarMonthly } from './CalendarMonthly';
 import './calendar.css';
 import {
   CalendarSelection,
+  SelectionGranularity,
   WHOLE,
   buildSelectionSearchQuery,
+  getAdjacentSelection,
+  getSelectionGranularity,
+  getSelectionSummary,
   getSortedMonths,
   getSortedYears,
   groupDaySections,
@@ -53,6 +62,45 @@ function selectionTitle(selection: CalendarSelection): string {
     year: 'numeric',
     timeZone: 'UTC',
   });
+}
+
+function PeriodStepButton({
+  direction,
+  granularity,
+  target,
+  onSelect,
+}: {
+  direction: 'previous' | 'next';
+  granularity: SelectionGranularity;
+  target: CalendarSelection | null;
+  onSelect: (selection: CalendarSelection) => void;
+}) {
+  const label = `${direction === 'previous' ? 'Previous' : 'Next'} ${granularity}`;
+  const Icon = direction === 'previous' ? IconChevronLeft : IconChevronRight;
+
+  // Disabled buttons swallow hover, so the tooltip hangs off a wrapper.
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex" tabIndex={target ? undefined : 0}>
+          <Button
+            variant="subtle"
+            size="icon-sm"
+            aria-label={label}
+            disabled={!target}
+            onClick={() => target && onSelect(target)}
+          >
+            <Icon size={16} />
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        {target
+          ? label
+          : `No ${direction === 'previous' ? 'earlier' : 'later'} ${granularity} with photos or videos`}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function CalendarPage() {
@@ -227,6 +275,23 @@ export function CalendarPage() {
             <SecondaryTitleAndScrollableContent
               icon={<IconCalendarMonth />}
               title={selectionTitle(selection)}
+              subtitle={getSelectionSummary(calendarData, selection)}
+              actions={
+                <>
+                  <PeriodStepButton
+                    direction="previous"
+                    granularity={getSelectionGranularity(selection)}
+                    target={getAdjacentSelection(calendarData, selection, 'previous')}
+                    onSelect={setSelection}
+                  />
+                  <PeriodStepButton
+                    direction="next"
+                    granularity={getSelectionGranularity(selection)}
+                    target={getAdjacentSelection(calendarData, selection, 'next')}
+                    onSelect={setSelection}
+                  />
+                </>
+              }
               galleryLayout
               content={<TimelineGallery key={JSON.stringify(selection)} searchQuery={galleryQuery} />}
             />

@@ -8,9 +8,12 @@ export function editMetadataArgs(
   width: number,
   height: number,
   regions: { name: string; area: AreaBox }[],
+  keepMetadata = true,
 ): string[] {
   if ([source, target].some((path) => /[\r\n]/.test(path)))
     throw new Error('Unsupported line break in filename');
+  // The color profile is not metadata to the viewer: dropping it changes how the photo looks.
+  if (!keepMetadata) return ['-tagsFromFile', source, '-ICC_Profile', '-overwrite_original', target];
   const regionArgs = regions.length
     ? regionsWriteArgs({
         fullPath: target,

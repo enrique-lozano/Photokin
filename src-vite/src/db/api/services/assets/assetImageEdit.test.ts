@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   discardImageEditor,
   loadImageEditor,
+  planImageEditor,
   prepareImageEditor,
   previewImageEditor,
   saveImageEditor,
@@ -220,6 +221,89 @@ describe('photo editor save pipeline', () => {
     expect(mocks.refresh).toHaveBeenCalledWith('photo', 'C:/photos/photo.jpg');
   });
 
+  describe('lossless JPEG crop', () => {
+    const lossless = { ...initialEdit(1000, 800, 'jpg'), lossless: true };
+
+    it('plans the snapped area through the native command', async () => {
+      mocks.invoke.mockImplementation(async (command: string) => {
+        if (command === 'sha256_file') return 'unchanged';
+        if (command === 'plan_lossless_image_edit') return { x: 0, y: 0, width: 512, height: 400 };
+      });
+      await loadImageEditor('photo');
+      await expect(planImageEditor('photo', lossless)).resolves.toEqual({
+        x: 0,
+        y: 0,
+        width: 512,
+        height: 400,
+      });
+      expect(mocks.invoke).toHaveBeenCalledWith('plan_lossless_image_edit', {
+        sourcePath: 'C:/photos/photo.jpg',
+        edit: lossless,
+      });
+    });
+
+    it('is refused for non-JPEG sources and for other output formats', async () => {
+      await loadImageEditor('photo');
+      await expect(planImageEditor('photo', { ...lossless, format: 'png' })).rejects.toThrow('Lossless');
+      mocks.asset.mockResolvedValue({
+        ...(await mocks.asset()),
+        filename: 'photo.png',
+        fullPath: 'C:/photos/photo.png',
+      });
+      const png = await loadImageEditor('photo');
+      expect(png.canLossless).toBe(false);
+      await expect(prepareImageEditor('photo', { ...lossless, format: 'png' })).rejects.toThrow('Lossless');
+    });
+
+    it('moves faces with the snapped area and writes them only when details are kept', async () => {
+      mocks.invoke.mockImplementation(async (command: string) => {
+        if (command === 'sha256_file') return 'unchanged';
+        if (command === 'prepare_image_edit')
+          return {
+            tempPath: 'C:/photos/.photokin-edit-1.jpg',
+            sourceHash: 'unchanged',
+            width: 512,
+            height: 400,
+            bytes: 800,
+            losslessArea: { x: 0, y: 0, width: 512, height: 400 },
+          };
+      });
+      const regionArgs = () =>
+        (mocks.exif.mock.calls.at(-1)?.[0] as string[]).filter((arg) =>
+          arg.startsWith('-XMP-mwg-rs:RegionInfo={'),
+        );
+
+      await loadImageEditor('photo');
+      const kept = await prepareImageEditor('photo', lossless);
+      expect(regionArgs()).toHaveLength(1);
+      await saveImageEditor('photo', kept.token, true, 'ignored.jpg');
+      const regionUpdate = mocks.execute.mock.calls.find(([query]) => query.table === 'tagRegionInfo')?.[0];
+      expect(regionUpdate.changes.x).toBeCloseTo(300 / 512);
+
+      await loadImageEditor('photo');
+      await prepareImageEditor('photo', { ...lossless, keepMetadata: false });
+      expect(regionArgs()).toHaveLength(0);
+      expect(mocks.exif.mock.calls.at(-1)?.[0]).toEqual(
+        expect.arrayContaining(['-tagsFromFile', '-ICC_Profile']),
+      );
+      expect(mocks.exif.mock.calls.at(-1)?.[0]).not.toContain('-all:all');
+    });
+
+    it('tolerates only the nothing-to-copy warning when details are dropped', async () => {
+      await loadImageEditor('photo');
+      mocks.exif.mockImplementation(async (_args: string[], onStderr: (line: string) => void) => {
+        onStderr('Warning: No writable tags set from C:/photos/photo.jpg');
+        return { code: 0, stdout: '' };
+      });
+      await expect(
+        prepareImageEditor('photo', { ...initialEdit(1000, 800, 'jpg'), keepMetadata: false }),
+      ).resolves.toBeDefined();
+      await expect(prepareImageEditor('photo', initialEdit(1000, 800, 'jpg'))).rejects.toThrow(
+        'Metadata could not be preserved',
+      );
+    });
+  });
+
   it('samples compression without staging a save or copying metadata, and cleans up on discard', async () => {
     await loadImageEditor('photo');
     const result = await previewImageEditor('photo', { ...initialEdit(1000, 800, 'jpg'), quality: 80 });
@@ -228,6 +312,8 @@ describe('photo editor save pipeline', () => {
       sourcePath: 'C:/photos/photo.jpg',
       format: 'jpg',
       quality: 80,
+      jpegSubsampling: '444',
+      optimizeJpeg: true,
     });
     expect(mocks.exif).not.toHaveBeenCalled();
     expect(mocks.invoke.mock.calls.some(([command]) => command === 'prepare_image_edit')).toBe(false);
@@ -241,15 +327,40 @@ describe('photo editor save pipeline', () => {
       filename: 'photo.heic',
       fullPath: 'C:/photos/photo.heic',
     });
+
     await loadImageEditor('photo');
     await previewImageEditor('photo', initialEdit(1000, 800, 'jpg'));
     expect(mocks.invoke).toHaveBeenCalledWith('preview_image_edit', {
       sourcePath: 'C:/cache/full.webp',
       format: 'jpg',
       quality: 92,
+      jpegSubsampling: '444',
+      optimizeJpeg: true,
     });
     await expect(previewImageEditor('photo', initialEdit(1000, 800, 'png'))).rejects.toThrow('JPEG copy');
   });
+
+  it.each([
+    ['444', true],
+    ['422', false],
+    ['420', true],
+  ] as const)(
+    'uses the same JPEG options in preview and save: %s / optimize %s',
+    async (jpegSubsampling, optimizeJpeg) => {
+      await loadImageEditor('photo');
+      const edit = { ...initialEdit(1000, 800, 'jpg'), jpegSubsampling, optimizeJpeg };
+      await previewImageEditor('photo', edit);
+      await prepareImageEditor('photo', edit);
+      expect(mocks.invoke).toHaveBeenCalledWith('preview_image_edit', {
+        sourcePath: 'C:/photos/photo.jpg',
+        format: 'jpg',
+        quality: 92,
+        jpegSubsampling,
+        optimizeJpeg,
+      });
+      expect(mocks.invoke).toHaveBeenCalledWith('prepare_image_edit', expect.objectContaining({ edit }));
+    },
+  );
 
   it('discards the staged file and never commits when metadata preservation fails', async () => {
     await loadImageEditor('photo');

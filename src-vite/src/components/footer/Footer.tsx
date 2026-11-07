@@ -79,58 +79,64 @@ export function OutletFooter() {
 
   return (
     <footer className="outlet-footer">
-      <div className="footer-content">
-        <div className="footer-left">
-          <SyncStatusIndicator sync={sync} isSyncing={isSyncing} />
-          <VerticalDivider className="h-3.5" />
-          <MetadataModeChip sync={sync} isSyncing={isSyncing} />
-          <ProcessFooterIndicator />
-          {status?.pending && (
-            <span className="footer-page-pending">
-              <span className="text-destructive-text font-semibold">
-                {status.pending.count.toLocaleString()} to remove
-              </span>
-              <span className="text-muted-foreground">·</span>
-              <span className="text-success font-semibold">
-                frees {formatBytes(status.pending.freesBytes)}
-              </span>
-            </span>
-          )}
-        </div>
-
-        <div className="footer-right">
-          {slider && (
-            <div className="footer-gallery-size-control">
-              <IconGrid3x3 size={14} className="text-muted-foreground" aria-hidden="true" />
-              <Slider
-                min={slider.min}
-                max={slider.max}
-                step={slider.step}
-                value={[slider.value]}
-                onValueChange={([next]) => slider.onChange(next)}
-                className="footer-gallery-size-slider"
-                aria-label={slider.ariaLabel}
-              />
-              <IconSquare size={14} className="text-muted-foreground" aria-hidden="true" />
+      <ProcessFooterIndicator
+        renderIndicators={(process, notification) => (
+          <div className="footer-content">
+            <div className="footer-left">
+              <SyncStatusIndicator sync={sync} isSyncing={isSyncing} />
+              <VerticalDivider className="h-3.5" />
+              <MetadataModeChip sync={sync} isSyncing={isSyncing} />
+              {process}
+              {status?.pending && (
+                <span className="footer-page-pending">
+                  <span className="text-destructive-text font-semibold">
+                    {status.pending.count.toLocaleString()} to remove
+                  </span>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-success font-semibold">
+                    frees {formatBytes(status.pending.freesBytes)}
+                  </span>
+                </span>
+              )}
             </div>
-          )}
-          {slider && readout && <VerticalDivider className="h-3.5" />}
-          {readout}
-          <DonateBadge />
-          {import.meta.env.DEV && (
-            <Badge asChild variant="outline">
-              <button
-                type="button"
-                title="Open component gallery in a new window (dev only)"
-                onClick={() => void openComponentsWindow()}
-              >
-                <IconComponents />
-                UI kit
-              </button>
-            </Badge>
-          )}
-        </div>
-      </div>
+
+            <div className="footer-right">
+              <DonateBadge />
+              {import.meta.env.DEV && (
+                <Badge asChild variant="outline">
+                  <button
+                    type="button"
+                    title="Open component gallery in a new window (dev only)"
+                    onClick={() => void openComponentsWindow()}
+                  >
+                    <IconComponents />
+                    UI kit
+                  </button>
+                </Badge>
+              )}
+              {slider && (
+                <div className="footer-gallery-size-control">
+                  <IconGrid3x3 size={14} className="text-muted-foreground" aria-hidden="true" />
+                  <Slider
+                    min={slider.min}
+                    max={slider.max}
+                    step={slider.step}
+                    value={[slider.value]}
+                    onValueChange={([next]) => slider.onChange(next)}
+                    className="footer-gallery-size-slider"
+                    aria-label={slider.ariaLabel}
+                  />
+                  <IconSquare size={14} className="text-muted-foreground" aria-hidden="true" />
+                </div>
+              )}
+              {slider && readout && <VerticalDivider className="h-3.5" />}
+              {readout}
+              <VerticalDivider className="h-3.5" />
+              {notification}
+            </div>
+          </div>
+        )}
+      />
     </footer>
   );
 }

@@ -113,8 +113,6 @@ function _rateSelection(value: number, title: string, success: (rated: number) =
         kind: ProcessKind.Generic,
         title: `${title} · ${_photosLabel(selectedImages.length)}`,
         progress: 0,
-        // Re-rating (or Favorite ⇄ Unfavorite) undoes it just as quickly.
-        briefSuccess: true,
         successMessage: ({ rated }) => success(rated),
         getWarnings: ({ failures }) =>
           [...failures].map(([id, message]) => `${filenameById.get(id) ?? id}: ${message}`),

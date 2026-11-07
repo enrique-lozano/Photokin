@@ -45,6 +45,7 @@ fn main() {
             generate_image_thumbnail,
             generate_image_preview,
             prepare_image_edit,
+            plan_lossless_image_edit,
             preview_image_edit,
             clear_image_edit_preview,
             commit_image_edit,

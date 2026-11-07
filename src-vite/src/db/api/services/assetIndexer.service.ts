@@ -123,6 +123,9 @@ export async function syncFilesAndDirsOf(params: {
     reporter?.update({
       message: `Scanning folders · ${scannedAlbums}/${totalAlbums}`,
       progress: totalAlbums > 0 ? scannedAlbums / totalAlbums : null,
+      progressCurrent: scannedAlbums,
+      progressTotal: totalAlbums,
+      progressUnit: 'folders',
     });
 
     await _registerNewSubAlbums(album, filesToAdd, unsupportedExtensions);
@@ -162,6 +165,9 @@ export async function syncFilesAndDirsOf(params: {
         reporter?.update({
           message: `Reading changed files · ${processed}/${total}`,
           progress: total > 0 ? processed / total : null,
+          progressCurrent: processed,
+          progressTotal: total,
+          progressUnit: 'files',
         }),
     );
     changedCount = reloaded;
@@ -178,6 +184,9 @@ export async function syncFilesAndDirsOf(params: {
       reporter?.update({
         message: `Rebuilding thumbnails · ${index + 1}/${toThumbnail.length}`,
         progress: toThumbnail.length > 0 ? (index + 1) / toThumbnail.length : null,
+        progressCurrent: index + 1,
+        progressTotal: toThumbnail.length,
+        progressUnit: 'files',
       });
 
       try {
@@ -206,6 +215,9 @@ export async function syncFilesAndDirsOf(params: {
       reporter?.update({
         message: `Writing metadata to files · ${processed}/${total}`,
         progress: total > 0 ? processed / total : null,
+        progressCurrent: processed,
+        progressTotal: total,
+        progressUnit: 'files',
       }),
     );
     writeBackFailedCount = failures.size;

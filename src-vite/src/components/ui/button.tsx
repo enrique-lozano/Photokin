@@ -27,6 +27,8 @@ const buttonVariants = cva(
         'outline-primary':
           'border border-primary/30 bg-primary/6 text-foreground hover:bg-primary/12 [&_svg]:text-primary',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+        subtle:
+          'bg-secondary-navbar-foreground/6 text-muted-foreground hover:bg-secondary-navbar-foreground/12 hover:text-secondary-navbar-foreground data-[state=open]:bg-secondary-navbar-foreground/12 data-[state=open]:text-secondary-navbar-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },

@@ -166,6 +166,19 @@ function toPlaceItem(section: PlaceSection): PlaceListItem {
   };
 }
 
+/**
+ * Region + country for a place, or a country's place count. Falls back to
+ * saying what the location lacks, so the hero always has a subtitle.
+ */
+function _placeSubtitle(country: CountryGroup | null, place: PlaceListItem | null): string | undefined {
+  if (country) return `${country.places.length} ${country.places.length === 1 ? 'place' : 'places'}`;
+  if (!place) return undefined;
+  if (place.secondaryLabel) return place.secondaryLabel;
+  if (place.city) return 'No country recorded';
+  if (place.country) return 'No city recorded';
+  return 'No location details recorded';
+}
+
 export function PlacesPage() {
   return (
     <ImportStatusProvider>
@@ -557,7 +570,7 @@ function PlacesContent() {
             <SecondaryTitleAndScrollableContent
               icon={area ? <IconMap /> : selectedCountry ? <IconWorld /> : <IconMapPin />}
               title={area ? 'Map area' : (selectedCountry?.label ?? selectedPlace?.primaryLabel)}
-              subtitle={area ? 'Photos with GPS coordinates' : selectedPlace?.secondaryLabel}
+              subtitle={area ? 'Photos with GPS coordinates' : _placeSubtitle(selectedCountry, selectedPlace)}
               filters={chipsFilter}
               galleryLayout
               content={

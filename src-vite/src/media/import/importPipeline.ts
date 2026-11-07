@@ -49,7 +49,13 @@ async function _drain(
         batch,
         (current) => {
           const { done, progress } = overallProgress(processed, current, metadataTotal);
-          reporter?.update({ message: `Reading metadata · ${done}/${metadataTotal} files`, progress });
+          reporter?.update({
+            message: `Reading metadata · ${done}/${metadataTotal} files`,
+            progress,
+            progressCurrent: done,
+            progressTotal: metadataTotal,
+            progressUnit: 'files',
+          });
         },
         { place: 'defer' },
       );

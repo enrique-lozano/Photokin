@@ -137,8 +137,11 @@ export function useFaceScanActions(): FaceScanActions {
             return { detect, recognize };
           },
         ).catch((error) => {
-          if (isProcessStopped(error) && photosBeforeStop > MIN_STOPPED_PHOTOS_TO_MEASURE) {
-            recordDetectRun(photosBeforeStop);
+          if (isProcessStopped(error)) {
+            if (photosBeforeStop > MIN_STOPPED_PHOTOS_TO_MEASURE) {
+              recordDetectRun(photosBeforeStop);
+            }
+            return;
           }
           throw error;
         });
@@ -162,11 +165,16 @@ export function useFaceScanActions(): FaceScanActions {
             );
             return recognizeFaces(assets, options, reporter);
           },
-        );
+        ).catch((error) => {
+          if (isProcessStopped(error)) return;
+          throw error;
+        });
 
-        useFaceRunRateStore
-          .getState()
-          .recordMatchRun(summary.checkedFaces, (performance.now() - startedAt) / 1000);
+        if (summary) {
+          useFaceRunRateStore
+            .getState()
+            .recordMatchRun(summary.checkedFaces, (performance.now() - startedAt) / 1000);
+        }
       },
     }),
     [],

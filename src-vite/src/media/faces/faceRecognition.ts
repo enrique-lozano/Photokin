@@ -267,6 +267,9 @@ export async function detectFaces(
     reporter?.update({
       message: `Detecting faces in ${totalPhotos} photo${totalPhotos === 1 ? '' : 's'} · ${scannedPhotos}/${totalPhotos}${faceSuffix}`,
       progress: totalPhotos > 0 ? scannedPhotos / totalPhotos : null,
+      progressCurrent: scannedPhotos,
+      progressTotal: totalPhotos,
+      progressUnit: 'photos',
     });
   };
 

@@ -39,6 +39,19 @@ the next time it syncs:
 Folders on a disconnected drive are left unchanged. Their photos aren't treated
 as deleted, and they come back when you reconnect the drive.
 
+### Background tasks
+
+Open **Background tasks** from the task or notification icon in the footer.
+Finished tasks show their outcome; active tasks show progress. Choose
+**Clear finished** to remove completed results without stopping active or
+paused tasks.
+
+Search indexing can be paused between batches; the current batch finishes
+first. Other tasks can be canceled when safe, but canceling doesn't undo work
+already saved. If items were skipped, choose **View details** in the warning
+notification or open the task's skipped items. **Undo**, when offered, works
+once from either the notification or task row.
+
 ### What counts as a change
 
 New, renamed and deleted photos are always detected. For photos you edit in

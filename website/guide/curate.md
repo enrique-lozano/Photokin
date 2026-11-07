@@ -59,6 +59,28 @@ For quick fixes, select a photo and choose **Edit photo…**. The editor offers:
 - **File format** and **Photo quality** when saving.
 - **Compare with original** to check your changes.
 
+### Quality and file size
+
+For JPEG photos, **Keep original quality** crops, rotates and flips without
+recompressing the image. Crop edges snap to JPEG blocks; rotating or flipping
+can trim partial blocks at an edge. Check **Output size** and any adjustment
+notice before saving.
+
+Turn it off to use the **Quality** slider and reduce file size. Even quality
+100 recompresses a JPEG; it cannot restore detail already lost. PNG saves
+without lossy compression and has no quality slider.
+
+When recompressing a JPEG, expand **Advanced JPEG settings**:
+
+- **Color detail:** **Full (4:4:4)** is the default. **Balanced (4:2:2)** and
+  **Smaller files (4:2:0)** reduce color resolution to save space; fine colored
+  edges or text may soften. Image dimensions do not change.
+- **Optimize file size:** on by default. Optimizes Huffman coding without
+  additional image-quality loss, at the cost of extra encoding work.
+
+The preview and size estimate use these choices. Original-quality JPEG editing
+preserves the source's color sampling and already optimizes Huffman coding.
+
 ### Saving
 
 - **Save as copy** (the default) creates a new file next to the original and
@@ -67,8 +89,10 @@ For quick fixes, select a photo and choose **Edit photo…**. The editor offers:
   use it when you have a backup. It's available only when the photo can be
   safely rewritten in the same format.
 
-Camera, date, location, keywords and color profile are copied to the edited
-photo where the format allows, and face areas are adjusted to the new crop.
+**Keep photo details** copies camera, date, location and keywords where the
+format allows, and face areas are adjusted to the new crop. Turn it off to omit
+these details from the saved file; Photokin's library records are not erased.
+The color profile is kept either way so colors display consistently.
 
 ::: warning Rotating changes the file
 Rotating a photo from the selection menu updates the original file (its

@@ -102,8 +102,24 @@ async function _indexAssets(
   onProgress?.(assets.length, assets.length, 'embedding');
 }
 
+async function _queueIndexWork<T>(reporter: ProcessReporter, work: () => Promise<T>): Promise<T> {
+  while (true) {
+    await reporter.waitIfPaused();
+    const attempt = await appTaskQueue.add(
+      async () => {
+        reporter.throwIfStopped();
+        if (reporter.paused) return { paused: true } as const;
+        return { paused: false, result: await work() } as const;
+      },
+      { signal: reporter.signal },
+    );
+    if (!attempt.paused) return attempt.result;
+  }
+}
+
 async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Promise<number> {
-  const { ids, modelId } = await appTaskQueue.add(
+  const { ids, modelId } = await _queueIndexWork(
+    reporter,
     async () => {
       reporter.throwIfStopped();
       const modelId = useSmartSearchSettingsStore.getState().activeModel;
@@ -117,7 +133,6 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
       const ids = await _unindexedAssetIds();
       return { ids, modelId };
     },
-    { signal: reporter.signal },
   );
   const total = ids.length;
   if (total === 0) return 0;
@@ -127,10 +142,12 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
 
   try {
     for (const batchIds of chunked(ids, INDEX_BATCH_SIZE)) {
+      await reporter.waitIfPaused();
       reporter.throwIfStopped();
       const alreadyConsidered = considered;
 
-      await appTaskQueue.add(
+      await _queueIndexWork(
+        reporter,
         async () => {
           reporter.throwIfStopped();
           const assets = await AssetsService.getFiles({ assetIds: batchIds });
@@ -139,7 +156,13 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
             const progress = (alreadyConsidered + phaseWork) / Math.max(1, total);
             const overall = Math.min(total, Math.floor(alreadyConsidered + phaseWork));
             const action = phase === 'preparing' ? 'Preparing images for search' : 'Indexing for search';
-            reporter.update({ message: `${action} · ${overall}/${total}`, progress });
+            reporter.update({
+              message: `${action} · ${overall}/${total}`,
+              progress,
+              progressCurrent: overall,
+              progressTotal: total,
+              progressUnit: 'photos',
+            });
           });
           reporter.throwIfStopped();
 
@@ -147,9 +170,14 @@ async function _indexPendingAssetsInQueuedBatches(reporter: ProcessReporter): Pr
           // as considered, so the bar reaches the end of a partially indexable batch.
           considered = alreadyConsidered + batchIds.length;
           const { progress } = overallProgress(considered, 0, total);
-          reporter.update({ message: `Indexing for search · ${considered}/${total}`, progress });
+          reporter.update({
+            message: `Indexing for search · ${considered}/${total}`,
+            progress,
+            progressCurrent: considered,
+            progressTotal: total,
+            progressUnit: 'photos',
+          });
         },
-        { signal: reporter.signal },
       );
     }
   } finally {
@@ -192,7 +220,8 @@ export function startBackgroundIndexing(options: { rebuild?: boolean; startup?: 
       kind: ProcessKind.Generic,
       title: INDEXING_PROCESS_TITLE,
       canStop: true,
-      successMessage: false,
+      canPause: true,
+      successMessage: 'Search indexing complete',
       errorMessage: (error) => `Could not index for search: ${String(error)}`,
     },
     (reporter) => _indexPendingAssetsInQueuedBatches(reporter),

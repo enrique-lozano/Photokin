@@ -12,6 +12,16 @@ it('copies all writable metadata and ICC before fixing geometry and stale previe
   expect(args.at(-1)).toBe('output.jpg');
 });
 
+it('keeps only the ICC profile when photo details are not kept', () => {
+  expect(editMetadataArgs('source.jpg', 'output.jpg', 640, 480, [], false)).toEqual([
+    '-tagsFromFile',
+    'source.jpg',
+    '-ICC_Profile',
+    '-overwrite_original',
+    'output.jpg',
+  ]);
+});
+
 it('rewrites confirmed regions after clearing stale ones and rejects argfile injection', () => {
   const args = editMetadataArgs('source.jpg', 'output.jpg', 640, 480, [
     { name: 'Someone', area: { x: 0.5, y: 0.5, w: 0.2, h: 0.2 } },

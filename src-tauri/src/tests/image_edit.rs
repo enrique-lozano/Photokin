@@ -10,6 +10,9 @@ fn edit() -> ImageEdit {
         height: 6,
         format: "png".into(),
         quality: 92,
+        jpeg_subsampling: JpegSubsampling::default(),
+        optimize_jpeg: true,
+        lossless: false,
     }
 }
 
@@ -90,8 +93,15 @@ fn quality_samples_reflect_compression_and_preserve_the_display_profile() {
         ])
     }));
     for format in ["jpg", "png", "webp"] {
-        let (display, bytes) =
-            encode_preview(&image, format.into(), 80, b"test color profile").unwrap();
+        let (display, bytes) = encode_preview(
+            &image,
+            format.into(),
+            80,
+            b"test color profile",
+            JpegSubsampling::default(),
+            true,
+        )
+        .unwrap();
         assert!(bytes > 0);
         let reader = ImageReader::new(std::io::Cursor::new(&display))
             .with_guessed_format()
@@ -103,12 +113,105 @@ fn quality_samples_reflect_compression_and_preserve_the_display_profile() {
             b"test color profile"
         );
     }
-    let (low, low_bytes) = encode_preview(&image, "jpg".into(), 20, &[]).unwrap();
-    let (high, high_bytes) = encode_preview(&image, "jpg".into(), 95, &[]).unwrap();
+    let (low, low_bytes) = encode_preview(
+        &image,
+        "jpg".into(),
+        20,
+        &[],
+        JpegSubsampling::default(),
+        true,
+    )
+    .unwrap();
+    let (high, high_bytes) = encode_preview(
+        &image,
+        "jpg".into(),
+        95,
+        &[],
+        JpegSubsampling::default(),
+        true,
+    )
+    .unwrap();
     assert!(low_bytes < high_bytes);
     assert_ne!(low, high);
-    assert!(encode_preview(&image, "jpg".into(), 0, &[]).is_err());
-    assert!(encode_preview(&image, "jpg".into(), 101, &[]).is_err());
+    assert!(encode_preview(
+        &image,
+        "jpg".into(),
+        0,
+        &[],
+        JpegSubsampling::default(),
+        true
+    )
+    .is_err());
+    assert!(encode_preview(
+        &image,
+        "jpg".into(),
+        101,
+        &[],
+        JpegSubsampling::default(),
+        true
+    )
+    .is_err());
+}
+
+#[test]
+fn jpeg_preview_and_save_use_identical_encoder_settings() {
+    let image = DynamicImage::ImageRgb8(image::RgbImage::from_fn(31, 25, |x, y| {
+        image::Rgb([
+            ((x * 71 + y * 17) % 256) as u8,
+            ((x * 31 + y * 61) % 256) as u8,
+            ((x * 13 + y * 23) % 256) as u8,
+        ])
+    }));
+    for sampling in [
+        JpegSubsampling::S444,
+        JpegSubsampling::S422,
+        JpegSubsampling::S420,
+    ] {
+        for optimize in [false, true] {
+            let settings = ImageEdit {
+                format: "jpg".into(),
+                jpeg_subsampling: sampling,
+                optimize_jpeg: optimize,
+                ..edit()
+            };
+            let saved = encode(&image, &settings).unwrap();
+            let (preview, bytes) = encode_preview(
+                &image,
+                settings.format,
+                settings.quality,
+                &[],
+                sampling,
+                optimize,
+            )
+            .unwrap();
+            assert_eq!(bytes, saved.len() as u64);
+            assert_eq!(
+                image::load_from_memory(&preview).unwrap().to_rgb8(),
+                image::load_from_memory(&saved).unwrap().to_rgb8(),
+            );
+        }
+    }
+}
+
+#[test]
+fn legacy_edits_default_to_444_and_optimized_huffman() {
+    let legacy = serde_json::json!({
+        "turns": 0, "flipHorizontal": false, "flipVertical": false,
+        "crop": [0.0, 0.0, 1.0, 1.0], "width": 8, "height": 6,
+        "format": "jpg", "quality": 85
+    });
+    let defaults: ImageEdit = serde_json::from_value(legacy.clone()).unwrap();
+    assert_eq!(defaults.jpeg_subsampling, JpegSubsampling::S444);
+    assert!(defaults.optimize_jpeg);
+    assert!(!defaults.lossless);
+    let mut explicit = legacy;
+    explicit["jpegSubsampling"] = serde_json::json!("422");
+    explicit["optimizeJpeg"] = serde_json::json!(false);
+    let settings: ImageEdit = serde_json::from_value(explicit.clone()).unwrap();
+    assert_eq!(settings.jpeg_subsampling, JpegSubsampling::S422);
+    assert!(!settings.optimize_jpeg);
+    explicit["jpegSubsampling"] = serde_json::json!("411");
+    assert!(serde_json::from_value::<ImageEdit>(explicit).is_err());
 }
 
 #[test]
@@ -119,14 +222,20 @@ fn preview_cache_is_bounded_read_only_and_cleans_its_temporary_files() {
     let source_path = source.to_string_lossy().into_owned();
     tauri::async_runtime::block_on(async {
         clear_image_edit_preview().await.unwrap();
-        let first = preview_image_edit(source_path.clone(), "jpg".into(), 80)
+        let first = preview_image_edit(source_path.clone(), "jpg".into(), 80, None, None)
             .await
             .unwrap();
         assert_eq!((first.width, first.height), (1600, 800));
-        let second = preview_image_edit(source_path.clone(), "jpg".into(), 60)
-            .await
-            .unwrap();
-        let third = preview_image_edit(source_path.clone(), "png".into(), 100)
+        let second = preview_image_edit(
+            source_path.clone(),
+            "jpg".into(),
+            60,
+            Some(JpegSubsampling::S420),
+            Some(false),
+        )
+        .await
+        .unwrap();
+        let third = preview_image_edit(source_path.clone(), "png".into(), 100, None, None)
             .await
             .unwrap();
         assert!(!Path::new(&first.preview_path).exists());
@@ -327,6 +436,88 @@ fn demo_orientation_samples_edit_to_each_supported_format() {
             }
         }
     }
+    std::fs::remove_dir_all(directory).unwrap();
+}
+
+#[test]
+fn lossless_edit_keeps_jpeg_blocks_and_reports_the_snapped_area() {
+    let sample = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../demo/exif-samples/jpg/orientation/landscape_6.jpg");
+    let directory = std::env::temp_dir().join(format!("photokin-lossless-{}", std::process::id()));
+    std::fs::create_dir_all(&directory).unwrap();
+    let source = directory.join("photo.jpg");
+    std::fs::copy(&sample, &source).unwrap();
+    let source_path = source.to_string_lossy().into_owned();
+    let settings = ImageEdit {
+        turns: 1,
+        crop: [0.1, 0.2, 0.5, 0.6],
+        lossless: true,
+        format: "jpg".into(),
+        ..edit()
+    };
+    tauri::async_runtime::block_on(async {
+        let planned = plan_lossless_image_edit(source_path.clone(), settings.clone())
+            .await
+            .unwrap();
+        let prepared = prepare_image_edit(source_path.clone(), None, settings.clone())
+            .await
+            .unwrap();
+        let area = prepared.lossless_area.unwrap();
+        assert_eq!(area, planned);
+        assert_eq!((prepared.width, prepared.height), (area.width, area.height));
+        let bytes = std::fs::read(&prepared.temp_path).unwrap();
+        for sampling in [
+            JpegSubsampling::S444,
+            JpegSubsampling::S422,
+            JpegSubsampling::S420,
+        ] {
+            for optimize in [false, true] {
+                let (same_jpeg, same_area) = lossless_edit(
+                    &source_path,
+                    &ImageEdit {
+                        jpeg_subsampling: sampling,
+                        optimize_jpeg: optimize,
+                        ..settings.clone()
+                    },
+                )
+                .unwrap();
+                assert_eq!(same_jpeg, bytes);
+                assert_eq!(same_area, area);
+            }
+        }
+        assert_eq!(
+            image::guess_format(&bytes).unwrap(),
+            image::ImageFormat::Jpeg
+        );
+        let output = image::load_from_memory(&bytes).unwrap();
+        assert_eq!((output.width(), output.height()), (area.width, area.height));
+        assert!(bytes.len() < std::fs::metadata(&source).unwrap().len() as usize);
+        discard_image_edit(source_path.clone(), prepared.temp_path)
+            .await
+            .unwrap();
+
+        for refused in [
+            ImageEdit {
+                format: "png".into(),
+                ..settings.clone()
+            },
+            ImageEdit {
+                crop: [0.0, 0.0, 1.5, 1.0],
+                ..settings.clone()
+            },
+        ] {
+            assert!(prepare_image_edit(source_path.clone(), None, refused)
+                .await
+                .is_err());
+        }
+        let png = directory.join("photo.png");
+        image::DynamicImage::new_rgb8(8, 8).save(&png).unwrap();
+        assert!(
+            plan_lossless_image_edit(png.to_string_lossy().into_owned(), settings)
+                .await
+                .is_err()
+        );
+    });
     std::fs::remove_dir_all(directory).unwrap();
 }
 

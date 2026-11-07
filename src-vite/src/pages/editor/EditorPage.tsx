@@ -1,4 +1,5 @@
 import { WindowControls } from '@/components/app-shell/WindowControls';
+import { SettingsToggleRow } from '@/components/settings/SettingsRow';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,8 +30,16 @@ import {
   transformedSize,
   transformRegion,
   type ImageEdit,
+  type PixelArea,
 } from '@/media/edit/editGeometry';
-import { estimateEditBytes, fileSizeChange, QUALITY_MARKS, qualityLabel } from '@/media/edit/editPreview';
+import {
+  estimateEditBytes,
+  estimateLosslessBytes,
+  fileSizeChange,
+  QUALITY_DIMINISHING_RETURNS,
+  QUALITY_MARKS,
+  qualityLabel,
+} from '@/media/edit/editPreview';
 import {
   requestEditor,
   type EditorData,
@@ -48,6 +57,7 @@ import {
   IconEye,
   IconFlipHorizontal,
   IconFlipVertical,
+  IconInfoCircle,
   IconLoader2,
   IconRestore,
   IconRotate,
@@ -56,7 +66,7 @@ import {
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { platform } from '@tauri-apps/plugin-os';
-import { useEffect, useRef, useState } from 'react';
+import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import ReactCrop, { centerCrop, makeAspectCrop, type PercentCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import './editor.css';
@@ -77,6 +87,32 @@ function EditorTitleBar({ filename }: { filename?: string }) {
         {filename ? `Edit - ${filename}` : 'Photo editor'}
       </h1>
       <WindowControls />
+    </div>
+  );
+}
+
+function startingEdit(data: EditorData): ImageEdit {
+  return { ...initialEdit(data.width, data.height, data.format), lossless: data.canLossless };
+}
+
+function EditorHelp({ label, children }: { label: string; children: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button type="button" variant="ghost" size="icon-xs" aria-label={`About ${label}`}>
+          <IconInfoCircle size={15} aria-hidden />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">{children}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function EditorToggle({ help, ...props }: ComponentProps<typeof SettingsToggleRow> & { help: string }) {
+  return (
+    <div className="editor-toggle">
+      <SettingsToggleRow {...props} />
+      <EditorHelp label={props.label}>{help}</EditorHelp>
     </div>
   );
 }
@@ -110,9 +146,18 @@ export function EditorPage() {
   const filenameEdited = useRef(false);
   const dirty = useRef(false);
   const editKey = JSON.stringify(edit);
-  const previewFormat = edit?.format;
+  const previewFormat = edit?.lossless ? undefined : edit?.format;
   const previewQuality = previewFormat === 'png' ? 100 : edit?.quality;
-  const previewKey = `${previewFormat}:${previewQuality}`;
+  const previewSubsampling = previewFormat === 'jpg' ? edit?.jpegSubsampling : '444';
+  const previewOptimize = previewFormat === 'jpg' ? edit?.optimizeJpeg : true;
+  const previewKey = previewFormat
+    ? `${previewFormat}:${previewQuality}:${previewSubsampling}:${previewOptimize}`
+    : '';
+  const [losslessIssue, setLosslessIssue] = useState('');
+  const [plan, setPlan] = useState<{ key: string; area: PixelArea }>();
+  const planKey = edit?.lossless
+    ? JSON.stringify([edit.turns, edit.flipHorizontal, edit.flipVertical, edit.crop])
+    : '';
 
   useEffect(
     () => () => {
@@ -127,7 +172,7 @@ export function EditorPage() {
       .then((loaded) => {
         if (!active) return;
         setData(loaded);
-        setEdit(initialEdit(loaded.width, loaded.height, loaded.format));
+        setEdit(startingEdit(loaded));
         setFilename(`${loaded.filename.replace(/\.[^.]+$/, '')}_edited.${loaded.format}`);
       })
       .catch((failure: unknown) => {
@@ -156,7 +201,12 @@ export function EditorPage() {
       void requestEditor<EditorPreview>({
         action: 'preview',
         assetId,
-        edit: { ...initialEdit(data.width, data.height, previewFormat), quality: previewQuality },
+        edit: {
+          ...initialEdit(data.width, data.height, previewFormat),
+          quality: previewQuality,
+          jpegSubsampling: previewSubsampling ?? '444',
+          optimizeJpeg: previewOptimize ?? true,
+        },
       })
         .then((result) => {
           if (active) setPreview({ key: previewKey, data: result });
@@ -169,7 +219,37 @@ export function EditorPage() {
       active = false;
       window.clearTimeout(timeout);
     };
-  }, [assetId, data, sourceLoaded, previewFormat, previewQuality, previewKey]);
+  }, [
+    assetId,
+    data,
+    sourceLoaded,
+    previewFormat,
+    previewQuality,
+    previewSubsampling,
+    previewOptimize,
+    previewKey,
+  ]);
+
+  useEffect(() => {
+    if (!data || !edit?.lossless) return;
+    let active = true;
+    const timeout = window.setTimeout(() => {
+      void requestEditor<PixelArea>({ action: 'plan', assetId, edit })
+        .then((area) => {
+          if (active) setPlan({ key: planKey, area });
+        })
+        .catch((failure: unknown) => {
+          if (!active) return;
+          setLosslessIssue(String(failure));
+          setEdit((current) => current && { ...current, lossless: false });
+        });
+    }, 150);
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+    };
+    // Only geometry changes the planned area; other edit fields are irrelevant to it.
+  }, [assetId, data, planKey]);
 
   useEffect(() => {
     const releaseCompareKey = (event: KeyboardEvent) => {
@@ -289,8 +369,9 @@ export function EditorPage() {
               </CollapsibleTrigger>
               <CollapsiblePanel>
                 <p>
-                  Existing camera, date, location, keywords and color-profile data are copied where supported.
-                  Orientation, dimensions, previews and face regions are corrected for the edited photo.
+                  {edit.keepMetadata
+                    ? 'Existing camera, date, location, keywords and color-profile data are copied where supported. Orientation, dimensions, previews and face regions are corrected for the edited photo.'
+                    : 'Camera, date, location, keywords and face regions are not copied. The color profile is kept so colors look the same.'}
                 </p>
               </CollapsiblePanel>
             </Collapsible>
@@ -352,14 +433,29 @@ export function EditorPage() {
     width: edit.crop[2] * 100,
     height: edit.crop[3] * 100,
   };
+  const plannedArea = plan?.key === planKey && planKey ? plan.area : undefined;
+  const keptSize = edit.lossless && plannedArea ? plannedArea : crop;
+  const snapped =
+    keptSize.x !== crop.x ||
+    keptSize.y !== crop.y ||
+    keptSize.width !== crop.width ||
+    keptSize.height !== crop.height;
   const ready = prepared && preparedKey === editKey && !busy;
-  const sample = preview?.key === previewKey && !previewError ? preview.data : undefined;
-  const outputBytes = ready ? prepared.bytes : sample ? estimateEditBytes(sample, edit) : undefined;
+  const sample = !edit.lossless && preview?.key === previewKey && !previewError ? preview.data : undefined;
+  const outputBytes = ready
+    ? prepared.bytes
+    : edit.lossless
+      ? estimateLosslessBytes(data.bytes, data, keptSize)
+      : sample
+        ? estimateEditBytes(sample, edit)
+        : undefined;
   const sizeChange = outputBytes === undefined ? undefined : fileSizeChange(data.bytes, outputBytes);
   const estimated = !ready;
   const sizeDescription = ready
     ? 'Exact file size, including preserved photo details.'
-    : 'Estimated from a display-resolution compression sample. Image detail, cropping and preserved metadata can change the final size. Saving calculates the exact size before confirmation.';
+    : edit.lossless
+      ? 'Estimated from the part of the photo that is kept, without recompression. Saving calculates the exact size before confirmation.'
+      : 'Estimated from a display-resolution compression sample. Image detail, cropping and preserved metadata can change the final size. Saving calculates the exact size before confirmation.';
   const removedFaces = data.regions.filter(
     (region) => !transformRegion(region, edit, data.width, data.height),
   ).length;
@@ -697,7 +793,7 @@ export function EditorPage() {
               'Original photo. Release Compare or M to return to your edit.'
             ) : showCropPreview ? (
               'Cropped photo. Turn off Preview crop to adjust. Hold Compare or M to see the original.'
-            ) : !sample && !previewError && sourceLoaded ? (
+            ) : !edit.lossless && !sample && !previewError && sourceLoaded ? (
               <>
                 <IconLoader2 size={14} className="motion-safe:animate-spin" aria-hidden /> Updating photo
                 quality preview...
@@ -739,11 +835,17 @@ export function EditorPage() {
                 </Select>
               </label>
               <div className="editor-measure">
-                <span>Crop size</span>
+                <span>Output size</span>
                 <strong>
-                  {crop.width} x {crop.height} px
+                  {keptSize.width} x {keptSize.height} px
                 </strong>
               </div>
+              {edit.lossless && snapped && (
+                <p className="editor-hint">
+                  Edges adjusted to JPEG blocks to avoid recompression. Rotations or flips may trim partial
+                  edge blocks.
+                </p>
+              )}
               {removedFaces > 0 && (
                 <p className="editor-warning">
                   <IconAlertTriangle size={18} />
@@ -764,7 +866,11 @@ export function EditorPage() {
                     setFilename((current) =>
                       current ? `${current.replace(/\.[^.]*$/, '')}.${value}` : current,
                     );
-                    change({ ...edit, format: value });
+                    change({
+                      ...edit,
+                      format: value,
+                      lossless: value === 'jpg' && data.canLossless && !losslessIssue,
+                    });
                   }}
                 >
                   <SelectTrigger aria-label="File format">
@@ -787,57 +893,129 @@ export function EditorPage() {
                   </SelectContent>
                 </Select>
               </label>
-              {edit.format !== 'png' ? (
-                <>
-                  <div className="editor-quality">
-                    <div className="editor-measure">
-                      <span className="editor-quality-label">Photo quality</span>
-                      <strong>{edit.quality}%</strong>
-                    </div>
-                    <Slider
-                      min={1}
-                      max={100}
-                      step={1}
-                      value={[edit.quality]}
-                      onValueChange={([quality]) => change({ ...edit, quality })}
-                      aria-label="Photo quality"
-                      aria-valuetext={`${edit.quality}% - ${qualityLabel(edit.quality)}`}
-                      className="editor-quality-slider"
-                      disabled={saving || busy || comparing || !sourceLoaded}
-                    />
-                    <div className="editor-quality-marks">
-                      {QUALITY_MARKS.map(({ quality, label }) => (
-                        <Button
-                          key={quality}
-                          variant="ghost"
-                          size="xs"
-                          style={{ left: `${((quality - 1) / 99) * 100}%` }}
-                          className={
-                            qualityLabel(edit.quality) === label ? 'editor-quality-mark-active' : undefined
-                          }
-                          title={`Quality ${quality}`}
-                          aria-pressed={qualityLabel(edit.quality) === label}
-                          onClick={() => change({ ...edit, quality })}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </div>
-                    <p className="editor-hint">
-                      Saving compresses the photo again, even without edits. 100% may produce a larger file;
-                      it does not restore lost detail.
-                    </p>
-                  </div>
-                </>
-              ) : (
+              {data.canLossless && (
+                <EditorToggle
+                  label="Keep original quality"
+                  checked={edit.lossless}
+                  disabled={
+                    saving || busy || comparing || !sourceLoaded || edit.format !== 'jpg' || !!losslessIssue
+                  }
+                  onCheckedChange={(lossless) => {
+                    setPreviewError('');
+                    change({ ...edit, lossless });
+                  }}
+                  help="Crop, rotate or flip a JPEG without recompressing its image data. Crop edges snap to JPEG blocks; rotations and flips can trim partial edge blocks. Turn off to reduce quality and file size."
+                />
+              )}
+              {data.canLossless && (losslessIssue || edit.format !== 'jpg') && (
+                <p className="editor-hint" role={losslessIssue ? 'status' : undefined}>
+                  {losslessIssue
+                    ? 'Original-quality editing is unavailable for this photo. Saving will recompress it.'
+                    : 'Changing the file format requires re-encoding.'}
+                </p>
+              )}
+              {edit.format !== 'png' && !edit.lossless && (
                 <div className="editor-quality">
                   <div className="editor-measure">
-                    <span>Photo quality</span>
-                    <strong>Lossless</strong>
+                    <span className="editor-label-with-help">
+                      Quality
+                      <EditorHelp label="photo quality">
+                        Higher values keep more detail but increase file size. JPEG at 100 still recompresses
+                        the photo and cannot restore lost detail.
+                      </EditorHelp>
+                    </span>
+                    <strong>{edit.quality}%</strong>
                   </div>
-                  <p className="editor-hint">PNG keeps full image quality. No compression preview needed.</p>
+                  <Slider
+                    min={1}
+                    max={100}
+                    step={1}
+                    value={[edit.quality]}
+                    onValueChange={([quality]) => change({ ...edit, quality })}
+                    aria-label="Photo quality"
+                    aria-valuetext={`${edit.quality}% - ${qualityLabel(edit.quality)}`}
+                    className="editor-quality-slider"
+                    disabled={saving || busy || comparing || !sourceLoaded}
+                  />
+                  <div className="editor-quality-marks">
+                    {QUALITY_MARKS.map(({ quality, label }) => (
+                      <Button
+                        key={quality}
+                        variant="ghost"
+                        size="xs"
+                        className={
+                          qualityLabel(edit.quality) === label ? 'editor-quality-mark-active' : undefined
+                        }
+                        title={`Quality ${quality}`}
+                        aria-pressed={qualityLabel(edit.quality) === label}
+                        onClick={() => change({ ...edit, quality })}
+                      >
+                        {label}
+                      </Button>
+                    ))}
+                  </div>
+                  {edit.format === 'jpg' && edit.quality > QUALITY_DIMINISHING_RETURNS ? (
+                    <p className="editor-warning">
+                      <IconAlertTriangle size={18} />
+                      Very large files for diminishing gains. Even 100 recompresses the photo.
+                    </p>
+                  ) : null}
                 </div>
               )}
+              {edit.format === 'jpg' && !edit.lossless && (
+                <Collapsible className="editor-advanced">
+                  <CollapsibleTrigger className="editor-section-trigger">
+                    Advanced JPEG settings
+                    <CollapsibleChevron />
+                  </CollapsibleTrigger>
+                  <CollapsiblePanel>
+                    <div className="editor-advanced-fields">
+                      <div className="editor-option-row">
+                        <label htmlFor="editor-color-detail">Color detail</label>
+                        <Select
+                          value={edit.jpegSubsampling}
+                          onValueChange={(jpegSubsampling) => {
+                            if (
+                              jpegSubsampling === '444' ||
+                              jpegSubsampling === '422' ||
+                              jpegSubsampling === '420'
+                            )
+                              change({ ...edit, jpegSubsampling });
+                          }}
+                        >
+                          <SelectTrigger id="editor-color-detail" aria-label="Color detail">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="444">Full · 4:4:4</SelectItem>
+                            <SelectItem value="422">Balanced · 4:2:2</SelectItem>
+                            <SelectItem value="420">Smaller files · 4:2:0</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <EditorHelp label="color detail">
+                          Chroma subsampling reduces color resolution, not image dimensions. 4:4:4 keeps full
+                          color detail; 4:2:2 reduces it horizontally; 4:2:0 reduces it in both directions.
+                          Smaller files may soften fine colored edges or text.
+                        </EditorHelp>
+                      </div>
+                      <EditorToggle
+                        label="Optimize file size"
+                        checked={edit.optimizeJpeg}
+                        disabled={saving || busy || comparing || !sourceLoaded}
+                        onCheckedChange={(optimizeJpeg) => change({ ...edit, optimizeJpeg })}
+                        help="Optimizes JPEG Huffman coding without changing the decoded image. Usually saves space, with extra encoding work."
+                      />
+                    </div>
+                  </CollapsiblePanel>
+                </Collapsible>
+              )}
+              <EditorToggle
+                label="Keep photo details"
+                checked={edit.keepMetadata}
+                disabled={saving || busy || comparing || !sourceLoaded}
+                onCheckedChange={(keepMetadata) => change({ ...edit, keepMetadata })}
+                help="Copies camera, date, location and keywords (EXIF, IPTC and XMP) where the format allows. Turn off to omit these details from the saved file and save space. The color profile is always kept; Photokin's library records are not erased."
+              />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="editor-file-size" tabIndex={0} aria-label={sizeDescription}>
@@ -903,7 +1081,7 @@ export function EditorPage() {
           onClick={() => {
             stopCropAnimation();
             dirty.current = false;
-            setEdit(initialEdit(data.width, data.height, data.format));
+            setEdit(startingEdit(data));
             setAspect('free');
             setPreviewingCrop(false);
             endComparison();

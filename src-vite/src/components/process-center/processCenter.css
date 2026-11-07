@@ -1,7 +1,7 @@
 @reference '../../App.css';
 
 /* ----------------------------------------------------------------------------
- * Footer status-bar indicator that re-opens autohidden process notifications.
+ * Footer background-task chip and popover.
  * ------------------------------------------------------------------------- */
 
 .process-row-spinner {
@@ -24,23 +24,57 @@
   animation: app-toast-spin 0.9s linear infinite;
 }
 
-/* ---- Footer status-bar indicator ----------------------------------------- */
-
 .process-footer-indicator {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   height: 22px;
+  min-width: 0;
+  max-width: min(560px, 60vw);
   padding: 0 8px;
   border-radius: 6px;
-  @apply text-xs font-semibold text-primary;
+  border: 0;
+  @apply text-xs font-medium text-primary;
   background-color: hsl(var(--primary) / 0.1);
-  max-width: 280px;
+  cursor: pointer;
   transition: background-color 0.15s ease;
+}
+
+.process-footer-indicator-dot {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--background));
+}
+
+.process-footer-indicator--error .process-footer-indicator-dot {
+  background: hsl(var(--destructive));
 }
 
 .process-footer-indicator:hover {
   background-color: hsl(var(--primary) / 0.18);
+}
+
+.process-footer-indicator:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.process-footer-indicator--idle {
+  justify-content: center;
+  width: 26px;
+  padding: 0;
+  @apply text-muted-foreground;
+  background-color: transparent;
+}
+
+.process-footer-indicator--idle:hover {
+  background-color: hsl(var(--accent));
 }
 
 .process-footer-indicator--error {
@@ -52,8 +86,197 @@
   background-color: hsl(var(--destructive) / 0.2);
 }
 
+.process-footer-indicator--paused {
+  @apply text-muted-foreground;
+  background-color: hsl(var(--muted));
+}
+
+.process-footer-indicator--paused:hover {
+  background-color: hsl(var(--accent));
+}
+
 .process-footer-indicator-label {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.process-footer-indicator-count,
+.process-footer-indicator-extra {
+  white-space: nowrap;
+  @apply text-muted-foreground;
+}
+
+.process-footer-indicator-extra {
+  @apply text-primary font-semibold;
+}
+
+.process-footer-indicator .process-progress {
+  width: 54px;
+  flex: 0 0 54px;
+  height: 4px;
+}
+
+.process-center-popover {
+  width: min(440px, calc(100vw - 24px));
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 12px 36px hsl(var(--foreground) / 0.16);
+}
+
+.process-center-popover__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--popover));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.process-center-popover__title {
+  margin: 0;
+  @apply text-base font-semibold;
+}
+
+.process-center-popover__empty {
+  padding: 18px;
+  @apply text-sm text-muted-foreground;
+}
+
+.process-task-list {
+  margin: 0;
+  padding: 0 18px;
+  list-style: none;
+}
+
+.process-task {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.process-task + .process-task {
+  border-top: 1px solid hsl(var(--border));
+}
+
+.process-task__icon {
+  margin-top: 2px;
+  flex: none;
+  @apply text-primary;
+}
+
+.process-task--success .process-task__icon {
+  @apply text-success;
+}
+
+.process-task--warning .process-task__icon {
+  @apply text-warning;
+}
+
+.process-task--error .process-task__icon {
+  @apply text-destructive-text;
+}
+
+.process-task--stopped .process-task__icon,
+.process-task--paused .process-task__icon {
+  @apply text-muted-foreground;
+}
+
+.process-task__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.process-task__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.process-task__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  @apply text-sm font-semibold text-foreground;
+}
+
+.process-task__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.process-task__state {
+  flex: none;
+  @apply text-xs text-muted-foreground;
+}
+
+.process-task__progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.process-progress {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--muted));
+}
+
+.process-progress__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: hsl(var(--primary));
+  transition: width 180ms ease;
+}
+
+.process-progress__fill--indeterminate {
+  width: 32%;
+  animation: process-progress-indeterminate 1.2s ease-in-out infinite alternate;
+}
+
+.process-task__count {
+  flex: none;
+  white-space: nowrap;
+  @apply text-xs text-muted-foreground;
+}
+
+.process-task__detail {
+  margin: 0;
+  @apply text-xs leading-relaxed text-muted-foreground;
+}
+
+@keyframes process-progress-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(315%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .process-progress__fill,
+  .process-progress__fill--indeterminate {
+    animation: none;
+    transition: none;
+  }
 }

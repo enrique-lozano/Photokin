@@ -96,9 +96,94 @@ export function buildSelectionSearchQuery(baseQuery: SearchQuery, selection: Cal
   ]);
 }
 
+export type SelectionGranularity = 'year' | 'month' | 'day';
+
+export function getSelectionGranularity({ month, date }: CalendarSelection): SelectionGranularity {
+  if (month === WHOLE) return 'year';
+  return date === WHOLE ? 'month' : 'day';
+}
+
+/**
+ * The neighbouring period with photos at the same granularity as `selection`
+ * (year → year, month → month, day → day), skipping empty ones. `null` when
+ * there is none in that direction.
+ */
+export function getAdjacentSelection(
+  data: CalendarData,
+  selection: CalendarSelection,
+  direction: 'previous' | 'next',
+): CalendarSelection | null {
+  const granularity = getSelectionGranularity(selection);
+  const ascending: CalendarSelection[] = [];
+
+  for (const year of getSortedYears(data).reverse()) {
+    if (granularity === 'year') {
+      ascending.push({ year, month: WHOLE, date: WHOLE });
+      continue;
+    }
+    for (const month of getSortedMonths(data[year]).reverse()) {
+      if (granularity === 'month') {
+        ascending.push({ year, month, date: WHOLE });
+        continue;
+      }
+      const days = data[year][month].map((day) => day.date).sort((a, b) => a - b);
+      for (const date of days) ascending.push({ year, month, date });
+    }
+  }
+
+  const index = ascending.findIndex(
+    (candidate) =>
+      candidate.year === selection.year &&
+      candidate.month === selection.month &&
+      candidate.date === selection.date,
+  );
+  if (index === -1) return null;
+
+  return ascending[direction === 'previous' ? index - 1 : index + 1] ?? null;
+}
+
 /** Number of days in a (1-indexed) month, computed in UTC. */
 export function getDaysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function _count(value: number, unit: string): string {
+  return `${value} ${unit}${value === 1 ? '' : 's'}`;
+}
+
+function _relativeTime(daysFromNow: number): string {
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  const distance = Math.abs(daysFromNow);
+  if (distance <= 31) return formatter.format(daysFromNow, 'day');
+  if (distance < 365) return formatter.format(Math.round(daysFromNow / 30.44), 'month');
+  return formatter.format(Math.round(daysFromNow / 365.25), 'year');
+}
+
+/**
+ * One-line description of a selected period that the title doesn't already
+ * carry: how spread out the photos are, or how long ago a single day was.
+ */
+export function getSelectionSummary(
+  data: CalendarData,
+  selection: CalendarSelection,
+  now = new Date(),
+): string {
+  const { year, month, date } = selection;
+
+  if (month === WHOLE) {
+    const months = data[year] ?? {};
+    const days = Object.values(months).reduce((total, monthDays) => total + monthDays.length, 0);
+    return `Photos on ${_count(days, 'day')} across ${_count(Object.keys(months).length, 'month')}`;
+  }
+  if (date === WHOLE) {
+    const days = data[year]?.[month]?.length ?? 0;
+    return `Photos on ${days} of ${_count(getDaysInMonth(year, month), 'day')}`;
+  }
+
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return `Taken ${_relativeTime(Math.round((Date.UTC(year, month - 1, date) - today) / DAY_MS))}`;
 }
 
 /** Weekday (0 = Sunday) of the first day of the month, computed in UTC. */

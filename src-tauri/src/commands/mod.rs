@@ -19,8 +19,8 @@ pub use external_app::open_file_with_app;
 pub use file_info::{dir_entries_stat, filestat};
 pub use hashing::{perceptual_hash, sha256_file, sha256_file_prefix};
 pub use image_edit::{
-    clear_image_edit_preview, commit_image_edit, discard_image_edit, prepare_image_edit,
-    preview_image_edit,
+    clear_image_edit_preview, commit_image_edit, discard_image_edit, plan_lossless_image_edit,
+    prepare_image_edit, preview_image_edit,
 };
 pub use import_discovery::discover_import_files;
 pub use import_preview::scan_import_preview;

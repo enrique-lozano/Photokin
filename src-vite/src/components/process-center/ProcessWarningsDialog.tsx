@@ -16,15 +16,14 @@ interface ProcessWarningsDialogState {
   /** Headline of the process whose warnings are shown, or `null` when closed. */
   title: string | null;
   warnings: string[];
-  /** Opens the dialog with a snapshot so it survives the toast being dismissed. */
+  /** Opens the dialog with a snapshot so it survives process-list updates. */
   open: (title: string, warnings: string[]) => void;
   close: () => void;
 }
 
 /**
  * Holds a snapshot (title + warnings) rather than a process id so the dialog
- * keeps working after the originating toast autohides and the process is
- * dropped from the store.
+ * remains stable while the process list updates.
  */
 export const useProcessWarningsDialog = create<ProcessWarningsDialogState>((set) => ({
   title: null,
@@ -35,8 +34,8 @@ export const useProcessWarningsDialog = create<ProcessWarningsDialogState>((set)
 
 /**
  * Lists the non-fatal warnings collected by a finished process (e.g. files that
- * couldn't be read during a face scan). Mounted once per window alongside the
- * toaster and opened from the "View details" action on a process toast.
+ * couldn't be read during a face scan). Mounted once per window and opened
+ * from the "View skipped items" action in the background-task popover.
  */
 export function ProcessWarningsDialog() {
   const title = useProcessWarningsDialog((state) => state.title);

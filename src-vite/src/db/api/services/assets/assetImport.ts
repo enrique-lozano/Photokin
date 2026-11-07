@@ -89,7 +89,13 @@ export async function insertFilesByPaths(
 
     offset += batch.length;
     const { done, progress } = overallProgress(offset, 0, total);
-    reporter?.update({ message: `Saving to library · ${done}/${total} files`, progress });
+    reporter?.update({
+      message: `Saving to library · ${done}/${total} files`,
+      progress,
+      progressCurrent: done,
+      progressTotal: total,
+      progressUnit: 'files',
+    });
   }
 
   return inserted;
@@ -334,6 +340,9 @@ async function _readMetadata(
   reporter?.update({
     message: total > 0 ? `Reading metadata · ${completed}/${total} files` : 'Reading metadata…',
     progress: total > 0 ? completed / total : null,
+    progressCurrent: completed,
+    progressTotal: total,
+    progressUnit: 'files',
   });
 
   const exiftoolRes = await readFromExiftool(
@@ -342,7 +351,13 @@ async function _readMetadata(
       if (!isProgressTick(current, batchTotal)) return;
 
       const { done, progress: fraction } = overallProgress(completed, current, total);
-      reporter?.update({ message: `Reading metadata · ${done}/${total} files`, progress: fraction });
+      reporter?.update({
+        message: `Reading metadata · ${done}/${total} files`,
+        progress: fraction,
+        progressCurrent: done,
+        progressTotal: total,
+        progressUnit: 'files',
+      });
     },
     options,
   );

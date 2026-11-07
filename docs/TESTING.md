@@ -119,6 +119,46 @@ stays stable across navigation, re-renders, and component remounts; About remain
 available regardless. Tests use fixed random draws on both sides of the exact
 0.3 threshold, not a flaky statistical sample.
 
+## Background tasks
+
+```powershell
+pnpm test --run src\system\processTracker.test.ts src\components\process-center\ProcessFooterIndicator.test.tsx src\media\smartSearch\indexing.test.ts src\utils\taskQueue\taskQueue.test.ts
+pnpm test --run src\pages\people\useFaceScanActions.test.tsx
+```
+
+Tests cover outcome notifications (including partial failures), warning details,
+single-use result actions shared by the toast and popover, cancellation, pause
+checkpoints, and pausing after indexing work has already entered the queue.
+Face-scan tests exercise the real tracker with mocked face work: stopping during
+detection or recognition resolves the UI action, preserves stopped outcomes and
+partial-run measurements, and still propagates genuine failures.
+
+With the Vite dev server running and Microsoft Edge installed, run:
+
+```powershell
+node tests\browser\test-background-tasks.mjs
+```
+
+An optional first argument overrides `http://localhost:1420`. The script mounts
+the real task components with isolated in-memory jobs and never opens a library
+or starts native sidecars. It checks idle and finished footer states, progress,
+Pause/Resume/Cancel, keyboard focus trapping, Escape and outside-click dismissal,
+the warning dialog, failure notifications, and shared single-use Undo.
+It also checks individual notification dismissal, clearing finished results
+without removing active work, the notification dot, and no progress bars on
+finished rows. Store tests confirm clearing also preserves paused work.
+The browser check also verifies finished-row timestamps stay beside the title
+and a normal result with a summary fits within a 70px row.
+It checks abbreviated timestamps (seconds through years) and icon-only task
+controls with accessible labels and hover titles.
+Both the task chip and bell open at the bell's bottom-right anchor. Browser
+checks verify identical positioning, chip hiding while open, and restoration
+after using the popover's close button.
+
+These browser checks do not replace a Tauri check with a disposable library:
+verify that canceling face detection stops its sidecar and that pausing search
+indexing stops new batches after the current batch finishes.
+
 ## In-app updates
 
 ```powershell

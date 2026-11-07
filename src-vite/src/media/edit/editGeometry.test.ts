@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { initialEdit, orientRegion, pixelCrop, reframeCrop, transformRegion } from './editGeometry';
+import {
+  initialEdit,
+  orientRegion,
+  pixelCrop,
+  reframeCrop,
+  transformRegion,
+  withAppliedArea,
+} from './editGeometry';
 
 describe('editor geometry', () => {
   it('preserves the selected image area when rotating or flipping', () => {
@@ -80,6 +87,12 @@ describe('editor geometry', () => {
       h: 0.25,
     });
     expect(transformRegion({ x: 0.51, y: 0.5, w: 0.25, h: 0.25 }, edit, 1000, 800)).toBeNull();
+  });
+  it('applies a snapped lossless area as the crop and output size', () => {
+    const edit = { ...initialEdit(1000, 800, 'jpg'), lossless: true, turns: 1 };
+    const applied = withAppliedArea(edit, { x: 0, y: 160, width: 400, height: 512 }, 1000, 800);
+    expect(applied.crop).toEqual([0, 0.16, 0.5, 0.512]);
+    expect(applied).toMatchObject({ width: 400, height: 512, turns: 1 });
   });
   it('uses rounded crop pixels, not ideal percentages, to place face regions', () => {
     const edit = {

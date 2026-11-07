@@ -1,6 +1,6 @@
 import type { AreaBox } from '@/db/models/TagRegionInfoDTO';
 import { emitTo, listen } from '@tauri-apps/api/event';
-import type { ImageEdit } from './editGeometry';
+import type { ImageEdit, PixelArea } from './editGeometry';
 
 export const EDITOR_REQUEST = 'photo-editor-request';
 export const EDITOR_REPLY = 'photo-editor-reply';
@@ -15,6 +15,7 @@ export interface EditorData {
   bytes: number;
   format: ImageEdit['format'];
   canOverwrite: boolean;
+  canLossless: boolean;
   regions: AreaBox[];
 }
 
@@ -24,6 +25,7 @@ export interface PreparedEditorEdit {
   bytes: number;
   width: number;
   height: number;
+  losslessArea: PixelArea | null;
   token: string;
   suggestedName: string;
 }
@@ -39,7 +41,7 @@ export interface EditorPreview {
 export interface EditorRequest {
   requestId: string;
   assetId: string;
-  action: 'load' | 'preview' | 'prepare' | 'save' | 'discard';
+  action: 'load' | 'preview' | 'plan' | 'prepare' | 'save' | 'discard';
   edit?: ImageEdit;
   token?: string;
   overwrite?: boolean;
@@ -48,7 +50,7 @@ export interface EditorRequest {
 
 export interface EditorReply {
   requestId: string;
-  data?: EditorData | EditorPreview | PreparedEditorEdit | { path: string };
+  data?: EditorData | EditorPreview | PreparedEditorEdit | PixelArea | { path: string };
   error?: string;
 }
 

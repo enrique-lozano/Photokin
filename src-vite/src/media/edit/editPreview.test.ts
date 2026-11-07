@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { estimateEditBytes, fileSizeChange, QUALITY_MARKS, qualityLabel } from './editPreview';
+import {
+  estimateEditBytes,
+  estimateLosslessBytes,
+  fileSizeChange,
+  QUALITY_MARKS,
+  qualityLabel,
+} from './editPreview';
 
 describe('editor preview estimates', () => {
   const sample = { previewPath: 'sample.png', width: 1600, height: 800, bytes: 100_000, profileBytes: 2000 };
@@ -22,11 +28,17 @@ describe('editor preview estimates', () => {
     expect(fileSizeChange(0, 1000)).toBeUndefined();
   });
 
-  it('keeps marks in ascending order and labels the mocked 80% setting as balanced', () => {
-    expect(QUALITY_MARKS.map(({ quality }) => quality)).toEqual([30, 60, 85]);
+  it('keeps marks in ascending order and labels each setting by its nearest mark', () => {
+    expect(QUALITY_MARKS.map(({ quality }) => quality)).toEqual([55, 75, 92]);
     for (const { quality, label } of QUALITY_MARKS) expect(qualityLabel(quality)).toBe(label);
     expect(qualityLabel(1)).toBe('Small');
     expect(qualityLabel(80)).toBe('Balanced');
     expect(qualityLabel(100)).toBe('High');
+  });
+
+  it('estimates a lossless crop from the share of pixels it keeps', () => {
+    const original = { width: 4000, height: 3000 };
+    expect(estimateLosslessBytes(5_000_000, original, original)).toBe(5_000_000);
+    expect(estimateLosslessBytes(5_000_000, original, { width: 2000, height: 1500 })).toBe(1_250_000);
   });
 });

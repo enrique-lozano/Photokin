@@ -14,6 +14,7 @@ import {
 } from '@/components/app-shell/ClearLibraryFilters';
 import { Segmented } from '@/components/segmented/Segmented';
 import { EmptyState } from '@/components/ui/empty-state';
+import type { StatsOverview } from '@/db/api/services/assets.service';
 import { countryNameFromCode } from '@/media/metadata/location/countryCode';
 import { SecondaryTitleAndScrollableContent } from '@/pages/search/SecondaryTitleAndScrollableContent';
 import { useAppStore } from '@/stores/appState';
@@ -135,7 +136,7 @@ export function StatsPage() {
   );
   usePageChrome('stats', footerStatus);
 
-  const subtitle = overview ? undefined : 'Analyzing the current library filters';
+  const subtitle = overview ? _timespanLabel(overview) : 'Analyzing the current library filters';
   const activity = useMemo(() => fillMonthlyStats(queries.activity.data ?? []), [queries.activity.data]);
   const captureMonths = useMemo(
     () => summarizeMonthlyStats(queries.activity.data ?? []),
@@ -448,6 +449,17 @@ export function StatsPage() {
       />
     </div>
   );
+}
+
+function _timespanLabel({ minDate, maxDate }: StatsOverview): string {
+  if (!minDate || !maxDate) return 'Your library at a glance';
+  const start = new Date(minDate);
+  const end = new Date(maxDate);
+  const months =
+    (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + end.getUTCMonth() - start.getUTCMonth();
+  if (months < 1) return 'All shot within a single month';
+  if (months < 24) return `${months} ${months === 1 ? 'month' : 'months'} of photography`;
+  return `${Math.round(months / 12)} years of photography`;
 }
 
 function _rangeFilters(

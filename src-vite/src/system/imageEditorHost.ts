@@ -1,6 +1,7 @@
 import {
   discardImageEditor,
   loadImageEditor,
+  planImageEditor,
   prepareImageEditor,
   previewImageEditor,
   saveImageEditor,
@@ -33,6 +34,10 @@ export function initImageEditorHost(): void {
           switch (payload.action) {
             case 'load':
               reply.data = await loadImageEditor(payload.assetId);
+              break;
+            case 'plan':
+              if (!payload.edit) throw new Error('Missing edit settings');
+              reply.data = await planImageEditor(payload.assetId, payload.edit);
               break;
             case 'prepare':
               if (payload.requestId !== latestPreview) throw new Error('Preview superseded');

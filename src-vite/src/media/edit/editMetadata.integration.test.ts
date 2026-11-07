@@ -88,6 +88,38 @@ async function _writeTags(args: string[], directory: string, expectedWarning?: R
 const fingerprint = (file: string) => createHash('sha256').update(readFileSync(file)).digest('hex');
 
 describe('editor metadata on real demo samples', () => {
+  it.each(['jpg/Canon_40D.jpg', 'jpg/gps/DSCN0010.jpg', 'jpg/xmp/BlueSquare.jpg'])(
+    'strips photo details without warnings when not keeping them: %s',
+    async (relative) => {
+      const directory = mkdtempSync(path.join(tmpdir(), 'photokin-edit-strip-'));
+      try {
+        const source = path.join(samples, relative);
+        const target = path.join(directory, 'edited.jpg');
+        writeFileSync(target, readFileSync(source));
+        await runExiftool(['-all=', '-overwrite_original', target]);
+        const argfile = path.join(directory, 'arguments.txt');
+        writeFileSync(
+          argfile,
+          `${editMetadataArgs(source, target, 100, 68, [], false).join('\n')}\n`,
+          'utf8',
+        );
+        const { stderr } = await runExiftool(['-charset', 'filename=UTF8', '-@', argfile]);
+        // Sources with no ICC profile have nothing to copy; the service tolerates exactly this warning.
+        expect(stderr.trim().replace(/^Warning: No writable tags set from .*$/i, '')).toBe('');
+        const tags = await _readTags(target, [
+          'Make',
+          'Model',
+          'GPSLatitude',
+          'DateTimeOriginal',
+          'IPTC:all',
+        ]);
+        expect(tags).toEqual({});
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
+    },
+  );
+
   it('restores place labels when importing an edited GPS-only copy', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'photokin-edit-location-'));
     try {

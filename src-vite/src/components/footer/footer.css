@@ -13,7 +13,7 @@ footer.outlet-footer {
 
 .footer-content {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   width: 100%;
   gap: 12px;
