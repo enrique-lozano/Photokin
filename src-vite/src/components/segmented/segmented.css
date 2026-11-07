@@ -56,3 +56,35 @@
 .segmented--stacked .segmented__count {
   @apply text-sm;
 }
+
+/* Outlined — matches the outline buttons next to it in a toolbar (32px, bordered,
+   no filled track); the active segment is tinted instead of raised. */
+.segmented--outlined {
+  gap: 0;
+  height: 32px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid hsl(var(--foreground) / 0.16);
+  background-color: hsl(var(--foreground) / 0.04);
+}
+
+.segmented--outlined .segmented__option {
+  height: 100%;
+  padding: 0 12px;
+  border-radius: 0;
+  @apply text-sm text-foreground;
+}
+
+.segmented--outlined .segmented__option + .segmented__option {
+  border-left: 1px solid hsl(var(--foreground) / 0.16);
+}
+
+.segmented--outlined .segmented__option:hover:not(.active) {
+  background-color: hsl(var(--foreground) / 0.08);
+}
+
+.segmented--outlined .segmented__option.active {
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  box-shadow: none;
+}

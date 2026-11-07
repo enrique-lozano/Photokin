@@ -138,6 +138,10 @@ export function PhotoMap({ points, focus, onOpen, onSelectArea }: PhotoMapProps)
       center: viewRef.current?.center ?? [20, 0],
       zoom: viewRef.current?.zoom ?? 2,
       zoomControl: false,
+      // Leaflet's keyboard handler calls focus() on mousedown, which scrolls every
+      // ancestor (even overflow-hidden ones) to reveal the map. In the full-height Map
+      // lens that shifted the whole page when dragging. The +/− buttons remain.
+      keyboard: false,
       maxZoom: MAX_ZOOM,
     });
     map.attributionControl.setPrefix('');
@@ -214,24 +218,24 @@ export function PhotoMap({ points, focus, onOpen, onSelectArea }: PhotoMapProps)
     <div className={`location-map photo-map${moving ? ' photo-map--moving' : ''}`}>
       <div ref={canvasRef} className="location-map__canvas" />
       {onSelectArea && (
-      <div
-        className="photo-map__area-action"
-        hidden={expanded}
-        inert={moving || !areaChanged}
-        aria-hidden={moving || !areaChanged}
-      >
-        <Button
-          size="sm"
-          className={areaChanged ? 'photo-map__apply' : 'photo-map__apply photo-map__apply--hidden'}
-          onClick={() => {
-            if (!mapRef.current) return;
-            onSelectArea(_mapBounds(mapRef.current.getBounds()));
-            setAreaChanged(false);
-          }}
+        <div
+          className="photo-map__area-action"
+          hidden={expanded}
+          inert={moving || !areaChanged}
+          aria-hidden={moving || !areaChanged}
         >
-          View photos in this area
-        </Button>
-      </div>
+          <Button
+            size="sm"
+            className={areaChanged ? 'photo-map__apply' : 'photo-map__apply photo-map__apply--hidden'}
+            onClick={() => {
+              if (!mapRef.current) return;
+              onSelectArea(_mapBounds(mapRef.current.getBounds()));
+              setAreaChanged(false);
+            }}
+          >
+            View photos in this area
+          </Button>
+        </div>
       )}
       {tilesUnavailable && points.length > 0 && (
         <div className="location-map__offline text-foreground">

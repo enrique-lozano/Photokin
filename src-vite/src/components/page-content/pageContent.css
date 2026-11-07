@@ -36,12 +36,13 @@
 }
 
 /* A timeline gallery brings its own scrollbar (`TimelineScrubber`), so the
-   native one would be a second, redundant scroll affordance next to it. */
-.page-scroll:has(.photo-grid__sections) {
+   native one would be a redundant second affordance — but only while the
+   scrubber is actually shown; otherwise the native one stays. */
+.page-scroll:has(.photo-grid__sections):has(.timeline-scrubber-rail) {
   scrollbar-width: none;
 }
 
-.page-scroll:has(.photo-grid__sections)::-webkit-scrollbar {
+.page-scroll:has(.photo-grid__sections):has(.timeline-scrubber-rail)::-webkit-scrollbar {
   display: none;
 }
 
@@ -437,6 +438,7 @@
 
 .hero-toggle__icon {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   @apply text-muted-foreground;
 }
@@ -608,8 +610,63 @@
   border-bottom: 0;
 }
 
-.secondary-headers > * + .content-subheader {
+/* Animatable so the sticky offsets below the rows follow the fold instead of jumping. */
+@property --chip-row-h {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+.page-scroll {
+  transition: --chip-row-h 220ms ease;
+}
+
+.secondary-toolbar-shell {
+  position: relative;
+  height: 48px;
+  overflow: hidden;
+  transition: height 220ms ease;
+}
+
+.secondary-toolbar-shell.is-collapsed {
+  height: 14px;
+}
+
+.secondary-toolbar {
+  transition: opacity 160ms ease;
+}
+
+.secondary-toolbar-shell.is-collapsed .secondary-toolbar {
+  opacity: 0;
+}
+
+/* Collapsible row: grid-rows 0fr -> 1fr animates to the content's own height. */
+.secondary-row {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+
+.secondary-row.is-open {
+  grid-template-rows: 1fr;
+}
+
+.secondary-row__inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.secondary-row.is-open .secondary-row__inner {
   border-top: 1px solid hsl(var(--border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-scroll,
+  .secondary-toolbar-shell,
+  .secondary-toolbar,
+  .secondary-row {
+    transition: none;
+  }
 }
 
 .secondary-toolbar {
@@ -622,11 +679,16 @@
 }
 
 .secondary-toolbar-handle {
-  display: block;
-  width: 100%;
+  position: absolute;
+  inset: auto 0 0 0;
   height: 14px;
   cursor: pointer;
-  position: relative;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.secondary-toolbar-shell.is-collapsed .secondary-toolbar-handle {
+  opacity: 1;
 }
 
 .secondary-toolbar-handle::after {
@@ -685,15 +747,101 @@
   }
 }
 
-@container secondary-toolbar (max-width: 460px) {
-  .secondary-toolbar__slider {
-    width: 64px;
-  }
-}
-
 /* The lens switcher shows icon + label, folding to icons when the toolbar is narrow. */
 @container secondary-toolbar (max-width: 860px) {
   .secondary-toolbar__lens .segmented__label {
     display: none;
+  }
+}
+
+/* Narrow toolbars: controls keep their size (never squash), extras fold away. */
+.secondary-toolbar {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.secondary-toolbar::-webkit-scrollbar {
+  display: none;
+}
+
+.secondary-toolbar > * {
+  flex-shrink: 0;
+}
+
+.secondary-toolbar__size > svg {
+  flex-shrink: 0;
+}
+
+/* The slider is the one control allowed to give up width, down to a usable minimum. */
+.secondary-toolbar > .secondary-toolbar__size {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.secondary-toolbar__slider {
+  min-width: 56px;
+}
+
+@container secondary-toolbar (max-width: 640px) {
+  .secondary-toolbar__chip {
+    padding-inline: 8px;
+  }
+}
+
+/* Layout: one menu button by default; the three icons only when there is plenty of room.
+   `!important` because the Button's own `inline-flex` utility would otherwise win. */
+.secondary-toolbar .secondary-toolbar__layout {
+  display: none !important;
+}
+
+@container secondary-toolbar (min-width: 1100px) {
+  .secondary-toolbar .secondary-toolbar__layout {
+    display: inline-flex !important;
+  }
+
+  .secondary-toolbar .secondary-toolbar__layout-menu {
+    display: none !important;
+  }
+}
+
+/* Drop the −/+ hints before the slider itself gets cramped. */
+@container secondary-toolbar (max-width: 480px) {
+  .secondary-toolbar__size > svg {
+    display: none;
+  }
+}
+
+/* Scope toggles live in the toolbar: same shape as the chips beside them. */
+.secondary-toolbar .hero-toggle {
+  height: 32px;
+  /* The base rule pins collapsed toggles to a 30px width, which squeezed the icon to a dot. */
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  border-color: hsl(var(--foreground) / 0.16);
+  background-color: hsl(var(--foreground) / 0.04);
+  @apply font-medium;
+}
+
+/* Active: the same soft primary tint as the active lens and the Quick chip, not a solid fill. */
+.secondary-toolbar .hero-toggle--active {
+  border-color: hsl(var(--primary) / 0.4);
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+.secondary-toolbar .hero-toggle--active:hover {
+  background-color: hsl(var(--primary) / 0.18);
+}
+
+@container secondary-toolbar (max-width: 640px) {
+  .secondary-toolbar .hero-toggle__label {
+    display: none;
+  }
+
+  .secondary-toolbar .hero-toggle {
+    padding: 0 8px;
   }
 }

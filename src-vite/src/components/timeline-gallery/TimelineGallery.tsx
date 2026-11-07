@@ -13,6 +13,7 @@ import React, {
   type JSX,
 } from 'react';
 import { SearchQuery } from '../../common/fileSearchFilters';
+import { RatingMode } from '../../common/ratingModeOptions';
 import { FilterCriteria } from '../../common/query/filters/FilterCriteria';
 import { addConditionsToQuery } from '../../common/searchQueryUtils';
 import { LightboxImageContext, LightboxNavigationScope, LightboxOrigin } from '../../context/LightboxContext';
@@ -23,7 +24,7 @@ import { isImportWorkActive } from '../../media/import/importActivity';
 import { GalleryLayoutMode, useAppStore } from '../../stores/appState.ts';
 import { useHiddenItemsStore } from '../../stores/hiddenItemsStore';
 import { ProcessKind, useProcessStore } from '../../stores/processStore';
-import { TimelineGroupBy, useSettingsStore } from '../../stores/settingsStore.ts';
+import { TimelineGroupBy, TimelineSortBy, useSettingsStore } from '../../stores/settingsStore.ts';
 import { formatDate } from '../../utils/dateFormatter';
 import { getScrollParent } from '../../utils/scrollParent';
 import { ClearLibraryFiltersButton, useHasActiveLibraryFilters } from '../app-shell/ClearLibraryFilters';
@@ -38,8 +39,10 @@ import {
 import { createGalleryScrollAnchor } from './galleryScrollAnchor';
 import './timelineGallery.css';
 import { GalleryMap } from './GalleryMap';
+import { arrangeFlatSegments } from './flatSegments';
+import { isDateGrouping, sortAssets } from './groupSort';
 import { Lens, useEffectiveLens } from './lens';
-import { ListRows, StripRow } from './TimelineLensViews';
+import { ListColumns, ListRows, STRIP_SCROLLBAR_SPACE, StripRow } from './TimelineLensViews';
 import { buildTimelineMonthFilters, type TimelineMonthSectionId } from './timelineMonthFilters';
 import { ScrubberSection, TimelineScrubber } from './TimelineScrubber.tsx';
 
@@ -150,15 +153,24 @@ function TimelineEmptyState({ pendingImport }: Pick<TimelineGalleryProps, 'pendi
 export function TimelineGallery({
   searchQuery,
   assetIdsFilter,
-  dateField = 'date',
+  dateField: dateFieldProp = 'date',
   onNoResults,
   pendingImport = 'metadata',
 }: TimelineGalleryProps) {
   const galleryThumbnailSize = useAppStore((state) => state.galleryThumbnailSize);
   const groupBy = useSettingsStore((state) => state.timelineGroupBy);
+  const sortBy = useSettingsStore((state) => state.timelineSortBy);
+  const sortReversed = useSettingsStore((state) => state.timelineSortReversed);
+  const sectionReversed = useSettingsStore((state) => state.timelineSectionReversed);
+  const randomSeed = useAppStore((state) => state.randomSortSeed);
+  // Sorting by "date added" also buckets sections by that date.
+  const dateField: AssetDateField = sortBy === 'dateAdded' ? 'dateAdded' : dateFieldProp;
+  const flatGroupBy = isDateGrouping(groupBy) ? null : (groupBy as 'none' | 'rating' | 'place');
   const layoutMode = useAppStore((state) => state.layoutMode);
   const setMapLensAvailable = useAppStore((state) => state.setMapLensAvailable);
-  const { lens } = useEffectiveLens();
+  const { lens: effectiveLens } = useEffectiveLens();
+  // Faces is a person-page view the page renders itself; here it is just the grid.
+  const lens: Lens = effectiveLens === 'faces' ? 'grid' : effectiveLens;
   const setDisplayedElementsCount = useAppStore((state) => state.setDisplayedElementsCount);
   const setDisplayedElementsSizeBytes = useAppStore((state) => state.setDisplayedElementsSizeBytes);
   const setGallerySelectionScope = useAppStore((state) => state.setGallerySelectionScope);
@@ -253,7 +265,8 @@ export function TimelineGallery({
       observer.disconnect();
       intersectionObserver.current = null;
     };
-  }, []);
+    // The grid element is replaced when leaving/entering the Map lens.
+  }, [lens === 'map']);
 
   const { data: sections } = useLiveQuery(
     async () => {
@@ -338,7 +351,7 @@ export function TimelineGallery({
         }
       });
     };
-  }, [sections]);
+  }, [sections, lens === 'map', flatGroupBy !== null]);
 
   useEffect(() => {
     const updateContainerWidth = () => {
@@ -373,7 +386,7 @@ export function TimelineGallery({
       resizeObserver?.disconnect();
       window.removeEventListener('resize', updateContainerWidth);
     };
-  }, []);
+  }, [lens === 'map']);
 
   // Sections needed by the scrubber: parse year/month and precompute the same
   // estimated height the grid uses, so the scrubber proportions line up.
@@ -385,11 +398,16 @@ export function TimelineGallery({
           sectionId: section.sectionId,
           year,
           month,
-          estimatedHeight: estimateSectionHeight(layoutMode, section.totalImages, timelineConfig),
+          estimatedHeight: estimateLensHeight(lens, groupBy, layoutMode, section.totalImages, timelineConfig),
         };
       }) ?? []
     );
-  }, [sections, timelineConfig, layoutMode]);
+  }, [sections, timelineConfig, layoutMode, lens, groupBy]);
+
+  const orderedSections = useMemo(
+    () => (sectionReversed && sections ? [...sections].reverse() : sections),
+    [sections, sectionReversed],
+  );
 
   if (sections && sections.length === 0) {
     return onNoResults ?? <TimelineEmptyState pendingImport={pendingImport} />;
@@ -404,48 +422,76 @@ export function TimelineGallery({
       {/* Rendered before the grid so the sticky scrubber rail pins from the top
           of the scroll content. It is a zero-height anchor, so it doesn't shift
           the grid. */}
-      <TimelineScrubber sections={scrubberSections} />
+      <TimelineScrubber
+        key={`${lens}-${layoutMode}`}
+        sections={flatGroupBy || sectionReversed ? [] : scrubberSections}
+      />
       <div
         ref={gridRef}
         id="grid"
-        className={clsx('photo-grid__sections', importing && 'is-importing')}
+        className={clsx('photo-grid__sections', importing && 'is-importing', lens === 'list' && 'is-list')}
         style={{ overflowAnchor: importing ? 'none' : undefined }}
       >
-        {sections?.map((section) => (
-          <div
-            key={section.sectionId}
-            id={section.sectionId}
-            className="section relative"
-            style={{
-              width: `${timelineConfig.containerWidth}px`,
-              height: intersectingSections.includes(section.sectionId)
-                ? undefined
-                : `${estimateLensHeight(lens, groupBy, layoutMode, section.totalImages, timelineConfig)}px`,
-            }}
-          >
-            {intersectingSections.some((x) => x == section.sectionId) && (
-              <TimelineSegments
-                config={timelineConfig}
-                estimatedHeight={estimateLensHeight(
-                  lens,
-                  groupBy,
-                  layoutMode,
-                  section.totalImages,
-                  timelineConfig,
+        {lens === 'list' && <ListColumns />}
+        {flatGroupBy ? (
+          <FlatSegments
+            config={timelineConfig}
+            lens={lens}
+            searchQuery={searchQuery}
+            assetIdsFilter={assetIdsFilter}
+            dateField={dateField}
+            groupBy={flatGroupBy}
+            sortBy={sortBy}
+            sortReversed={sortReversed}
+            sectionReversed={sectionReversed}
+            seed={randomSeed}
+            layoutMode={layoutMode}
+            captureScrollAnchor={captureScrollAnchor}
+            restoreScrollAnchor={restoreScrollAnchor}
+          />
+        ) : (
+          <>
+            {orderedSections?.map((section) => (
+              <div
+                key={section.sectionId}
+                id={section.sectionId}
+                className="section relative"
+                style={{
+                  width: `${timelineConfig.containerWidth}px`,
+                  height: intersectingSections.includes(section.sectionId)
+                    ? undefined
+                    : `${estimateLensHeight(lens, groupBy, layoutMode, section.totalImages, timelineConfig)}px`,
+                }}
+              >
+                {intersectingSections.some((x) => x == section.sectionId) && (
+                  <TimelineSegments
+                    config={timelineConfig}
+                    estimatedHeight={estimateLensHeight(
+                      lens,
+                      groupBy,
+                      layoutMode,
+                      section.totalImages,
+                      timelineConfig,
+                    )}
+                    lens={lens}
+                    sectionId={section.sectionId as TimelineMonthSectionId}
+                    searchQuery={searchQuery}
+                    assetIdsFilter={assetIdsFilter}
+                    dateField={dateField}
+                    groupBy={groupBy}
+                    sortBy={sortBy}
+                    sortReversed={sortReversed}
+                    sectionReversed={sectionReversed}
+                    seed={randomSeed}
+                    layoutMode={layoutMode}
+                    captureScrollAnchor={captureScrollAnchor}
+                    restoreScrollAnchor={restoreScrollAnchor}
+                  ></TimelineSegments>
                 )}
-                lens={lens}
-                sectionId={section.sectionId as TimelineMonthSectionId}
-                searchQuery={searchQuery}
-                assetIdsFilter={assetIdsFilter}
-                dateField={dateField}
-                groupBy={groupBy}
-                layoutMode={layoutMode}
-                captureScrollAnchor={captureScrollAnchor}
-                restoreScrollAnchor={restoreScrollAnchor}
-              ></TimelineSegments>
-            )}
-          </div>
-        ))}
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </GalleryScopeContext.Provider>
   );
@@ -471,6 +517,10 @@ const TimelineSegments = memo(function TimelineSegments(props: {
   assetIdsFilter?: string[];
   dateField: AssetDateField;
   groupBy: TimelineGroupBy;
+  sortBy: TimelineSortBy;
+  sortReversed: boolean;
+  sectionReversed: boolean;
+  seed: number;
   layoutMode: GalleryLayoutMode;
   captureScrollAnchor: () => void;
   restoreScrollAnchor: () => void;
@@ -522,7 +572,11 @@ const TimelineSegments = memo(function TimelineSegments(props: {
       groupedFiles[key].images.push(file);
     });
 
-    return Object.entries(groupedFiles).map(([key, { label, images }]) => {
+    const entries = Object.entries(groupedFiles);
+    if (props.sectionReversed) entries.reverse();
+
+    return entries.map(([key, { label, images: unsorted }]) => {
+      const images = sortAssets(unsorted, props.sortBy, props.sortReversed, props.seed);
       const sizes = images.map((image) => ({
         height: image.metadata.height,
         width: image.metadata.width,
@@ -536,7 +590,18 @@ const TimelineSegments = memo(function TimelineSegments(props: {
         layoutInfo: computeSegmentLayout(props.layoutMode, sizes, props.config),
       };
     });
-  }, [files, props.config, props.groupBy, props.sectionId, props.layoutMode, props.dateField]);
+  }, [
+    files,
+    props.config,
+    props.groupBy,
+    props.sectionId,
+    props.layoutMode,
+    props.dateField,
+    props.sortBy,
+    props.sortReversed,
+    props.sectionReversed,
+    props.seed,
+  ]);
 
   useLayoutEffect(() => {
     props.restoreScrollAnchor();
@@ -555,6 +620,108 @@ const TimelineSegments = memo(function TimelineSegments(props: {
           containerWidth={props.config.containerWidth ?? 0}
           showGroupCount={showGroupCount}
           showGroupLocation={showGroupLocation}
+        />
+      ))}
+    </>
+  );
+});
+
+/** Sections for the groupings that aren't calendar-based (none / rating / place): one sorted list, bucketed client-side. */
+const FlatSegments = memo(function FlatSegments(props: {
+  config: JustifiedLayoutOptions;
+  lens: Lens;
+  searchQuery?: SearchQuery;
+  assetIdsFilter?: string[];
+  dateField: AssetDateField;
+  groupBy: 'none' | 'rating' | 'place';
+  sortBy: TimelineSortBy;
+  sortReversed: boolean;
+  sectionReversed: boolean;
+  seed: number;
+  layoutMode: GalleryLayoutMode;
+  captureScrollAnchor: () => void;
+  restoreScrollAnchor: () => void;
+}) {
+  const showGroupCount = useSettingsStore((state) => state.showTimelineGroupCount);
+  const showGroupLocation = useSettingsStore((state) => state.showTimelineGroupLocation);
+  const favoritesMode = useSettingsStore((state) => state.ratingMode) === RatingMode.Favorites;
+  const showHiddenItems = useHiddenItemsStore((state) => state.showHiddenItems);
+  const countUnverifiedFaces = useSettingsStore((state) => state.countUnverifiedFaces);
+  const searchQueryKey = useMemo(() => JSON.stringify(props.searchQuery ?? null), [props.searchQuery]);
+  const assetIdsFilterKey = useMemo(() => props.assetIdsFilter?.join(',') ?? null, [props.assetIdsFilter]);
+
+  const { data: files } = useLiveQuery(
+    async () => {
+      const result = await AssetsService.getFiles({
+        assetIds: props.assetIdsFilter,
+        dateField: props.dateField,
+        searchQuery: props.searchQuery,
+      });
+      props.captureScrollAnchor();
+      return result;
+    },
+    ['assets', 'fileTags', 'tagRegionInfo'],
+    {
+      extDependencies: [
+        searchQueryKey,
+        assetIdsFilterKey,
+        props.dateField,
+        showHiddenItems,
+        countUnverifiedFaces,
+      ],
+    },
+  );
+
+  const segments = useMemo<Segment[]>(
+    () =>
+      files
+        ? arrangeFlatSegments(files, {
+            groupBy: props.groupBy,
+            sortBy: props.sortBy,
+            sortReversed: props.sortReversed,
+            sectionReversed: props.sectionReversed,
+            seed: props.seed,
+            favoritesMode,
+          }).map((group) => ({
+            segmentId: `flat__${group.key}`,
+            label: group.label,
+            location: getDominantLocation(group.images),
+            images: group.images,
+            layoutInfo: computeSegmentLayout(
+              props.layoutMode,
+              group.images.map((image) => ({ height: image.metadata.height, width: image.metadata.width })),
+              props.config,
+            ),
+          }))
+        : [],
+    [
+      files,
+      props.groupBy,
+      props.sortBy,
+      props.sortReversed,
+      props.sectionReversed,
+      props.seed,
+      props.layoutMode,
+      props.config,
+      favoritesMode,
+    ],
+  );
+
+  useLayoutEffect(() => {
+    props.restoreScrollAnchor();
+  }, [segments, props.restoreScrollAnchor]);
+
+  return (
+    <>
+      {segments.map((segment) => (
+        <TimelineSegment
+          key={segment.segmentId}
+          segment={segment}
+          lens={props.lens}
+          layoutMode={props.layoutMode}
+          containerWidth={props.config.containerWidth ?? 0}
+          showGroupCount={showGroupCount}
+          showGroupLocation={showGroupLocation && props.groupBy !== 'place'}
         />
       ))}
     </>
@@ -653,46 +820,48 @@ const TimelineSegment = memo(function TimelineSegment({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ height: `${dayLabelHeight}px` }} className="segment-label">
-        <SegmentSelectButton images={segment.images} hovered={hovered} />
-        <span className="segment-label-date">{segment.label}</span>
-        {subLabel && <span className="segment-label-secondary">{subLabel}</span>}
-      </div>
+      {segment.label && (
+        <div style={{ height: `${dayLabelHeight}px` }} className="segment-label">
+          <SegmentSelectButton images={segment.images} hovered={hovered} />
+          <span className="segment-label-date">{segment.label}</span>
+          {subLabel && <span className="segment-label-secondary">{subLabel}</span>}
+        </div>
+      )}
       <div
         id={segment.segmentId}
         className="segment"
         style={
-          lens === 'grid'
+          lens === 'grid' && layoutMode !== 'strips'
             ? { width: `${containerWidth}px`, height: `${segment.layoutInfo.containerHeight}px` }
             : { width: `${containerWidth}px` }
         }
       >
-        {lens === 'grid' ? (
+        {lens === 'grid' && layoutMode !== 'strips' ? (
           <FileTiles segment={segment} layoutMode={layoutMode} />
         ) : (
-          <LensBody lens={lens} images={segment.images} />
+          <LensBody kind={lens === 'list' ? 'list' : 'strips'} images={segment.images} />
         )}
       </div>
     </div>
   );
 });
 
-/** Strips and List bodies of a segment; open photos inside the gallery's current scope. */
-function LensBody({ lens, images }: { lens: Lens; images: AssetInClient[] }) {
+/** Strips (a Grid layout) and List bodies of a segment; open photos inside the gallery's current scope. */
+function LensBody({ kind, images }: { kind: 'strips' | 'list'; images: AssetInClient[] }) {
   const { openLightbox } = useContext(LightboxImageContext);
   const galleryScope = useContext(GalleryScopeContext);
   const open = useCallback(
     (img: AssetInClient, origin?: LightboxOrigin) => openLightbox(img, origin, galleryScope),
     [openLightbox, galleryScope],
   );
-  return lens === 'strips' ? (
+  return kind === 'strips' ? (
     <StripRow images={images} onOpen={open} />
   ) : (
     <ListRows images={images} onOpen={open} />
   );
 }
 
-/** Scroll-placeholder height of a section under the active lens (Grid defers to its layout maths). */
+/** Scroll-placeholder height of a section under the active lens and layout. */
 function estimateLensHeight(
   lens: Lens,
   groupBy: TimelineGroupBy,
@@ -700,13 +869,14 @@ function estimateLensHeight(
   totalImages: number,
   options: JustifiedLayoutOptions,
 ): number {
-  if (lens === 'grid' || lens === 'map') return estimateSectionHeight(layoutMode, totalImages, options);
+  const strips = lens === 'grid' && layoutMode === 'strips';
+  if (!strips && lens !== 'list') return estimateSectionHeight(layoutMode, totalImages, options);
   if (totalImages <= 0) return 0;
   if (lens === 'list') return totalImages * LIST_ROW_HEIGHT + dayLabelHeight;
   const size = (options.targetRowHeight ?? 200) * 1.25;
   // Day groups hold a few dozen photos at most; coarser groups are one long row each.
   const groups = groupBy === 'day' ? Math.max(1, Math.ceil(totalImages / 20)) : 1;
-  return groups * (size + dayLabelHeight);
+  return groups * (size + STRIP_SCROLLBAR_SPACE + dayLabelHeight);
 }
 
 /**

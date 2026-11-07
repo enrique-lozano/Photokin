@@ -112,6 +112,9 @@ export function computeSegmentLayout(
       return computeMasonryLayout(sizes, options);
     case 'card':
       return computeCardLayout(sizes, options);
+    case 'strips':
+      // Strips are laid out by CSS (a scrolling flex row), not by box positions.
+      return { containerHeight: 0, widowCount: 0, boxes: [] };
     case 'justified':
     default:
       return justifiedLayout(sizes, options);

@@ -20,7 +20,25 @@ export enum SettingsTab {
   Metadata = 5,
 }
 
-export type TimelineGroupBy = 'day' | 'month' | 'year';
+export type TimelineGroupBy = 'none' | 'day' | 'month' | 'year' | 'rating' | 'place';
+export type TimelineSortBy = 'dateTaken' | 'dateAdded' | 'fileName' | 'rating' | 'fileSize' | 'random';
+
+export const TIMELINE_GROUP_BY_VALUES: TimelineGroupBy[] = [
+  'none',
+  'day',
+  'month',
+  'year',
+  'rating',
+  'place',
+];
+export const TIMELINE_SORT_BY_VALUES: TimelineSortBy[] = [
+  'dateTaken',
+  'dateAdded',
+  'fileName',
+  'rating',
+  'fileSize',
+  'random',
+];
 export type ViewerMouseWheel = 'navigate' | 'zoom';
 
 export interface SettingsState {
@@ -57,6 +75,12 @@ export interface SettingsState {
   showTimelineGroupLocation: boolean;
   /** Calendar unit used to group photos in timeline galleries. */
   timelineGroupBy: TimelineGroupBy;
+  /** Field photos are sorted by inside each section. */
+  timelineSortBy: TimelineSortBy;
+  /** Flips the sort from its natural direction (newest / best / largest / A→Z first). */
+  timelineSortReversed: boolean;
+  /** Flips the section order from its natural direction (newest / best / A→Z first). */
+  timelineSectionReversed: boolean;
   /** Whether the quick-filter suggestions row is shown under the page header. */
   showQuickFilters: boolean;
   /** Last lens used on each list, by route path. Grid is the default and not stored. */
@@ -96,6 +120,9 @@ interface SettingsStore extends SettingsState {
   setShowTimelineGroupCount: (showTimelineGroupCount: boolean) => void;
   setShowTimelineGroupLocation: (showTimelineGroupLocation: boolean) => void;
   setTimelineGroupBy: (timelineGroupBy: TimelineGroupBy) => void;
+  setTimelineSortBy: (timelineSortBy: TimelineSortBy) => void;
+  setTimelineSortReversed: (timelineSortReversed: boolean) => void;
+  setTimelineSectionReversed: (timelineSectionReversed: boolean) => void;
   setListLens: (path: string, lens: string) => void;
   setShowQuickFilters: (showQuickFilters: boolean) => void;
   setShowSecondaryToolbar: (showSecondaryToolbar: boolean) => void;
@@ -127,6 +154,9 @@ export const DEFAULT_SETTINGS: SettingsState = {
   showTimelineGroupCount: true,
   showTimelineGroupLocation: true,
   timelineGroupBy: 'day',
+  timelineSortBy: 'dateTaken',
+  timelineSortReversed: false,
+  timelineSectionReversed: false,
   showQuickFilters: true,
   lensByList: {},
   showSecondaryToolbar: true,
@@ -161,6 +191,9 @@ export const useSettingsStore = create<SettingsStore>()(
       setShowTimelineGroupCount: (showTimelineGroupCount) => set({ showTimelineGroupCount }),
       setShowTimelineGroupLocation: (showTimelineGroupLocation) => set({ showTimelineGroupLocation }),
       setTimelineGroupBy: (timelineGroupBy) => set({ timelineGroupBy }),
+      setTimelineSortBy: (timelineSortBy) => set({ timelineSortBy }),
+      setTimelineSortReversed: (timelineSortReversed) => set({ timelineSortReversed }),
+      setTimelineSectionReversed: (timelineSectionReversed) => set({ timelineSectionReversed }),
       setListLens: (path, lens) =>
         set((state) => {
           const lensByList = { ...state.lensByList };
@@ -214,8 +247,11 @@ function _sanitizePersisted(persisted: unknown): Partial<SettingsState> {
   if (!Number.isInteger(clean.font) || (clean.font as number) < 0) {
     delete clean.font;
   }
-  if (!['day', 'month', 'year'].includes(clean.timelineGroupBy as string)) {
+  if (!TIMELINE_GROUP_BY_VALUES.includes(clean.timelineGroupBy as TimelineGroupBy)) {
     delete clean.timelineGroupBy;
+  }
+  if (!TIMELINE_SORT_BY_VALUES.includes(clean.timelineSortBy as TimelineSortBy)) {
+    delete clean.timelineSortBy;
   }
   if (typeof clean.lensByList !== 'object' || clean.lensByList === null) {
     delete clean.lensByList;

@@ -625,7 +625,7 @@ export function AlbumsPage() {
                 <FilterChipPlaceholders />
               ) : undefined
             }
-            subHeaderActions={
+            scopeControls={
               activeAlbumView === 'selectedAlbums' && selectedEntry && selectedEntry.children.length > 0 ? (
                 <HeroToggle
                   label="Include sub-albums"

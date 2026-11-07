@@ -5,8 +5,8 @@ import { FaceThumbnail } from '@/components/face-thumbnail/FaceThumbnail';
 import { FilterChipPlaceholders, FilterChipRow } from '@/components/page-content/FilterChipRow';
 import { useContentFilterChips } from '@/components/page-content/useContentFilterChips';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
-import { Segmented } from '@/components/segmented/Segmented';
 import { type GalleryScope, GalleryScopeProvider } from '@/components/selection-actions/galleryScope';
+import { useLens } from '@/components/timeline-gallery/lens';
 import { TimelineGallery } from '@/components/timeline-gallery/TimelineGallery';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -16,7 +16,7 @@ import { RegionsService } from '@/db/api/services/regions.service';
 import { TagsService } from '@/db/api/services/tags.service';
 import { useLiveQuery } from '@/db/connection/useLiveQuery';
 import { AppRoutes } from '@/router';
-import { IconAlertTriangle, IconArrowLeft, IconCamera, IconPhoto, IconUser } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowLeft, IconCamera, IconUser } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { mergeSearchQueries } from '../../common/searchQueryUtils';
@@ -42,7 +42,6 @@ import { buildPersonActions } from './personActions';
 import { PersonEditDialog } from './PersonEditDialog';
 import { PersonFacesGrid } from './PersonFacesGrid';
 import { usePeopleOutletContext } from './PeopleLayout';
-import { getPersonViewMode, PersonViewMode, setPersonViewMode } from './personViewMode';
 import { SuggestionBanner } from './SuggestionBanner';
 import { SuggestionsReviewModal } from './SuggestionsReviewModal';
 import { ProfilePhotoDialog } from './ProfilePhotoDialog';
@@ -57,11 +56,14 @@ export function PersonDetail() {
   const searchQuery = useAppStore((state) => state.searchQuery);
   const setBreadcrumb = useAppStore((state) => state.setBreadcrumb);
 
-  const [viewMode, setViewModeState] = useState<PersonViewMode>(getPersonViewMode);
-  const setViewMode = (mode: PersonViewMode) => {
-    setPersonViewMode(mode);
-    setViewModeState(mode);
-  };
+  // Photos vs. Faces is a lens of this page (`?lens=faces`), not a separate toggle.
+  const { lens } = useLens();
+  const viewMode = lens === 'faces' ? 'faces' : 'gallery';
+  const setFacesLensAvailable = useAppStore((state) => state.setFacesLensAvailable);
+  useEffect(() => {
+    setFacesLensAvailable(true);
+    return () => setFacesLensAvailable(false);
+  }, [setFacesLensAvailable]);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isProfilePhotoOpen, setIsProfilePhotoOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -261,20 +263,7 @@ export function PersonDetail() {
             <FilterChipPlaceholders />
           ) : undefined
         }
-        subHeaderActions={
-          /* The Photos/Faces switch is a view control, so it rides in the filter
-           row rather than the hero (§2 keeps view toggles out of page headers). */
-          <Segmented
-            ariaLabel="View mode"
-            value={viewMode}
-            onChange={setViewMode}
-            options={[
-              { value: 'gallery', label: 'Photos', icon: <IconPhoto size={15} /> },
-              { value: 'faces', label: 'Faces', icon: <IconUser size={15} /> },
-            ]}
-          />
-        }
-        galleryLayout={viewMode === 'gallery' ? true : 'disabled'}
+        galleryLayout
         content={
           <>
             {issuePhotoCount > 0 && (

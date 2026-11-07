@@ -17,8 +17,16 @@ vi.mock('react-router-dom', () => ({
 }));
 vi.mock('@/router', () => ({ AppRoutes: { allFaces: '/people/all' } }));
 vi.mock('@/stores/appState', () => ({
-  useAppStore: (selector: (state: { searchQuery: []; setBreadcrumb: () => void }) => unknown) =>
-    selector({ searchQuery: [], setBreadcrumb: vi.fn() }),
+  useAppStore: (
+    selector: (state: {
+      searchQuery: [];
+      setBreadcrumb: () => void;
+      setFacesLensAvailable: () => void;
+    }) => unknown,
+  ) => selector({ searchQuery: [], setBreadcrumb: vi.fn(), setFacesLensAvailable: vi.fn() }),
+}));
+vi.mock('@/components/timeline-gallery/lens', () => ({
+  useLens: () => ({ lens: 'grid', setLens: vi.fn() }),
 }));
 vi.mock('@/db/connection/useLiveQuery', () => ({
   useLiveQuery: () => {
@@ -94,10 +102,6 @@ vi.mock('./faceMutations', () => ({
   dismissSuggestions: vi.fn(),
   hideFaces: vi.fn(),
   hideFacesWithUndo: vi.fn(),
-}));
-vi.mock('./personViewMode', () => ({
-  getPersonViewMode: () => 'gallery',
-  setPersonViewMode: vi.fn(),
 }));
 
 beforeEach(() => {

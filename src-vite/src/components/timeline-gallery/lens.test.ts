@@ -4,7 +4,8 @@ import { parseLens } from './lens';
 
 describe('parseLens', () => {
   it('accepts known lenses and rejects anything else', () => {
-    expect(parseLens('strips')).toBe('strips');
+    expect(parseLens('list')).toBe('list');
+    expect(parseLens('strips')).toBeNull();
     expect(parseLens('map')).toBe('map');
     expect(parseLens('calendar')).toBeNull();
     expect(parseLens(null)).toBeNull();

@@ -114,7 +114,8 @@
   height: 100%;
 }
 
-.button-and-image-container img {
+.button-and-image-container img,
+.list-row__thumb img {
   position: absolute;
   top: 0;
   left: 0;
@@ -125,7 +126,8 @@
   transition: opacity 0.25s linear;
 }
 
-.button-and-image-container img.loaded {
+.button-and-image-container img.loaded,
+.list-row__thumb img.loaded {
   opacity: 1;
 }
 

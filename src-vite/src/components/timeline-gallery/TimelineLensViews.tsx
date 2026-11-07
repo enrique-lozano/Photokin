@@ -13,10 +13,12 @@ import { formatDate } from '@/utils/dateFormatter';
 import { formatBytes } from '@/utils/numberFormatter';
 import { IconHeart, IconHeartFilled } from '@tabler/icons-react';
 import clsx from 'clsx';
-import { memo, useRef } from 'react';
+import { memo, useCallback, useRef } from 'react';
 
 /** Strip thumbnails are taller than grid rows so a single row reads at a glance. */
 const STRIP_SCALE = 1.25;
+/** Space reserved under a strip for its horizontal scrollbar. */
+export const STRIP_SCROLLBAR_SPACE = 14;
 const MIN_ASPECT = 0.6;
 const MAX_ASPECT = 2.2;
 
@@ -34,9 +36,11 @@ export const StripRow = memo(function StripRow({
   const ref = useRef<HTMLDivElement>(null);
   useHorizontalScrollFades(ref);
   const height = Math.round(size * STRIP_SCALE);
+  // Room for the horizontal scrollbar below the tiles.
+  const rowHeight = height + STRIP_SCROLLBAR_SPACE;
 
   return (
-    <div ref={ref} className="strip-row" style={{ height }}>
+    <div ref={ref} className="strip-row" style={{ height: rowHeight }}>
       {images.map((image) => {
         const aspect = image.metadata.width / Math.max(1, image.metadata.height);
         const width = Math.round(height * Math.min(MAX_ASPECT, Math.max(MIN_ASPECT, aspect || 1.5)));
@@ -81,20 +85,29 @@ function RatingCell({ image }: { image: AssetInClient }) {
   );
 }
 
-const ListRow = memo(function ListRow({ image, onOpen }: { image: AssetInClient; onOpen: OpenImage }) {
-  const selectedImages = useAppStore((state) => state.selectedImages);
-  const setSelectedImages = useAppStore((state) => state.setSelectedImages);
-  const selectionMode = useAppStore((state) => state.selectionMode);
-  const selected = selectedImages.some((x) => x.id === image.id);
+type SelectMode = 'replace' | 'toggle' | 'range';
+
+function selectModeOf(event: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean }): SelectMode {
+  if (event.shiftKey) return 'range';
+  return event.metaKey || event.ctrlKey ? 'toggle' : 'replace';
+}
+
+/** File-explorer behaviour: click selects, Cmd/Ctrl-click toggles, Shift-click selects a range, double-click opens. */
+const ListRow = memo(function ListRow({
+  image,
+  index,
+  onSelect,
+  onOpen,
+}: {
+  image: AssetInClient;
+  index: number;
+  onSelect: (image: AssetInClient, index: number, mode: SelectMode) => void;
+  onOpen: OpenImage;
+}) {
+  const selected = useAppStore((state) => state.selectedImages.some((x) => x.id === image.id));
   const rowRef = useRef<HTMLDivElement>(null);
 
-  function handleClick() {
-    if (selectedImages.length > 0 || selectionMode) {
-      setSelectedImages(
-        selected ? selectedImages.filter((x) => x.id !== image.id) : [...selectedImages, image],
-      );
-      return;
-    }
+  function open() {
     const rect = rowRef.current?.getBoundingClientRect();
     onOpen(image, rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null);
   }
@@ -106,11 +119,15 @@ const ListRow = memo(function ListRow({ image, onOpen }: { image: AssetInClient;
       tabIndex={0}
       aria-selected={selected}
       className={clsx('list-row', selected && 'is-selected')}
-      onClick={handleClick}
+      onClick={(event) => onSelect(image, index, selectModeOf(event))}
+      onDoubleClick={open}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.key === 'Enter') {
           event.preventDefault();
-          handleClick();
+          open();
+        } else if (event.key === ' ') {
+          event.preventDefault();
+          onSelect(image, index, 'toggle');
         }
       }}
     >
@@ -140,11 +157,50 @@ export const ListRows = memo(function ListRows({
   images: AssetInClient[];
   onOpen: OpenImage;
 }) {
+  const anchor = useRef(-1);
+
+  const select = useCallback(
+    (image: AssetInClient, index: number, mode: SelectMode) => {
+      const { selectedImages, setSelectedImages } = useAppStore.getState();
+      if (mode === 'range' && anchor.current >= 0) {
+        const [from, to] = [anchor.current, index].sort((a, b) => a - b);
+        setSelectedImages(images.slice(from, to + 1));
+        return;
+      }
+      anchor.current = index;
+      if (mode === 'toggle') {
+        const isSelected = selectedImages.some((x) => x.id === image.id);
+        setSelectedImages(
+          isSelected ? selectedImages.filter((x) => x.id !== image.id) : [...selectedImages, image],
+        );
+        return;
+      }
+      setSelectedImages([image]);
+    },
+    [images],
+  );
+
   return (
     <div role="table" className="list-rows">
-      {images.map((image) => (
-        <ListRow key={image.id} image={image} onOpen={onOpen} />
+      {images.map((image, index) => (
+        <ListRow key={image.id} image={image} index={index} onSelect={select} onOpen={onOpen} />
       ))}
     </div>
   );
 });
+
+/** Column titles for the List lens; shares the rows' grid so the columns line up. */
+export function ListColumns() {
+  return (
+    <div className="list-columns" role="row">
+      <span />
+      <span role="columnheader">Name</span>
+      <span role="columnheader">Date taken</span>
+      <span role="columnheader">Place</span>
+      <span role="columnheader">Rating</span>
+      <span role="columnheader" className="list-row__size">
+        Size
+      </span>
+    </div>
+  );
+}

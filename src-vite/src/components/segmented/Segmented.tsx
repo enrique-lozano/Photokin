@@ -33,6 +33,7 @@ export function Segmented<T extends string>({
   ariaLabel,
   fill = false,
   stacked = false,
+  outlined = false,
   className,
 }: {
   options: SegmentedOption<T>[];
@@ -41,6 +42,8 @@ export function Segmented<T extends string>({
   ariaLabel: string;
   fill?: boolean;
   stacked?: boolean;
+  /** Bordered, track-less look that matches outline buttons (used in toolbars). */
+  outlined?: boolean;
   className?: string;
 }) {
   /**
@@ -67,7 +70,13 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={clsx('segmented', fill && 'segmented--fill', stacked && 'segmented--stacked', className)}
+      className={clsx(
+        'segmented',
+        fill && 'segmented--fill',
+        stacked && 'segmented--stacked',
+        outlined && 'segmented--outlined',
+        className,
+      )}
       onKeyDown={handleKeyDown}
     >
       {options.map((option) => {

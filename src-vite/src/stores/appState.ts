@@ -16,8 +16,9 @@ export type FaceBoxMode = 'never' | 'hover' | 'auto';
  * - `justified`: equal-height rows that fill the container width (default).
  * - `masonry`: equal-width columns with a ragged bottom edge (aspect preserved).
  * - `card`: uniform square cards that crop to fill.
+ * - `strips`: one horizontally scrolling, snapping row per group.
  */
-export type GalleryLayoutMode = 'justified' | 'masonry' | 'card';
+export type GalleryLayoutMode = 'justified' | 'masonry' | 'card' | 'strips';
 
 /**
  * What the current page shows. The shell derives its page-dependent chrome from
@@ -97,12 +98,15 @@ interface AppGlobalState {
   /** Whether the list in view has geotagged photos (`null` while unknown); gates the Map lens. */
   mapLensAvailable: boolean | null;
   setMapLensAvailable: (available: boolean | null) => void;
+  /** The page can show a Faces lens (a person's detail page). */
+  facesLensAvailable: boolean;
+  setFacesLensAvailable: (available: boolean) => void;
   /** True while a secondary toolbar owns the thumbnail-size slider (the footer then omits it). */
   secondaryToolbarMounted: boolean;
   setSecondaryToolbarMounted: (mounted: boolean) => void;
-  /** Select toggle: clicking a photo adds it to the selection instead of opening it. */
-  selectionMode: boolean;
-  setSelectionMode: (selectionMode: boolean) => void;
+  /** Seed of the "Random" sort; bumping it reshuffles. Not persisted. */
+  randomSortSeed: number;
+  reshuffleRandomSort: () => void;
   secondaryNavbarWidth: number | null;
   setSecondaryNavbarWidth: (width: number) => void;
   galleryThumbnailSize: number;
@@ -151,10 +155,12 @@ export const useAppStore = create<AppGlobalState>()((set) => ({
   setQuickFilterActiveCount: (quickFilterActiveCount) => set({ quickFilterActiveCount }),
   mapLensAvailable: null,
   setMapLensAvailable: (mapLensAvailable) => set({ mapLensAvailable }),
+  facesLensAvailable: false,
+  setFacesLensAvailable: (facesLensAvailable) => set({ facesLensAvailable }),
   secondaryToolbarMounted: false,
   setSecondaryToolbarMounted: (secondaryToolbarMounted) => set({ secondaryToolbarMounted }),
-  selectionMode: false,
-  setSelectionMode: (selectionMode) => set({ selectionMode }),
+  randomSortSeed: 1,
+  reshuffleRandomSort: () => set((state) => ({ randomSortSeed: state.randomSortSeed + 1 })),
   secondaryNavbarWidth: null,
   setSecondaryNavbarWidth: (width) =>
     set((state) => {

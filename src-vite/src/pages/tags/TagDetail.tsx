@@ -201,7 +201,7 @@ export function TagDetail() {
           <FilterChipPlaceholders />
         ) : undefined
       }
-      subHeaderActions={
+      scopeControls={
         descendantTags.length > 0 ? (
           <HeroToggle
             label="Include subtags"

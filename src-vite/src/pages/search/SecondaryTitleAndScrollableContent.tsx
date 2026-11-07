@@ -42,8 +42,8 @@ type SecondaryTitleAndScrollableContentProps = {
   compactActions?: ReactNode;
   /** Sub-header filter chips (left side). */
   filters?: ReactNode;
-  /** Sub-header right-side toggles (Include sub-albums, Group by year, …). */
-  subHeaderActions?: ReactNode;
+  /** Scope toggles (Include sub-albums, …); shown in the toolbar, never in the quick-filters row. */
+  scopeControls?: ReactNode;
   /**
    * Show the gallery layout menu at the right edge of the sub-header;
    * `'disabled'` keeps it in place for a view without a photo grid.
@@ -74,7 +74,7 @@ export function SecondaryTitleAndScrollableContent({
   actions,
   compactActions,
   filters,
-  subHeaderActions,
+  scopeControls,
   galleryLayout = false,
   heroBelow,
   content,
@@ -101,20 +101,27 @@ export function SecondaryTitleAndScrollableContent({
     const showFiltersRow = hasFilters && (showQuickFilters || activeQuickFilters > 0);
     resolvedSubHeader = (
       <div className="secondary-headers">
-        <SecondaryToolbar hasQuickFilters={hasFilters} gridControls={galleryLayout === true} />
-        {showFiltersRow && (
-          <ContentSubHeader
-            filters={filters}
-            actions={subHeaderActions}
-            onHide={showQuickFilters ? () => setShowQuickFilters(false) : undefined}
-          />
+        <SecondaryToolbar
+          hasQuickFilters={hasFilters}
+          scopeControls={scopeControls}
+          gridControls={galleryLayout === true}
+        />
+        {hasFilters && (
+          <div className={clsx('secondary-row', showFiltersRow && 'is-open')} inert={!showFiltersRow}>
+            <div className="secondary-row__inner">
+              <ContentSubHeader
+                filters={filters}
+                onHide={showQuickFilters ? () => setShowQuickFilters(false) : undefined}
+              />
+            </div>
+          </div>
         )}
       </div>
     );
     subHeaderHeight =
       (showToolbar ? TOOLBAR_HEIGHT : TOOLBAR_HANDLE_HEIGHT) + (showFiltersRow ? ROW_HEIGHT : 0);
-  } else if (hasFilters || subHeaderActions) {
-    resolvedSubHeader = <ContentSubHeader filters={filters} actions={subHeaderActions} />;
+  } else if (hasFilters || scopeControls) {
+    resolvedSubHeader = <ContentSubHeader filters={filters} actions={scopeControls} />;
   }
 
   // Slim variant of the hero that pins once the full hero scrolls away, so the

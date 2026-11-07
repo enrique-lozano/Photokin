@@ -4,9 +4,9 @@ import { useCallback, useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 /** How a photo list is looked at. Never changes which photos it contains. */
-export type Lens = 'grid' | 'strips' | 'list' | 'map';
+export type Lens = 'grid' | 'list' | 'map' | 'faces';
 
-export const LENSES: Lens[] = ['grid', 'strips', 'list', 'map'];
+export const LENSES: Lens[] = ['grid', 'list', 'map', 'faces'];
 
 export const LENS_PARAM = 'lens';
 
@@ -15,7 +15,7 @@ export function parseLens(value: string | null | undefined): Lens | null {
 }
 
 /**
- * The active lens of the current list. The URL (`?lens=strips`, omitted for
+ * The active lens of the current list. The URL (`?lens=list`, omitted for
  * Grid) is the source of truth so views are linkable and Back/Forward work.
  * On arrival without a lens, the one last used on this list is restored.
  */
@@ -60,6 +60,10 @@ export function useLens(): { lens: Lens; setLens: (lens: Lens) => void } {
 export function useEffectiveLens(): { lens: Lens; requested: Lens; setLens: (lens: Lens) => void } {
   const { lens: requested, setLens } = useLens();
   const mapLensAvailable = useAppStore((state) => state.mapLensAvailable);
-  const lens: Lens = requested === 'map' && mapLensAvailable === false ? 'grid' : requested;
+  const facesLensAvailable = useAppStore((state) => state.facesLensAvailable);
+  // A lens that doesn't apply to this list (no locations, not a person page) falls back to Grid.
+  const unavailable =
+    (requested === 'map' && mapLensAvailable === false) || (requested === 'faces' && !facesLensAvailable);
+  const lens: Lens = unavailable ? 'grid' : requested;
   return { lens, requested, setLens };
 }

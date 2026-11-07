@@ -31,7 +31,6 @@ import { DeletePersonDialog } from './DeletePersonDialog';
 import './people.css';
 import { buildPersonActions } from './personActions';
 import { PersonEditDialog } from './PersonEditDialog';
-import { resetPersonViewMode } from './personViewMode';
 
 /** Enough placeholder rows to fill a typical sidebar without implying a count. */
 const SKELETON_ROW_COUNT = 8;
@@ -84,8 +83,6 @@ export function PeopleLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const showHiddenPeople = useHiddenItemsStore((state) => state.showHiddenItems);
-
-  useEffect(() => () => resetPersonViewMode(), []);
 
   // The sidebar and its active page share one catalog query.
   const { data: people, loading } = useLiveQuery(
