@@ -55,6 +55,8 @@ export function Lightbox(params: {
   const loopVideo = useSettingsStore((state) => state.loopVideo);
 
   const mediaContainerRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const isOpen = params.img != null;
   const {
     renderedImg,
     isActive,
@@ -173,6 +175,32 @@ export function Lightbox(params: {
     }
   }, [params.img]);
 
+  // Move focus into the dialog and give it back to the opened thumbnail on close.
+  useEffect(() => {
+    if (!isOpen) return;
+    const opener = document.activeElement as HTMLElement | null;
+    rootRef.current?.focus({ preventScroll: true });
+    return () => opener?.focus({ preventScroll: true });
+  }, [isOpen]);
+
+  const trapTabFocus = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Tab') return;
+    const focusable = event.currentTarget.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), [href], input:not(:disabled), [tabindex]:not([tabindex="-1"])',
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first) return;
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === event.currentTarget)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, []);
+
   const handleToggleInfoPanel = useCallback(() => setInfoPanelActive((value) => !value), []);
   const handleCloseInfoPanel = useCallback(() => setInfoPanelActive(false), []);
   const handleSelectAsset = useCallback(
@@ -277,7 +305,15 @@ export function Lightbox(params: {
   const handleReloadThumbnailClick = useCallback(() => void handleReloadThumbnail(), [handleReloadThumbnail]);
 
   return (
-    <div className="lightbox">
+    <div
+      ref={rootRef}
+      className="lightbox"
+      role={isOpen ? 'dialog' : undefined}
+      aria-modal={isOpen || undefined}
+      aria-label={isOpen ? 'Photo viewer' : undefined}
+      tabIndex={-1}
+      onKeyDown={trapTabFocus}
+    >
       <div
         className={
           'lightbox-media' +

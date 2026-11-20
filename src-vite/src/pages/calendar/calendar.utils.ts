@@ -67,10 +67,6 @@ export function sumMonthCount(months: MonthBuckets, month: number): number {
   return months[month]?.reduce((acc, day) => acc + day.count, 0) ?? 0;
 }
 
-export function sumYearCount(months: MonthBuckets): number {
-  return Object.keys(months).reduce((acc, month) => acc + sumMonthCount(months, Number(month)), 0);
-}
-
 /**
  * Half-open UTC range `[start, end)` for the current selection. UTC keeps the
  * boundaries aligned with how assets are bucketed across the app.

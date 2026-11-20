@@ -15,26 +15,6 @@ export enum MetadataMode {
 
 export const DEFAULT_METADATA_MODE: MetadataMode = MetadataMode.ReadOnly;
 
-export interface MetadataModeOption {
-  value: MetadataMode;
-  label: string;
-  description: string;
-}
-
-export const METADATA_MODE_OPTIONS: MetadataModeOption[] = [
-  {
-    value: MetadataMode.ReadOnly,
-    label: 'Library only',
-    description: 'Your edits stay in Photokin’s library and your photo files are never touched.',
-  },
-  {
-    value: MetadataMode.Full,
-    label: 'Library and photo files',
-    description:
-      'Photokin also writes tags, ratings, titles, descriptions and locations into each photo’s metadata (EXIF, IPTC, XMP), so other apps can read them.',
-  },
-];
-
 export function isMetadataMode(value: unknown): value is MetadataMode {
   return (Object.values(MetadataMode) as unknown[]).includes(value);
 }
@@ -51,25 +31,6 @@ export enum WriteBackTiming {
 }
 
 export const DEFAULT_WRITE_BACK_TIMING: WriteBackTiming = WriteBackTiming.DeferredOnSync;
-
-export interface WriteBackTimingOption {
-  value: WriteBackTiming;
-  label: string;
-  description: string;
-}
-
-export const WRITE_BACK_TIMING_OPTIONS: WriteBackTimingOption[] = [
-  {
-    value: WriteBackTiming.DeferredOnSync,
-    label: 'On sync',
-    description: 'Collect edits and write them to files in one batch when you sync the library.',
-  },
-  {
-    value: WriteBackTiming.ImmediateOnEdit,
-    label: 'Immediately',
-    description: 'Write each change into the file the moment you make it in Photokin.',
-  },
-];
 
 export function isWriteBackTiming(value: unknown): value is WriteBackTiming {
   return (Object.values(WriteBackTiming) as unknown[]).includes(value);

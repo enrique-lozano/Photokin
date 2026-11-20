@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { EntityDetailRoute } from './components/page-content/EntityDetailRoute';
+import { RouteError } from './components/page-content/RouteError';
 import { AlbumsPage } from './pages/albums/Albums';
 import { CalendarPage } from './pages/calendar/Calendar';
 import { ComponentsPage } from './pages/components/ComponentsPage';
@@ -60,10 +61,11 @@ export function tagDetailPath(id: string): string {
 }
 
 export const router = createBrowserRouter([
-  { path: AppRoutes.editor, element: <EditorPage /> },
+  { path: AppRoutes.editor, element: <EditorPage />, errorElement: <RouteError /> },
   {
     path: AppRoutes.settings,
     element: <SettingsPage />,
+    errorElement: <RouteError />,
     children: [
       { path: 'smart-search/models', element: <SettingsModels /> },
       { path: 'navigation', element: <SettingsNavigation /> },
@@ -73,10 +75,12 @@ export const router = createBrowserRouter([
   {
     path: AppRoutes.onboarding,
     element: <Onboarding />,
+    errorElement: <RouteError />,
   },
   {
     path: '/',
     element: <Dashboard></Dashboard>,
+    errorElement: <RouteError />,
     children: [
       {
         path: AppRoutes.home,

@@ -1,6 +1,5 @@
 mod clipboard;
 mod dependency_status;
-mod disk_space;
 mod exiftool_setup;
 mod external_app;
 mod file_info;
@@ -13,7 +12,6 @@ mod thumbnail;
 
 pub use clipboard::copy_image_to_clipboard;
 pub use dependency_status::get_external_dependency_status;
-pub use disk_space::available_disk_space;
 pub use exiftool_setup::{apply_saved_exiftool_dir, install_exiftool, set_exiftool_location};
 pub use external_app::open_file_with_app;
 pub use file_info::{dir_entries_stat, filestat};

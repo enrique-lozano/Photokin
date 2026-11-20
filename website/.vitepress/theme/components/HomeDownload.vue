@@ -10,9 +10,7 @@ import { withBase } from 'vitepress';
       your computer.
     </p>
     <div class="actions">
-      <a class="button brand" href="https://github.com/enrique-lozano/Photokin/releases/latest"
-        >Download Photokin</a
-      >
+      <a class="button brand" :href="withBase('/download')">Download Photokin</a>
       <a class="button alt" :href="withBase('/guide/getting-started')">Install guide</a>
     </div>
   </section>

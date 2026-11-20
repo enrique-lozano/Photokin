@@ -15,7 +15,6 @@ import './App.css';
 import { TooltipProvider } from './components/ui/tooltip';
 import { LightboxImageProvider } from './context/LightboxContext';
 import { initSettings } from './hooks/useSettingsSync';
-import './styles/components/popover.css';
 import './styles/components/scrollbar.css';
 import './styles/fonts';
 import './styles/normalize.css';

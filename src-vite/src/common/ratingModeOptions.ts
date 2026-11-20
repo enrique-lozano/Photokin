@@ -16,15 +16,3 @@ export enum RatingMode {
 }
 
 export const DEFAULT_RATING_MODE: RatingMode = RatingMode.Favorites;
-
-/** Display copy for each rating mode, keyed by the mode itself. */
-export const RATING_MODES: Record<RatingMode, { label: string; description: string }> = {
-  [RatingMode.Favorites]: {
-    label: 'Favorites',
-    description: 'Mark photos you love with a single heart.',
-  },
-  [RatingMode.Stars]: {
-    label: '1–5 stars',
-    description: 'Rate photos from 1 to 5 stars for finer sorting and filtering.',
-  },
-};

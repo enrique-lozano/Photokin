@@ -45,13 +45,6 @@
     cursor: auto;
   }
 
-  .album-tree-label {
-    margin: 10px 2px 0;
-    @apply text-xs font-semibold text-muted-foreground;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
   .tree-container {
     flex-grow: 2;
     border-radius: 0;

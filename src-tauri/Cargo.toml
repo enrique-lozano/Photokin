@@ -1,6 +1,6 @@
 [package]
 name = "photokin"
-version = "0.0.0"
+version = "0.0.1"
 description = "Photokin - local photo gallery"
 authors = ["you"]
 edition = "2021"
@@ -41,10 +41,6 @@ mozjpeg-sys = { version = "2", default-features = false, features = ["jpegtran",
 # Streaming SHA-256 for byte-identical (exact) duplicate detection, computed in
 # Rust so large media never has to be loaded into the webview's heap.
 sha2 = "0.10"
-# Cross-platform available/total filesystem space (statvfs on Unix, Win32 API on
-# Windows) without hand-rolling per-OS FFI. Used to show free disk space before
-# downloading large ML models.
-fs4 = "1.1.0"
 # Small blocking HTTP client used to stream ML model downloads straight to disk
 # in Rust (no per-chunk IPC hop through the webview), so a download keeps running
 # even if the user navigates away or closes the window.

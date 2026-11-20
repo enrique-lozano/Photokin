@@ -15,6 +15,7 @@ import { useModelDownloads } from '@/media/smartSearch/modelDownload';
 import { hasAnyDownloadedModel, isModelDownloaded } from '@/media/smartSearch/models';
 import { AppRoutes } from '@/router';
 import { useSmartSearchSettingsStore } from '@/stores/smartSearchSettingsStore';
+import { deleteAllThumbnails } from '@/media/thumbnails/thumbnail';
 import { requestBackgroundTask } from '@/system/backgroundTasks';
 import { useDependencyStatus } from '@/system/useDependencyStatus';
 import {
@@ -22,7 +23,6 @@ import {
   ThumbnailCacheStats,
   WIPE_USER_DATA_EVENT,
   WipeUserDataPayload,
-  clearThumbnailCache,
   getDatabaseFolder,
   getDatabaseStorageSize,
   getSearchModelsStorageStats,
@@ -152,7 +152,7 @@ export function SettingsSystem() {
     setIsClearingThumbnails(true);
 
     try {
-      await clearThumbnailCache();
+      await deleteAllThumbnails();
       toast.success('Thumbnail cache cleared');
       await refreshStorageStats();
     } catch (error) {

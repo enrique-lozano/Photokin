@@ -155,13 +155,6 @@
   margin: 12px var(--lightbox-info-lateral-padding) 0;
 }
 
-.lightbox-accordion-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  flex-shrink: 0;
-}
-
 /* Flat sections: no card chrome, just a hairline divider between them. */
 .info-card {
   border: 0;
@@ -188,12 +181,6 @@
   visibility: visible;
 }
 
-.lightbox-info-panel__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
 /* ---------------------------------------------------------------------------
    Flat fields (Title / Description / Date & time / Rating / File name)
    --------------------------------------------------------------------------- */
@@ -207,30 +194,6 @@
   @apply text-xs font-semibold text-muted-foreground;
   letter-spacing: 0;
   text-transform: uppercase;
-}
-
-/* Read-only twin of the `filled` field variant (see components/ui/input.tsx). */
-.info-field__static {
-  width: 100%;
-  margin: 0;
-  padding: 9px 12px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 8px;
-  background-color: hsl(var(--muted) / 0.35);
-  @apply text-foreground text-base;
-  overflow-wrap: anywhere;
-}
-
-.info-field__hint {
-  margin: 0;
-  @apply text-xs text-muted-foreground;
-}
-
-.info-field__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 /* Date & time */
@@ -259,20 +222,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.info-rating__clear {
-  border: 0;
-  background: transparent;
-  @apply text-muted-foreground text-sm;
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-}
-
-.info-rating__clear:hover {
-  @apply text-foreground;
-  text-decoration: underline;
 }
 
 /* Full-bleed row (breaks out of the content's lateral padding) with the text
@@ -350,16 +299,6 @@
   padding-top: 8px;
 }
 
-.info-tile__trailing .hide-if-closed {
-  opacity: 1;
-  transition: opacity 0.25s;
-}
-
-.accordion-item[data-state='closed'] .info-tile__trailing .hide-if-closed {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .toggle-accordion-icon {
   transition: transform 0.25s;
 }
@@ -382,51 +321,10 @@
   @apply text-foreground;
 }
 
-.camera-info__title {
-  @apply text-base font-semibold;
-  margin: 0;
-}
-
 .camera-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 6px;
-}
-
-.camera-grid__chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 6px;
-  border-radius: 8px;
-  background-color: hsl(var(--muted) / 0.7);
-  text-align: center;
-  /* Grid items default to min-content width; without this an unusually long
-     value stretches the chip and pushes the row out of the panel. */
-  min-width: 0;
-}
-
-.camera-grid__value {
-  max-width: 100%;
-  @apply text-sm font-semibold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.camera-grid__chip[data-empty='true'] .camera-grid__value {
-  @apply text-muted-foreground font-medium;
-}
-
-.camera-grid__label {
-  max-width: 100%;
-  @apply text-xs text-muted-foreground;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ---------------------------------------------------------------------------
@@ -447,17 +345,6 @@
     border-radius: 999px;
     padding: 4px 11px;
   }
-}
-
-/* Editable camera make/model, shown when a photo lacks full shot data. */
-.camera-identity-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.camera-identity-editor .info-field {
-  gap: 4px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -483,12 +370,6 @@
   padding: 14px 12px;
   text-align: center;
   @apply text-muted-foreground;
-}
-
-.location-empty__text {
-  margin: 0;
-  @apply text-sm;
-  max-width: 26ch;
 }
 
 /* ---------------------------------------------------------------------------

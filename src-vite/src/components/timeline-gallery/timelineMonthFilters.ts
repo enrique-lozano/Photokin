@@ -29,18 +29,3 @@ export function buildTimelineMonthFilters(
     },
   ];
 }
-
-/**
- * Mirrors the SQL date comparisons applied by {@link buildTimelineMonthFilters}
- * so tests can assert parity with `strftime('%Y-%m', …)` month buckets.
- */
-export function assetDateMatchesTimelineMonthSection(
-  dateIso: string,
-  sectionId: TimelineMonthSectionId,
-): boolean {
-  const [year, month] = sectionId.split('-').map((part) => Number(part));
-  const monthStart = new Date(Date.UTC(year, month - 1, 1)).toISOString();
-  const nextMonthStart = new Date(Date.UTC(year, month, 1)).toISOString();
-
-  return dateIso >= monthStart && dateIso < nextMonthStart;
-}

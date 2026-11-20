@@ -61,14 +61,6 @@ export async function tauriFileStat(filename: string): Promise<TauriFileStat> {
 }
 
 /**
- * Bytes free on the filesystem that holds `path`. The path need not exist yet —
- * the backend walks up to the nearest existing ancestor before querying.
- */
-export async function availableDiskSpace(path: string): Promise<number> {
-  return invoke<number>('available_disk_space', { path });
-}
-
-/**
  * Lists the direct children of a directory together with their modification
  * time, size and stable file identity in a single native call. Much cheaper
  * than `readDir` + a `filestat` per entry, and the only reliable way to read the

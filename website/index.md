@@ -10,7 +10,7 @@ hero:
   actions:
     - theme: brand
       text: Download
-      link: https://github.com/enrique-lozano/Photokin/releases/latest
+      link: /download
     - theme: alt
       text: Explore the app
       link: '#explore'

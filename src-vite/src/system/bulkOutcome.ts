@@ -38,11 +38,6 @@ export interface BulkOutcome {
  */
 export type BulkFileProgress = { processed: number; total: number } | null;
 
-/** True when every file the action covered was written. */
-export function isCleanOutcome(outcome: BulkOutcome): boolean {
-  return outcome.fileFailures.length === 0 && (outcome.skipped?.length ?? 0) === 0;
-}
-
 /** Files in scope that completed without a reported write error. */
 export function successfulFileCount(outcome: BulkOutcome): number {
   return Math.max(0, outcome.fileCount - outcome.fileFailures.length - (outcome.skipped?.length ?? 0));

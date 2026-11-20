@@ -30,12 +30,12 @@ describe('filmstrip membership after importing an edited copy', () => {
   beforeEach(() => {
     settings.countUnverifiedFaces = false;
     db.current = new Database(':memory:');
-    const directory = 'src\\db\\migrations';
+    const directory = 'src/db/migrations';
     const migrations = readdirSync(directory)
       .filter((file) => file.endsWith('.sql'))
       .sort((a, b) => parseInt(a) - parseInt(b));
     for (const file of migrations) {
-      db.current.exec(readFileSync(`${directory}\\${file}`, 'utf8'));
+      db.current.exec(readFileSync(`${directory}/${file}`, 'utf8'));
     }
     db.current.exec(`
       INSERT INTO rootAlbums (id, path) VALUES ('root', 'C:\\photos');

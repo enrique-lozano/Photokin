@@ -12,12 +12,6 @@
   gap: 8px;
 }
 
-.model-manager__section-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .model-manager__label {
   margin: 0;
   padding-inline: 2px;

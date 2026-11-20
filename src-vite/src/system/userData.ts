@@ -7,7 +7,6 @@ import { clearDuplicatesCache } from '@/pages/duplicates/duplicatesCache';
 import { tauriDirEntriesStat, tauriScanImportPreview } from '@/system/diskManager';
 import { join } from '@tauri-apps/api/path';
 import { exists, remove } from '@tauri-apps/plugin-fs';
-import { openPath } from '@tauri-apps/plugin-opener';
 
 /** Event used by the settings window to ask the main window to wipe all data. */
 export const WIPE_USER_DATA_EVENT = 'photokin://wipe-user-data';
@@ -96,19 +95,6 @@ export async function getThumbnailCacheStats(): Promise<ThumbnailCacheStats> {
   }
 
   return { sizeBytes, fileCount };
-}
-
-/**
- * Delete every generated thumbnail. Safe to call at any time: thumbnails are a
- * pure cache and are regenerated on demand the next time an asset is displayed.
- */
-export async function clearThumbnailCache() {
-  await deleteAllThumbnails();
-}
-
-/** Reveal the database folder in the OS file explorer. */
-export async function openDatabaseFolder() {
-  await openPath(await getDbDir());
 }
 
 async function _removeWithRetries(path: string, recursive = false) {

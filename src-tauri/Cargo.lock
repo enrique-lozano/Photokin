@@ -1582,16 +1582,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fs4"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e72ed92b67c146290f88e9c89d60ca163ea417a446f61ffd7b72df3e7f1dfd5"
-dependencies = [
- "rustix",
- "windows-sys 0.61.2",
-]
-
-[[package]]
 name = "funty"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3582,11 +3572,10 @@ dependencies = [
 
 [[package]]
 name = "photokin"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "fix-path-env",
  "flate2",
- "fs4",
  "image",
  "mozjpeg-sys",
  "mp4",

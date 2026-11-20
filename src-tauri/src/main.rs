@@ -39,7 +39,6 @@ fn main() {
             get_external_dependency_status,
             install_exiftool,
             set_exiftool_location,
-            available_disk_space,
             download_model,
             cancel_model_download,
             generate_image_thumbnail,

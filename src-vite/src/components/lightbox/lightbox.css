@@ -10,6 +10,10 @@
   position: absolute;
 }
 
+.lightbox:focus {
+  outline: none;
+}
+
 .dark .lightbox {
   --lightbox-stage: 222.2 60% 3%;
 }

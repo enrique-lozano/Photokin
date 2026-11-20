@@ -32,7 +32,7 @@ export default defineConfig({
     logo: '/logo.svg',
     nav: [
       { text: 'Guide', link: '/guide/', activeMatch: '/guide/' },
-      { text: 'Download', link: `${REPO}/releases/latest` },
+      { text: 'Download', link: '/download', activeMatch: '/download' },
     ],
     sidebar: {
       '/guide/': [

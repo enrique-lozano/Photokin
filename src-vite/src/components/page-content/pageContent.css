@@ -524,30 +524,6 @@
   border-bottom: 1px solid hsl(var(--border));
 }
 
-.overview-header__title {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  @apply text-foreground;
-}
-
-.overview-header__title h2 {
-  margin: 0;
-  @apply text-xl font-semibold;
-  letter-spacing: -0.02em;
-}
-
-.overview-header__title p {
-  margin: 0;
-  @apply text-sm;
-  @apply text-muted-foreground;
-}
-
-.overview-header__search {
-  width: 280px;
-  max-width: 40vw;
-}
-
 /* Vertical rhythm only: `.page-scroll__body` already applies the shared
    `--page-inline-padding`, so adding a horizontal padding here pushed section
    titles and grids ~30px further in than the hero title above them. */
