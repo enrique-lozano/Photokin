@@ -38,6 +38,15 @@
   flex: 1;
 }
 
+.segmented .segmented__option:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.segmented .segmented__option:disabled:hover {
+  @apply text-muted-foreground;
+}
+
 .segmented__option.active {
   background-color: hsl(var(--secondary-navbar-foreground) / 0.14);
   @apply text-secondary-navbar-foreground;
