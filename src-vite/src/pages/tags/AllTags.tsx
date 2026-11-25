@@ -1,4 +1,4 @@
-import { faceCropViewBox } from '@/components/face-thumbnail/FaceThumbnail';
+import { FaceCropImage } from '@/components/face-thumbnail/FaceThumbnail';
 import { HeroIcon } from '@/components/page-content/HeroIcon';
 import { useCountStatus, usePageChrome } from '@/components/page-content/usePageChrome';
 import { Button } from '@/components/ui/button';
@@ -122,14 +122,7 @@ function TagCoverImage({ cover }: { cover: TagCoverData }) {
 
   if (!src) return null;
 
-  return (
-    <img
-      className="tag-cover__img"
-      src={src}
-      alt=""
-      style={cover.region ? faceCropViewBox(cover.region) : undefined}
-    />
-  );
+  return <FaceCropImage className="tag-cover__img" alt="" src={src} area={cover.region} />;
 }
 
 function TagCover({ color, childCount, cover }: { color: string; childCount: number; cover?: TagCoverData }) {

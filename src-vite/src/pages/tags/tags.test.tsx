@@ -82,7 +82,9 @@ vi.mock('@/components/timeline-gallery/TimelineGallery', () => ({ TimelineGaller
 vi.mock('../search/SecondaryTitleAndScrollableContent', () => ({
   SecondaryTitleAndScrollableContent: ({ content }: { content: ReactNode }) => <main>{content}</main>,
 }));
-vi.mock('@/components/face-thumbnail/FaceThumbnail', () => ({ faceCropViewBox: vi.fn() }));
+vi.mock('@/components/face-thumbnail/FaceThumbnail', () => ({
+  FaceCropImage: ({ src }: { src: string }) => <img src={src} alt="" />,
+}));
 vi.mock('@/media/thumbnails/thumbnail', () => ({ resolveThumbnailPath: vi.fn() }));
 vi.mock('@/system/diskManager', () => ({ pathToImageSrc: (path: string) => path }));
 vi.mock('./TagFormDialog', () => ({ TagFormDialog: () => null }));

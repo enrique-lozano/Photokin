@@ -1,7 +1,11 @@
+import { mergeSearchQueries, hasCondition } from '@/common/searchQueryUtils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VerticalDivider } from '@/components/ui/verticalDivider';
 import { useAppStore } from '@/stores/appState';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { IconArrowBarToUp } from '@tabler/icons-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ContentFilterChip } from './contentFilterChips';
 import { FilterChip } from './FilterChip';
@@ -238,9 +242,48 @@ export function FilterChipRow({ chips: allChips, activeChipIds, onToggle, disabl
     />
   );
 
+  const promoteToGlobal = () => {
+    const chipsToPromote = selectedItems.map((item) => item.chip);
+    const previousQuery = useAppStore.getState().searchQuery;
+    const added = chipsToPromote
+      .flatMap((chip) => chip.conditions)
+      .filter((condition) => !hasCondition(previousQuery, condition.filters));
+    useAppStore.getState().setSearchQuery(mergeSearchQueries(previousQuery, added));
+    chipsToPromote.forEach(onToggle);
+    toast.success(`Applied to the whole app: ${chipsToPromote.map((chip) => chip.label).join(' + ')}`, {
+      duration: 10_000,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          useAppStore.getState().setSearchQuery(previousQuery);
+          chipsToPromote.forEach(onToggle);
+        },
+      },
+    });
+  };
+
   return (
     <>
       {selectedItems.map(renderChip)}
+      {selectedItems.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label="Apply to the whole app"
+              onClick={promoteToGlobal}
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-dashed border-primary/50 text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+            >
+              <IconArrowBarToUp size={16} aria-hidden="true" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            Apply to the whole app
+            <span className="block text-muted-foreground">Stays active when you change page</span>
+          </TooltipContent>
+        </Tooltip>
+      )}
       {showDivider && <VerticalDivider ref={dividerRef} />}
       {otherItems.map(renderChip)}
     </>

@@ -11,7 +11,7 @@ import { ThumbnailSize } from '@/media/thumbnails/thumbnailOptions.model';
 import { pathToImageSrc } from '@/system/diskManager';
 import { IconUser } from '@tabler/icons-react';
 import clsx from 'clsx';
-import { CSSProperties, useEffect, useState } from 'react';
+import { ComponentProps, CSSProperties, useEffect, useState } from 'react';
 import './faceThumbnail.css';
 import { useSharpFaceCrop } from './useSharpFaceCrop';
 
@@ -36,7 +36,7 @@ function _windowStart(center: number, size: number): number {
 }
 
 /**
- * `object-view-box` insets for a circular (or cover-fit) face crop.
+ * Square window (as photo fractions) for a circular (or cover-fit) face crop.
  *
  * `imageAspectRatio` (width / height) is what makes the window square in
  * *pixels*: `w` and `h` are fractions of different sides, so without it the
@@ -45,7 +45,7 @@ function _windowStart(center: number, size: number): number {
  * window inwards instead, and then the untrimmed band shows up as a face that
  * looks zoomed out and off-centre.
  */
-export function faceCropViewBox(area: AreaBox, imageAspectRatio?: number): CSSProperties {
+function _faceCropWindow(area: AreaBox, imageAspectRatio?: number) {
   const aspect =
     imageAspectRatio && Number.isFinite(imageAspectRatio) && imageAspectRatio > 0 ? imageAspectRatio : 1;
 
@@ -58,12 +58,81 @@ export function faceCropViewBox(area: AreaBox, imageAspectRatio?: number): CSSPr
   width *= fit;
   height *= fit;
 
-  const left = _windowStart(area.x, width);
-  const top = _windowStart(area.y, height);
+  return { left: _windowStart(area.x, width), top: _windowStart(area.y, height), width, height };
+}
+
+export function faceCropViewBox(area: AreaBox, imageAspectRatio?: number): CSSProperties {
+  const { left, top, width, height } = _faceCropWindow(area, imageAspectRatio);
 
   return {
     objectViewBox: `inset(${top * 100}% ${(1 - left - width) * 100}% ${(1 - top - height) * 100}% ${left * 100}%)`,
   } as CSSProperties;
+}
+
+const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
+// WebKit (the macOS webview) lacks `object-view-box`; Chromium-based webviews have it.
+const supportsObjectViewBox = typeof CSS === 'undefined' || CSS.supports('object-view-box', 'inset(0)');
+
+const measuredAspects = new Map<string, number>();
+
+/** Background that reproduces `object-view-box` + `object-fit: cover` in a square tile. */
+function _faceCropBackground(src: string, window: ReturnType<typeof _faceCropWindow>, aspect: number) {
+  const { left, top, width, height } = window;
+  // Cover the tile with the window along its shorter side, keeping the photo's proportions.
+  const [photoW, photoH] =
+    (width * aspect) / height >= 1 ? [aspect / height, 1 / height] : [1 / width, 1 / (width * aspect)];
+  const position = (size: number, start: number, extent: number) =>
+    size === 1 ? 0 : (((1 - extent * size) / 2 - start * size) / (1 - size)) * 100;
+
+  return {
+    backgroundImage: `url(${JSON.stringify(src)})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: `${photoW * 100}% ${photoH * 100}%`,
+    backgroundPosition: `${position(photoW, left, width)}% ${position(photoH, top, height)}%`,
+  } satisfies CSSProperties;
+}
+
+/**
+ * An `<img>` showing only the face crop. Uses `object-view-box` where
+ * available; elsewhere the photo becomes the element's background (the 1x1
+ * pixel is square, like the crop) once its real proportions are known.
+ */
+export function FaceCropImage({
+  src,
+  area,
+  imageAspectRatio,
+  ...props
+}: ComponentProps<'img'> & { src: string; area?: AreaBox; imageAspectRatio?: number }) {
+  const [, setMeasuredCount] = useState(0);
+  const aspect = imageAspectRatio ?? measuredAspects.get(src);
+
+  useEffect(() => {
+    if (supportsObjectViewBox || !area || aspect) return;
+    const probe = new Image();
+    probe.onload = () => {
+      measuredAspects.set(src, probe.naturalWidth / probe.naturalHeight);
+      setMeasuredCount((count) => count + 1);
+    };
+    probe.src = src;
+    return () => {
+      probe.onload = null;
+    };
+  }, [src, area, aspect]);
+
+  if (!area) return <img {...props} src={src} />;
+
+  if (supportsObjectViewBox) {
+    return <img {...props} src={src} style={faceCropViewBox(area, imageAspectRatio)} />;
+  }
+
+  return (
+    <img
+      {...props}
+      src={TRANSPARENT_PIXEL}
+      style={aspect ? _faceCropBackground(src, _faceCropWindow(area, imageAspectRatio), aspect) : undefined}
+    />
+  );
 }
 
 type FaceThumbnailProps = {
@@ -168,24 +237,22 @@ export function FaceThumbnail({ region, className, sharp = false }: FaceThumbnai
     return <Skeleton ref={setThumbnailNode} className={clsx('face-thumbnail', className)} aria-hidden />;
   }
 
-  const viewBox = faceCropViewBox(region.area);
-
   return (
     <>
-      <img
+      <FaceCropImage
         ref={setThumbnailNode}
         className={clsx('face-thumbnail', className)}
-        src={src}
         alt="Face preview"
-        style={viewBox}
+        src={src}
+        area={region.area}
       />
       {sharpSrc && (
-        <img
+        <FaceCropImage
           className={clsx('face-thumbnail', 'face-thumbnail-sharp', className)}
-          src={sharpSrc}
           alt=""
           aria-hidden
-          style={viewBox}
+          src={sharpSrc}
+          area={region.area}
         />
       )}
     </>

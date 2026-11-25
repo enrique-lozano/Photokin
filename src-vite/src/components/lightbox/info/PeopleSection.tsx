@@ -1,4 +1,4 @@
-import { faceCropViewBox } from '@/components/face-thumbnail/FaceThumbnail';
+import { FaceCropImage } from '@/components/face-thumbnail/FaceThumbnail';
 import { Badge } from '@/components/ui/badge';
 import { toastOnError } from '@/components/ui/toast';
 import { LightboxImageContext } from '@/context/LightboxContext';
@@ -103,10 +103,11 @@ export function PeopleSection({
               : undefined;
 
           const crop = (
-            <img
+            <FaceCropImage
               className="persons-box__img"
-              style={faceCropViewBox(region.areaInfo, imageAspectRatio)}
               src={pathToImageSrc(img.fullPath)}
+              area={region.areaInfo}
+              imageAspectRatio={imageAspectRatio}
               alt=""
             />
           );

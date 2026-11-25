@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>Mock: promover filtros a globales</title>
+<style>
+  :root { --p:#7c3aed; --pl:#ede9fe; --b:#e5e7eb; --t:#1f2937; --m:#6b7280; }
+  * { box-sizing:border-box }
+  body { font:14px system-ui,sans-serif; color:var(--t); background:#f3f4f6; margin:0; padding:32px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--m); margin:32px 0 8px }
+  p.note { color:var(--m); margin:6px 0 0; font-size:13px; max-width:760px }
+  .frame { background:#fff; border:1px solid var(--b); border-radius:12px; overflow:hidden; max-width:980px; position:relative }
+  .top { background:#3b1d6e; padding:10px 16px; display:flex; justify-content:center }
+  .search { width:420px; background:rgba(255,255,255,.15); color:#e9d5ff; border-radius:8px; padding:7px 12px; display:flex; gap:8px; align-items:center; min-height:34px }
+  .search .ph { opacity:.8 }
+  .gpill { background:#fff; color:var(--p); border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600; display:none; align-items:center; gap:4px }
+  .gpill.on { display:inline-flex }
+  .gpill b { cursor:pointer; opacity:.6 }
+  .body { padding:16px 20px }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+  .chip { border:1px solid var(--b); border-radius:999px; padding:5px 12px; background:#fff; cursor:pointer; font-size:13px; white-space:nowrap }
+  .chip small { color:var(--m) }
+  .chip.sel { background:var(--pl); border-color:#c4b5fd; color:var(--p); font-weight:600 }
+  .div { width:1px; height:22px; background:var(--b); margin:0 4px }
+  .promote { position:relative; width:28px; height:28px; border-radius:50%; border:1px dashed #a78bfa; color:var(--p); background:#fff; cursor:pointer; display:none; align-items:center; justify-content:center; font-size:15px }
+  .promote.show { display:flex }
+  .promote:hover { background:var(--pl) }
+  .tip { position:absolute; top:34px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; font-size:12px; padding:6px 9px; border-radius:6px; width:230px; text-align:left; display:none; z-index:5; line-height:1.35; font-weight:400 }
+  .tip em { color:#9ca3af; font-style:normal }
+  .promote:hover .tip { display:block }
+  .toast { position:absolute; right:16px; bottom:16px; background:#111827; color:#fff; border-radius:8px; padding:10px 14px; display:none; gap:14px; align-items:center }
+  .toast.on { display:flex }
+  .toast a { color:#c4b5fd; cursor:pointer; font-weight:600 }
+  .head { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px }
+  .head h3 { margin:0; font-size:20px }
+  .btn { border:1px solid var(--b); border-radius:8px; padding:6px 10px; background:#fff; display:inline-flex; gap:6px; align-items:center; cursor:default }
+  .menu { position:absolute; right:20px; top:150px; background:#fff; border:1px solid var(--b); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); padding:6px; width:290px }
+  .menu div { padding:7px 10px; border-radius:6px }
+  .menu div.hl { background:var(--pl); color:var(--p) }
+  .menu small { display:block; color:var(--m); font-size:12px }
+  .menu hr { border:0; border-top:1px solid var(--b); margin:4px 0 }
+  .dis { color:#9ca3af }
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:980px }
+  .cols .frame .body { min-height:70px }
+  .tag { font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px; display:inline-block; margin-bottom:8px }
+  .bad { background:#fee2e2; color:#b91c1c } .good { background:#dcfce7; color:#15803d }
+  .icon { color:#7c3aed }
+</style>
+
+<h1 style="margin:0">Promover filtros a globales</h1>
+<p class="note">Interactivo: pulsa chips para seleccionarlos, luego el botón punteado. Deshacer en el toast y ✕ en la píldora del buscador.</p>
+
+<h2>1 · Chips → filtro global (fase 1)</h2>
+<div class="frame" id="f1">
+  <div class="top"><div class="search"><span>🔍</span><span class="ph" id="ph">Search photos or videos.</span><span class="gpill" id="gp"><span id="gptxt"></span><b id="gpx">✕</b></span></div></div>
+  <div class="body">
+    <div class="head"><h3>All Photos</h3><span class="btn">⋯</span></div>
+    <div class="row" id="chips">
+      <span class="chip" data-id="np">No people <small>174</small></span>
+      <span class="chip" data-id="ut">Untagged <small>124</small></span>
+      <span class="chip" data-id="ty">This year <small>51</small></span>
+      <span class="chip" data-id="nl">No location <small>103</small></span>
+    </div>
+    <p class="note" id="hint">Selecciona un chip: aparece el botón punteado tras los seleccionados, antes del divisor.</p>
+  </div>
+  <div class="toast" id="toast"><span id="toasttxt"></span><a id="undo">Deshacer</a></div>
+</div>
+
+<h2>2 · Alcance de navegación (fase 2) — menú “⋯” de la cabecera</h2>
+<div class="frame" style="height:290px">
+  <div class="top"><div class="search"><span>🔍</span><span class="gpill on">📁 Álbum: Viaje Japón <b>✕</b></span></div></div>
+  <div class="body">
+    <div class="head"><h3>📁 Viaje Japón</h3><span class="btn" style="background:var(--pl)">⋯</span></div>
+    <div class="menu">
+      <div>Renombrar…</div>
+      <div>Mostrar en Finder</div>
+      <hr>
+      <div class="hl">⬆ Filtrar toda la app por este álbum<small>Incluye subálbumes. Se mantiene en Mapa, Calendario, Personas…</small></div>
+      <div class="dis">Mover a la papelera</div>
+    </div>
+  </div>
+</div>
+<p class="note">Favoritos también podría ofrecerlo (es una condición de rating). Trash, All Photos y Recently Added: sin esta opción.</p>
+
+<h2>3 · Barra de orden / layout — las dos flechas</h2>
+<div class="cols">
+  <div class="frame"><div class="body"><span class="tag bad">Ahora</span>
+    <div class="row"><span class="btn">⇅ Day · Date ↓ ⌄</span><span class="btn">▣ ⌄</span></div>
+    <p class="note">Dos ⌄ cercanos; la ↓ y el ⌄ seguidos parecen controles distintos.</p></div></div>
+  <div class="frame"><div class="body"><span class="tag good">Propuesta A</span>
+    <div class="row"><span class="btn">⇅ Day · Date ↓</span><span class="btn">▣ ⌄</span></div>
+    <p class="note">Sin ⌄ en el orden (la ↓ ya indica dirección y el botón lo es). El ⌄ solo en el layout, que es solo icono.</p></div></div>
+  <div class="frame"><div class="body"><span class="tag good">Propuesta B</span>
+    <div class="row"><span class="btn" style="gap:0;padding:0"><span style="padding:6px 10px">⇅ Day · Date</span><span style="padding:6px 10px;border-left:1px solid var(--b)">↓</span></span><span class="btn">▣</span></div>
+    <p class="note">Dirección como segmento propio (toggle); sin ningún ⌄. Más explícito, algo más ancho.</p></div></div>
+</div>
+
+<script>
+  const chips=[...document.querySelectorAll('#chips .chip')];
+  const row=document.getElementById('chips');
+  const btn=document.createElement('button');
+  btn.className='promote';
+  btn.innerHTML='⬆<span class="tip">Aplicar a toda la app<br><em>Se mantiene al cambiar de página</em></span>';
+  const div=document.createElement('span');div.className='div';
+  let promoted=[];
+  const $=id=>document.getElementById(id);
+  function render(){
+    const sel=chips.filter(c=>c.classList.contains('sel'));
+    const rest=chips.filter(c=>!c.classList.contains('sel'));
+    row.innerHTML='';
+    sel.forEach(c=>row.append(c));
+    btn.classList.toggle('show',sel.length>0);
+    row.append(btn);
+    if(sel.length) row.append(div);
+    rest.forEach(c=>row.append(c));
+    $('hint').style.display=sel.length?'none':'';
+  }
+  chips.forEach(c=>c.onclick=()=>{c.classList.toggle('sel');render()});
+  function label(){return promoted.map(c=>c.firstChild.textContent.trim()).join(' + ')}
+  btn.onclick=()=>{
+    const sel=chips.filter(c=>c.classList.contains('sel'));
+    promoted=sel; sel.forEach(c=>c.classList.remove('sel'));
+    $('gptxt').textContent=label(); $('gp').classList.add('on'); $('ph').style.display='none';
+    $('toasttxt').textContent='Filtro aplicado a toda la app: '+label();
+    $('toast').classList.add('on'); setTimeout(()=>$('toast').classList.remove('on'),4000);
+    render();
+  };
+  $('undo').onclick=()=>{promoted.forEach(c=>c.classList.add('sel'));reset();render()};
+  $('gpx').onclick=reset;
+  function reset(){promoted=[];$('gp').classList.remove('on');$('ph').style.display='';$('toast').classList.remove('on')}
+  render();
+</script>

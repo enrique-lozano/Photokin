@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAppStore } from '@/stores/appState';
 import { TIMELINE_GROUP_BY_VALUES, TIMELINE_SORT_BY_VALUES, useSettingsStore } from '@/stores/settingsStore';
-import { IconAlertTriangle, IconArrowsSort, IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { IconAlertTriangle, IconArrowsSort, IconCheck } from '@tabler/icons-react';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
 
@@ -100,7 +100,6 @@ export function GroupSortControl() {
         >
           <IconArrowsSort size={16} aria-hidden="true" />
           <span className="secondary-toolbar__chip-label">{label}</span>
-          <IconChevronDown size={14} className="opacity-70" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[min(36rem,calc(100vw-2rem))] p-3 text-sm">
